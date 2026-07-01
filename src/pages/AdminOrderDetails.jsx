@@ -38,24 +38,21 @@ export function AdminOrderDetails() {
 
   const servicesText = useMemo(() => (order?.activeServices?.length ? order.activeServices : order?.services || []).join("\n"), [order]);
 
-  const loadOrder = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const data = await adminApi.order(orderId);
+  useEffect(() => {
+    let active = true;
+    adminApi.order(orderId).then((data) => {
+      if (!active) return;
       setOrder(data.order);
       setProgress(data.progress || []);
       setInvoices(data.invoices || []);
       setSummary(data.summary || null);
-    } catch (err) {
-      setError(err.message || "Could not load order.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadOrder();
+      setError("");
+    }).catch((err) => {
+      if (active) setError(err.message || "Could not load order.");
+    }).finally(() => {
+      if (active) setLoading(false);
+    });
+    return () => { active = false; };
   }, [orderId]);
 
   const saveOrder = async (event) => {
