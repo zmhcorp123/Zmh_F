@@ -54,6 +54,10 @@ export function Layout({ children }) {
         </button>
         <nav className={open ? "nav open" : "nav"} aria-label="Primary navigation">
           {nav.map(([label, to]) => <LinkButton key={to} to={to} onClick={closeMenu}>{label}</LinkButton>)}
+          <button className="text-link mobile-auth-link" onClick={() => { navigate(isAuthenticated ? "/dashboard" : "/login"); closeMenu(); }}>
+            {isAuthenticated ? (user?.role === "admin" ? "Admin" : "Dashboard") : "Login"}
+          </button>
+          <button className="text-link mobile-auth-link primary" onClick={() => { navigate("/book-service"); closeMenu(); }}>Book Audit</button>
         </nav>
         <div className="nav-actions">
           <button className="icon-btn theme-toggle" title={dark ? "Switch to day mode" : "Switch to night mode"} aria-label={dark ? "Switch to day mode" : "Switch to night mode"} onClick={() => setDark((value) => !value)}>

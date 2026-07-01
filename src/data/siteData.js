@@ -78,6 +78,12 @@ export const faqs = [
   ["Can the team scale with us?", "Yes. Packages are designed to grow from light support to a dedicated remote operations department."],
 ];
 
+export const testimonials = [
+  { quote: "ZMH helped us capture calls we used to miss and gave our dispatch board real structure.", name: "Operations Manager", company: "Residential HVAC Group" },
+  { quote: "Their team feels like part of our office. Customers get updates, and technicians get clean notes.", name: "Founder", company: "Plumbing Contractor" },
+  { quote: "We finally have a repeatable admin workflow without hiring a full in-house department.", name: "Director", company: "Property Management Firm" },
+];
+
 export const teamProfiles = [
   {
     name: "Founder Profile",
