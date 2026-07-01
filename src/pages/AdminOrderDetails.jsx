@@ -9,6 +9,10 @@ function formatDate(value) {
   return value ? new Date(value).toLocaleDateString() : "Not selected";
 }
 
+function compactDate(value) {
+  return value ? new Date(value).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "Not selected";
+}
+
 function dateValue(value) {
   return value ? new Date(value).toISOString().slice(0, 10) : "";
 }
@@ -23,6 +27,26 @@ function downloadBase64Pdf(filename, base64) {
   link.download = filename;
   link.click();
   URL.revokeObjectURL(url);
+}
+
+function StatusBadge({ value }) {
+  return <span className={`enterprise-status ${String(value || "pending").replace(/\s+/g, "-")}`}>{value || "pending"}</span>;
+}
+
+function MetricCard({ label, value, hint }) {
+  return <article className="order-metric-card"><span>{label}</span><strong>{value}</strong>{hint && <small>{hint}</small>}</article>;
+}
+
+function CollapsiblePanel({ title, eyebrow, children, defaultOpen = true, actions }) {
+  return (
+    <details className="order-enterprise-panel" open={defaultOpen}>
+      <summary>
+        <span>{eyebrow && <small>{eyebrow}</small>}<strong>{title}</strong></span>
+        {actions && <div className="panel-actions">{actions}</div>}
+      </summary>
+      <div className="panel-body">{children}</div>
+    </details>
+  );
 }
 
 export function AdminOrderDetails() {
@@ -144,20 +168,24 @@ export function AdminOrderDetails() {
   };
 
   if (loading) return <section className="admin-page"><div className="empty-state">Loading order details...</div></section>;
+  if (!order) return <section className="admin-page"><div className="empty-state">{error || "Order not found."}</div></section>;
 
-  if (!order) {
-    return <section className="admin-page"><div className="empty-state">{error || "Order not found."}</div></section>;
-  }
+  const progressValue = Number(order.progressPercent || summary?.currentProgress || 0);
+  const completedCount = summary?.servicesCompleted?.length || 0;
+  const remainingCount = summary?.servicesRemaining?.length || 0;
+  const latestInvoice = invoices[0];
+  const outstanding = order.paymentStatus === "paid" ? 0 : Number(latestInvoice?.amount || String(order.packagePrice || "").replace(/[^0-9.]/g, "")) || 0;
 
   return (
     <>
       <SEO title={`${order.companyName} Order`} description="Admin order details and service progress." />
-      <section className="order-detail-page">
-        <div className="admin-hero">
+      <section className="order-detail-page enterprise-order-page">
+        <div className="enterprise-order-hero">
           <div>
             <span className="eyebrow">Order Details</span>
             <h2>{order.companyName}</h2>
             <p>{order.contactPerson || order.user?.name || "Client"} | {order.email || order.user?.email || "No email"} | {order.phone || "No phone"}</p>
+            <div className="hero-badges"><StatusBadge value={order.status} /><StatusBadge value={order.paymentStatus} /><span className="enterprise-status neutral">{order.packageName || "Custom support"}</span></div>
           </div>
           <div className="order-actions">
             <Button variant="secondary" icon="arrow" onClick={() => navigate("/admin-dashboard")}>Back</Button>
@@ -166,85 +194,104 @@ export function AdminOrderDetails() {
           </div>
         </div>
 
+        <div className="sticky-order-actions">
+          <span>{order.companyName}</span>
+          <div>
+            <button type="button" className="settings-secondary-action" onClick={generatePdf}>Export PDF</button>
+            <button type="button" className="settings-secondary-action" onClick={generatePdf}>Preview PDF</button>
+            <button type="button" className="settings-secondary-action" onClick={() => window.print()}>Print</button>
+            <button type="button" className="settings-primary-action" onClick={sendSummary}>Email Summary</button>
+          </div>
+        </div>
+
         {error && <div className="form-error">{error}</div>}
         {notice && <div className="success">{notice}</div>}
 
-        <div className="order-detail-grid">
-          <form className="form-card order-editor" onSubmit={saveOrder}>
-            <h3>Order Profile</h3>
-            <div className="profile-facts">
-              <span><strong>Company</strong>{order.companyName}</span>
-              <span><strong>Status</strong>{order.status}</span>
-              <span><strong>Order Date</strong>{formatDate(order.createdAt)}</span>
-              <span><strong>Requested</strong>{formatDate(order.requestedDate)}</span>
-            </div>
-            <div className="form-grid compact">
-              <label>Contact Person<input name="contactPerson" defaultValue={order.contactPerson || order.user?.name || ""} /></label>
-              <label>Package Name<input name="packageName" defaultValue={order.packageName || ""} /></label>
-              <label>Package Price<input name="packagePrice" defaultValue={order.packagePrice || ""} /></label>
-              <label>Assigned Staff<input name="assignedStaff" defaultValue={order.assignedStaff || ""} /></label>
-              <label>Service Start Date<input name="serviceStartDate" type="date" defaultValue={dateValue(order.serviceStartDate)} /></label>
-              <label>Next Billing Date<input name="nextBillingDate" type="date" defaultValue={dateValue(order.nextBillingDate)} /></label>
-              <label>Progress %<input name="progressPercent" type="number" min="0" max="100" defaultValue={order.progressPercent || 0} /></label>
-              <label>Payment Status<select name="paymentStatus" defaultValue={order.paymentStatus || "pending"}><option value="pending">Pending</option><option value="sent">Sent</option><option value="paid">Paid</option><option value="overdue">Overdue</option><option value="waived">Waived</option></select></label>
-            </div>
-            <label>Services Included<textarea name="activeServices" defaultValue={servicesText} /></label>
-            <label>Admin Notes<textarea name="notes" defaultValue={order.notes || ""} /></label>
-            <Button type="submit" icon="settings">{saving === "order" ? "Saving..." : "Save Order"}</Button>
-          </form>
-
-          <form className="form-card progress-form" onSubmit={addProgress}>
-            <h3>Update Service Progress</h3>
-            <label>Title<input name="title" required placeholder="Onboarding completed" /></label>
-            <label>Description<textarea name="description" placeholder="Describe what was completed and what changed for the client." /></label>
-            <div className="form-grid compact">
-              <label>Date & Time<input name="happenedAt" type="datetime-local" /></label>
-              <label>Progress %<input name="progressPercent" type="number" min="0" max="100" defaultValue={order.progressPercent || 0} /></label>
-              <label>Status<select name="status" defaultValue="completed"><option value="planned">Planned</option><option value="in progress">In progress</option><option value="completed">Completed</option><option value="blocked">Blocked</option></select></label>
-            </div>
-            <Button type="submit" icon="route">{saving === "progress" ? "Adding..." : "Add Progress"}</Button>
-          </form>
+        <div className="order-metric-grid">
+          <MetricCard label="Progress" value={`${progressValue}%`} hint="Overall service completion" />
+          <MetricCard label="Outstanding" value={`USD ${outstanding.toFixed(2)}`} hint={order.paymentStatus || "pending"} />
+          <MetricCard label="Completed" value={completedCount} hint="Service milestones" />
+          <MetricCard label="Remaining" value={remainingCount} hint="Open service items" />
         </div>
 
-        <div className="order-detail-grid">
-          <div className="premium-panel">
-            <h3>Service Summary</h3>
-            <div className="summary-columns">
-              <div><strong>Completed</strong>{summary?.servicesCompleted?.length ? summary.servicesCompleted.map((item) => <span key={item}>{item}</span>) : <p>No completed services yet.</p>}</div>
-              <div><strong>Remaining</strong>{summary?.servicesRemaining?.length ? summary.servicesRemaining.map((item) => <span key={item}>{item}</span>) : <p>No remaining services listed.</p>}</div>
-            </div>
-          </div>
-          <div className="premium-panel">
-            <h3>Files Uploaded</h3>
-            {(order.filesUploaded || []).length ? order.filesUploaded.map((file) => <p key={file.url || file.name}>{file.name || "File"}<br /><small>{file.url}</small></p>) : <p>No files uploaded yet.</p>}
-          </div>
-        </div>
-
-        <div className="order-detail-grid">
-          <div className="premium-panel">
-            <h3>Modern Timeline</h3>
-            <div className="service-timeline">
-              {progress.length ? progress.map((item) => (
-                <article key={item._id}>
-                  <span>{formatDate(item.happenedAt)} | {item.progressPercent}% | {item.status}</span>
-                  <strong>{item.title}</strong>
-                  <p>{item.description || "No description provided."}</p>
-                  <small>{item.adminName || item.admin?.name || "Admin"}</small>
-                </article>
-              )) : <p>No progress updates yet.</p>}
-            </div>
-          </div>
-          <div className="premium-panel">
-            <h3>Invoice History</h3>
-            <div className="invoice-list">
-              {invoices.length ? invoices.map((invoice) => (
-                <div key={invoice._id}>
-                  <strong>{invoice.invoice}</strong>
-                  <span>{invoice.currency} {invoice.amount} | {invoice.status} | Due {formatDate(invoice.dueDate)}</span>
+        <div className="enterprise-order-grid">
+          <div className="enterprise-order-main">
+            <CollapsiblePanel title="Executive Order Profile" eyebrow="Client & package" actions={<StatusBadge value={order.status} />}>
+              <form className="enterprise-form" onSubmit={saveOrder}>
+                <div className="enterprise-facts">
+                  <span><strong>Company</strong>{order.companyName}</span>
+                  <span><strong>Order Date</strong>{compactDate(order.createdAt)}</span>
+                  <span><strong>Requested</strong>{compactDate(order.requestedDate)}</span>
+                  <span><strong>Next Billing</strong>{compactDate(order.nextBillingDate)}</span>
                 </div>
-              )) : <p>No invoice history found.</p>}
-            </div>
+                <div className="settings-form-grid">
+                  <label className="settings-field"><span>Contact Person</span><input name="contactPerson" defaultValue={order.contactPerson || order.user?.name || ""} /></label>
+                  <label className="settings-field"><span>Package Name</span><input name="packageName" defaultValue={order.packageName || ""} /></label>
+                  <label className="settings-field"><span>Package Price</span><input name="packagePrice" defaultValue={order.packagePrice || ""} /></label>
+                  <label className="settings-field"><span>Assigned Staff</span><input name="assignedStaff" defaultValue={order.assignedStaff || ""} /></label>
+                  <label className="settings-field"><span>Service Start Date</span><input name="serviceStartDate" type="date" defaultValue={dateValue(order.serviceStartDate)} /></label>
+                  <label className="settings-field"><span>Next Billing Date</span><input name="nextBillingDate" type="date" defaultValue={dateValue(order.nextBillingDate)} /></label>
+                  <label className="settings-field"><span>Progress %</span><input name="progressPercent" type="number" min="0" max="100" defaultValue={order.progressPercent || 0} /></label>
+                  <label className="settings-field"><span>Payment Status</span><select name="paymentStatus" defaultValue={order.paymentStatus || "pending"}><option value="pending">Pending</option><option value="sent">Sent</option><option value="paid">Paid</option><option value="overdue">Overdue</option><option value="waived">Waived</option></select></label>
+                </div>
+                <label className="settings-field"><span>Services Included</span><textarea name="activeServices" defaultValue={servicesText} /></label>
+                <label className="settings-field"><span>Admin Notes</span><textarea name="notes" defaultValue={order.notes || ""} /></label>
+                <div className="settings-footer-actions"><button type="submit" className="settings-primary-action">{saving === "order" ? "Saving..." : "Save Order"}</button></div>
+              </form>
+            </CollapsiblePanel>
+
+            <CollapsiblePanel title="Modern Timeline" eyebrow="Service progress">
+              <div className="enterprise-timeline">
+                {progress.length ? progress.map((item) => (
+                  <article key={item._id}>
+                    <div><StatusBadge value={item.status} /><span>{formatDate(item.happenedAt)} | {item.adminName || item.admin?.name || "Admin"}</span></div>
+                    <strong>{item.title}</strong>
+                    <p>{item.description || "No description provided."}</p>
+                    <div className="progress-meter"><span style={{ width: `${Number(item.progressPercent || 0)}%` }} /></div>
+                  </article>
+                )) : <p>No progress updates yet.</p>}
+              </div>
+            </CollapsiblePanel>
+
+            <CollapsiblePanel title="Invoice History" eyebrow="Billing">
+              <div className="enterprise-table-wrap">
+                <table className="admin-table enterprise-table">
+                  <thead><tr><th>Invoice</th><th>Amount</th><th>Status</th><th>Due Date</th></tr></thead>
+                  <tbody>
+                    {invoices.length ? invoices.map((invoice) => (
+                      <tr key={invoice._id}><td>{invoice.invoice}</td><td>{invoice.currency} {invoice.amount}</td><td><StatusBadge value={invoice.status} /></td><td>{formatDate(invoice.dueDate)}</td></tr>
+                    )) : <tr><td colSpan="4">No invoice history found.</td></tr>}
+                  </tbody>
+                </table>
+              </div>
+            </CollapsiblePanel>
           </div>
+
+          <aside className="enterprise-order-side">
+            <CollapsiblePanel title="Update Progress" eyebrow="Admin action">
+              <form className="enterprise-form" onSubmit={addProgress}>
+                <label className="settings-field"><span>Title</span><input name="title" required placeholder="Onboarding completed" /></label>
+                <label className="settings-field"><span>Description</span><textarea name="description" placeholder="Describe what was completed and what changed for the client." /></label>
+                <label className="settings-field"><span>Date & Time</span><input name="happenedAt" type="datetime-local" /></label>
+                <label className="settings-field"><span>Progress %</span><input name="progressPercent" type="number" min="0" max="100" defaultValue={order.progressPercent || 0} /></label>
+                <label className="settings-field"><span>Status</span><select name="status" defaultValue="completed"><option value="planned">Planned</option><option value="in progress">In progress</option><option value="completed">Completed</option><option value="blocked">Blocked</option></select></label>
+                <button type="submit" className="settings-primary-action">{saving === "progress" ? "Adding..." : "Add Progress"}</button>
+              </form>
+            </CollapsiblePanel>
+
+            <CollapsiblePanel title="Service Analytics" eyebrow="Dashboard">
+              <div className="analytics-donut" style={{ "--progress": `${progressValue}%` }}><strong>{progressValue}%</strong><span>complete</span></div>
+              <div className="summary-columns compact">
+                <div><strong>Completed</strong>{summary?.servicesCompleted?.length ? summary.servicesCompleted.map((item) => <span key={item}>{item}</span>) : <p>No completed services yet.</p>}</div>
+                <div><strong>Remaining</strong>{summary?.servicesRemaining?.length ? summary.servicesRemaining.map((item) => <span key={item}>{item}</span>) : <p>No remaining services listed.</p>}</div>
+              </div>
+            </CollapsiblePanel>
+
+            <CollapsiblePanel title="Files & Activity" eyebrow="Workspace" defaultOpen={false}>
+              {(order.filesUploaded || []).length ? order.filesUploaded.map((file) => <p key={file.url || file.name}>{file.name || "File"}<br /><small>{file.url}</small></p>) : <p>No files uploaded yet.</p>}
+              <div className="client-activity-list"><span>Order created {formatDate(order.createdAt)}</span><span>Last updated {formatDate(order.updatedAt)}</span><span>{invoices.length} invoice records</span><span>{progress.length} progress updates</span></div>
+            </CollapsiblePanel>
+          </aside>
         </div>
       </section>
     </>
