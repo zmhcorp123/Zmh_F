@@ -9,7 +9,7 @@ import { navigate } from "../utils/router";
 export function Dashboard({ section = "Dashboard" }) {
   const { user, updateUser, logout } = useAuth();
   const [saved, setSaved] = useState(false);
-  const items = ["Dashboard", "Bookings", "Invoices", "Messages", "Notifications", "Profile", "Settings", "Support Tickets", "Book Service", "My Services", "Calendar"];
+  const items = ["Dashboard", "Bookings", "Invoices", "Notifications", "Profile", "Settings", "Support Tickets", "Book Service", "My Services", "Calendar"];
 
   const saveProfile = (event) => {
     event.preventDefault();
@@ -26,24 +26,28 @@ function DashboardCards({ section }) {
   const [bookings, setBookings] = useState([]);
   const [invoices, setInvoices] = useState([]);
   const [notifications, setNotifications] = useState([]);
+  const [tickets, setTickets] = useState([]);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
 
   useEffect(() => {
     let active = true;
     async function loadDashboard() {
       setError("");
       try {
-        const [profileData, bookingData, invoiceData, notificationData] = await Promise.all([
+        const [profileData, bookingData, invoiceData, notificationData, ticketData] = await Promise.all([
           dashboardApi.profile(),
           bookingApi.list(),
           dashboardApi.invoices(),
           dashboardApi.notifications(),
+          dashboardApi.supportTickets(),
         ]);
         if (!active) return;
         setProfile(profileData);
         setBookings(bookingData.bookings || []);
         setInvoices(invoiceData.invoices || []);
         setNotifications(notificationData.notifications || []);
+        setTickets(ticketData.tickets || []);
       } catch (err) {
         if (active) setError(err.message || "Could not load dashboard data.");
       }
@@ -60,6 +64,24 @@ function DashboardCards({ section }) {
     response: booking.adminResponse || "Waiting for admin response",
   }));
 
+  const createTicket = async (event) => {
+    event.preventDefault();
+    setError("");
+    setNotice("");
+    const form = new FormData(event.currentTarget);
+    try {
+      const data = await dashboardApi.createSupportTicket({
+        subject: form.get("subject"),
+        message: form.get("message"),
+      });
+      setTickets((current) => [data.ticket, ...current]);
+      setNotice("Support ticket created. Our team has been notified.");
+      event.currentTarget.reset();
+    } catch (err) {
+      setError(err.message || "Could not create support ticket.");
+    }
+  };
+
   if (section === "Bookings" || section === "Calendar" || section === "My Services") {
     return <div className="portal-list">{error && <div className="form-error">{error}</div>}{bookingRows.length ? bookingRows.map((booking) => <article className="portal-row" key={booking.id}><div><strong>{booking.title}</strong><span>{booking.date}</span><p>{booking.response}</p></div><span className="status-pill">{booking.status}</span></article>) : <div className="empty-state">No bookings yet. Submit a booking request to see it here.</div>}</div>;
   }
@@ -68,8 +90,12 @@ function DashboardCards({ section }) {
     return <div className="portal-list">{error && <div className="form-error">{error}</div>}{invoices.length ? invoices.map((invoice) => <article className="portal-row" key={invoice._id}><div><strong>{invoice.invoice}</strong><span>{invoice.company}</span></div><span className="status-pill">{invoice.status}</span></article>) : <div className="empty-state">No invoices found.</div>}</div>;
   }
 
-  if (section === "Notifications" || section === "Messages") {
+  if (section === "Notifications") {
     return <div className="portal-list">{error && <div className="form-error">{error}</div>}{notifications.length ? notifications.map((item) => <article className="portal-row" key={item._id}><div><strong>{item.title}</strong><p>{item.body}</p></div><span className="status-pill">{item.type}</span></article>) : <div className="empty-state">No notifications yet.</div>}</div>;
+  }
+
+  if (section === "Support Tickets") {
+    return <div className="portal-list">{error && <div className="form-error">{error}</div>}{notice && <div className="success">{notice}</div>}<form className="form-card inline" onSubmit={createTicket}><h3>Create support ticket</h3><label>Subject<input name="subject" required placeholder="What do you need help with?" /></label><label>Message<textarea name="message" required placeholder="Describe the issue or request" /></label><Button type="submit">Create ticket</Button></form>{tickets.length ? tickets.map((ticket) => <article className="portal-row" key={ticket._id}><div><strong>{ticket.subject}</strong><span>{new Date(ticket.createdAt).toLocaleDateString()}</span><p>{ticket.adminResponse || ticket.message}</p></div><span className="status-pill">{ticket.status}</span></article>) : <div className="empty-state">No support tickets yet.</div>}</div>;
   }
 
   const stats = profile?.stats || {};
@@ -77,8 +103,9 @@ function DashboardCards({ section }) {
     ["Bookings", stats.bookings || bookings.length || 0],
     ["Invoices", stats.invoices || invoices.length || 0],
     ["Notifications", stats.notifications || notifications.length || 0],
+    ["Support tickets", stats.tickets || tickets.length || 0],
     ["Admin responses", bookings.filter((booking) => booking.adminResponse).length],
-    ["Confirmed", bookings.filter((booking) => booking.status === "confirmed").length],
+    ["Ongoing", bookings.filter((booking) => booking.status === "ongoing").length],
     ["Calendar events", bookings.filter((booking) => booking.requestedDate).length],
   ].map(([item, value]) => <Card key={item} title={item} text={error || "Live account data from the backend."}><strong className="price">{value}</strong></Card>)}</div>;
 }

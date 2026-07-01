@@ -66,6 +66,8 @@ export const dashboardApi = {
   profile: () => request("/dashboard/profile"),
   invoices: () => request("/invoices"),
   notifications: () => request("/notifications"),
+  supportTickets: () => request("/support-tickets"),
+  createSupportTicket: (payload) => request("/support-tickets", { method: "POST", body: payload }),
   chatbot: (payload) => request("/chatbot/query", { method: "POST", body: payload }),
 };
 
@@ -78,6 +80,9 @@ export const adminApi = {
   updateBooking: (id, payload) => request("/admin/bookings/" + id, { method: "PATCH", body: payload }),
   bills: () => request("/admin/bills?db=mongodb"),
   updateBill: (id, payload) => request("/admin/bills/" + id, { method: "PATCH", body: payload }),
+  sendBills: (payload) => request("/admin/bills/send", { method: "POST", body: payload }),
+  supportTickets: () => request("/admin/support-tickets"),
+  updateSupportTicket: (id, payload) => request("/admin/support-tickets/" + id, { method: "PATCH", body: payload }),
   getSettings: () => request("/admin/settings"),
   settings: (payload) => request("/admin/settings", { method: "POST", body: payload }),
 };

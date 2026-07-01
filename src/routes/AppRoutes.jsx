@@ -138,7 +138,6 @@ export function AppRoutes() {
         <Route path="/bookings" element={<UserDashboardRoute section="Bookings" />} />
         <Route path="/settings" element={<UserDashboardRoute section="Settings" />} />
         <Route path="/invoices" element={<UserDashboardRoute section="Invoices" />} />
-        <Route path="/messages" element={<UserDashboardRoute section="Messages" />} />
         <Route path="/notifications" element={<UserDashboardRoute section="Notifications" />} />
         <Route path="/support-tickets" element={<UserDashboardRoute section="Support Tickets" />} />
         <Route path="/my-services" element={<UserDashboardRoute section="My Services" />} />
