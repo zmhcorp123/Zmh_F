@@ -1,4 +1,5 @@
-import { Navigate, Route, Routes, useParams } from "react-router-dom";
+import { useEffect } from "react";
+import { Navigate, Route, Routes, useNavigate, useParams } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { industries, packages, services, teamProfiles } from "./data/siteData";
 import { AdminPage } from "./pages/AdminPage";
@@ -11,6 +12,7 @@ import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { SignupPage } from "./pages/SignupPage";
 import { About, BookService, CaseStudies, Contact, Dashboard, FAQ, HowItWorks, IndustriesPage, IndustryDetail, Legal, NotFound, PackageDetail, PricingPage, ServiceDetail, ServicesPage, TeamPage, TeamProfile } from "./pages/CorePages";
 import { useAuth } from "./context/useAuth";
+import { setRouterNavigate } from "./utils/router";
 
 function ServiceRoute() {
   const { slug } = useParams();
@@ -58,6 +60,12 @@ function DashboardRoute() {
 }
 
 export default function App() {
+  const routerNavigate = useNavigate();
+
+  useEffect(() => {
+    setRouterNavigate(routerNavigate);
+  }, [routerNavigate]);
+
   return (
     <Layout>
       <Routes>
