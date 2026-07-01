@@ -1,6 +1,8 @@
 import { lazy, Suspense, useEffect } from "react";
 import { Navigate, Route, Routes, useNavigate, useParams } from "react-router-dom";
 import { AdminPage } from "../pages/AdminPage";
+import { ServiceDetail } from "../pages/ServiceDetail";
+import { Services } from "../pages/Services";
 import { industries, packages, services, teamProfiles } from "../data/siteData";
 import { useAuth } from "../context/useAuth";
 import { setRouterNavigate } from "../utils/router";
@@ -8,8 +10,6 @@ import { setRouterNavigate } from "../utils/router";
 const lazyNamed = (loader, exportName) => lazy(() => loader().then((module) => ({ default: module[exportName] })));
 
 const Home = lazyNamed(() => import("../pages/Home"), "Home");
-const Services = lazyNamed(() => import("../pages/Services"), "Services");
-const ServiceDetail = lazyNamed(() => import("../pages/ServiceDetail"), "ServiceDetail");
 const Industries = lazyNamed(() => import("../pages/Industries"), "Industries");
 const IndustryDetail = lazyNamed(() => import("../pages/IndustryDetail"), "IndustryDetail");
 const Pricing = lazyNamed(() => import("../pages/Pricing"), "Pricing");
