@@ -15,6 +15,7 @@ const adminTabs = [
   { name: "Cancelled Orders", icon: "bill" },
   { name: "Bills", icon: "bill" },
   { name: "Send Bills", icon: "mail" },
+  { name: "Payment Verification", icon: "bill" },
   { name: "Support Tickets", icon: "mail" },
   { name: "Settings", icon: "settings" },
 ];
@@ -433,6 +434,7 @@ export function AdminPage() {
   const [users, setUsers] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [bills, setBills] = useState([]);
+  const [payments, setPayments] = useState([]);
   const [tickets, setTickets] = useState([]);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -447,12 +449,14 @@ export function AdminPage() {
       adminApi.users(),
       adminApi.bookings(),
       adminApi.bills(),
+      adminApi.payments(),
       adminApi.supportTickets(),
-    ]).then(([userData, bookingData, billData, ticketData]) => {
+    ]).then(([userData, bookingData, billData, paymentData, ticketData]) => {
       if (!active) return;
       setUsers(userData.users || []);
       setBookings(bookingData.bookings || []);
       setBills(billData.bills || []);
+      setPayments(paymentData.payments || []);
       setTickets(ticketData.tickets || []);
     }).catch((err) => {
       if (active) setError(err.message || "Could not load admin data.");
@@ -486,8 +490,9 @@ export function AdminPage() {
     ["Users", users.length, "users"],
     ["Bookings", bookings.length, "calendar"],
     ["Ongoing", ongoingBookings.length, "route"],
+    ["Payments to review", payments.filter((payment) => payment.status === "submitted").length, "bill"],
     ["Open tickets", openTickets.length, "mail"],
-  ], [users, pendingUsers, bookings, ongoingBookings, openTickets]);
+  ], [users, pendingUsers, bookings, ongoingBookings, payments, openTickets]);
 
   const approveUser = async (id) => {
     setSavingId(id);
@@ -581,6 +586,41 @@ export function AdminPage() {
       event.currentTarget.reset();
     } catch (err) {
       setError(err.message || "Could not send bills.");
+    } finally {
+      setSavingId("");
+    }
+  };
+
+  const approvePayment = async (payment) => {
+    setSavingId(payment._id);
+    setError("");
+    setNotice("");
+    try {
+      const data = await adminApi.approvePayment(payment._id);
+      setPayments((current) => current.map((item) => item._id === payment._id ? data.payment : item));
+      setBills((current) => current.map((bill) => bill._id === data.invoice?._id ? data.invoice : bill));
+      if (data.order?._id) setBookings((current) => current.map((booking) => booking._id === data.order._id ? data.order : booking));
+      setNotice(data.emailSent ? "Payment approved and confirmation email sent." : "Payment approved. Email provider skipped or failed.");
+    } catch (err) {
+      setError(err.message || "Could not approve payment.");
+    } finally {
+      setSavingId("");
+    }
+  };
+
+  const rejectPayment = async (event, payment) => {
+    event.preventDefault();
+    setSavingId(payment._id);
+    setError("");
+    setNotice("");
+    const form = new FormData(event.currentTarget);
+    try {
+      const data = await adminApi.rejectPayment(payment._id, { reason: form.get("reason") });
+      setPayments((current) => current.map((item) => item._id === payment._id ? data.payment : item));
+      if (data.order?._id) setBookings((current) => current.map((booking) => booking._id === data.order._id ? data.order : booking));
+      setNotice(data.emailSent ? "Payment rejected and client email sent." : "Payment rejected. Email provider skipped or failed.");
+    } catch (err) {
+      setError(err.message || "Could not reject payment.");
     } finally {
       setSavingId("");
     }
@@ -760,6 +800,46 @@ export function AdminPage() {
               <label>Bill message<textarea name="message" placeholder="Optional message for the bill email" /></label>
               <Button type="submit" icon="mail">{savingId === "send-bills" ? "Sending..." : "Send bills"}</Button>
             </form>
+          )}
+
+          {tab === "Payment Verification" && (
+            <div className="booking-admin-list payment-review-list">
+              {payments.length ? payments.map((payment) => (
+                <article className="support-ticket-card payment-review-card" key={payment._id}>
+                  <div className="order-profile-head">
+                    <div>
+                      <span className="eyebrow">{payment.status}</span>
+                      <h3>{payment.user?.name || "Client"} - {payment.invoice?.invoice || "Invoice"}</h3>
+                      <p>{payment.order?.companyName || payment.invoice?.company || payment.user?.company || "Company"} | {payment.order?.packageName || "Package pending"}</p>
+                    </div>
+                    <span className="status-pill">{payment.status === "submitted" ? "Waiting for verification" : payment.status}</span>
+                  </div>
+                  <div className="profile-facts">
+                    <span><strong>Amount</strong>{payment.currency} {Number(payment.amount || payment.invoice?.amount || 0).toFixed(2)}</span>
+                    <span><strong>Payment Date</strong>{formatDate(payment.paymentDate)}</span>
+                    <span><strong>Transaction ID</strong>{payment.transactionId}</span>
+                    <span><strong>Submitted</strong>{formatDate(payment.createdAt)}</span>
+                  </div>
+                  <div className="profile-facts">
+                    <span><strong>Method</strong>{payment.paymentMethod}</span>
+                    <span><strong>Client Email</strong>{payment.user?.email || "-"}</span>
+                    <span><strong>Package</strong>{payment.order?.packageName || "-"}</span>
+                    <span><strong>Invoice Status</strong>{payment.invoice?.status || "-"}</span>
+                  </div>
+                  {payment.note && <p>{payment.note}</p>}
+                  {payment.screenshot?.dataUrl && <a className="table-action" href={payment.screenshot.dataUrl} target="_blank" rel="noreferrer">Open Screenshot</a>}
+                  {payment.status === "submitted" ? (
+                    <div className="payment-review-actions">
+                      <button type="button" className="settings-primary-action" disabled={savingId === payment._id} onClick={() => approvePayment(payment)}>{savingId === payment._id ? "Reviewing..." : "Approve Payment"}</button>
+                      <form className="payment-reject-form" onSubmit={(event) => rejectPayment(event, payment)}>
+                        <input name="reason" placeholder="Reason for rejection" required />
+                        <button type="submit" className="settings-secondary-action danger-link" disabled={savingId === payment._id}>Reject Payment</button>
+                      </form>
+                    </div>
+                  ) : <div className="empty-state">Reviewed {formatDate(payment.reviewedAt)}. {payment.reviewReason}</div>}
+                </article>
+              )) : <div className="empty-state">No payment submissions yet.</div>}
+            </div>
           )}
 
           {tab === "Support Tickets" && (

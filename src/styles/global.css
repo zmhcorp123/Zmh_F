@@ -203,6 +203,22 @@ textarea { min-height: 120px; resize: vertical; }
 .client-timeline p { margin: 0; }
 .client-bill-card { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
 .client-bill-actions { justify-content: flex-end; }
+.client-toolbar { display: grid; grid-template-columns: minmax(220px, 1fr) 220px; gap: 12px; padding: 16px; border: 1px solid var(--line); border-radius: 16px; background: rgba(255,255,255,.72); }
+.client-service-actions, .payment-review-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.client-payment-alert { padding: 12px 14px; border: 1px solid rgba(249,115,22,.24); border-radius: 14px; color: #b45309; background: rgba(249,115,22,.1); font-weight: 900; }
+.client-booking-card { align-items: stretch; }
+.client-pagination { display: flex; align-items: center; justify-content: center; gap: 12px; color: var(--muted); font-weight: 800; }
+.payment-modal-backdrop { justify-content: center; align-items: center; padding: 18px; }
+.payment-modal { width: min(680px, 100%); max-height: calc(100dvh - 36px); overflow: auto; border: 1px solid var(--line); border-radius: 22px; background: rgba(248,250,252,.98); box-shadow: var(--shadow); }
+.payment-modal-body { display: grid; gap: 14px; padding: 22px; }
+.payment-review-card { min-width: 0; }
+.payment-review-actions { justify-content: space-between; }
+.payment-reject-form { display: flex; align-items: center; gap: 10px; flex: 1 1 360px; }
+.payment-reject-form input { min-width: 180px; }
+.service-detail-workspace { display: grid; gap: 18px; }
+.status-pill.payment-submitted, .status-pill.submitted { color: #b45309; background: rgba(249,115,22,.12); }
+.status-pill.payment-rejected, .status-pill.rejected, .status-pill.cancelled { color: #dc2626; background: rgba(220,38,38,.1); }
+.status-pill.paid, .status-pill.approved { color: #047857; background: rgba(22,196,127,.13); }
 .checkbox { display: flex; align-items: center; gap: 10px; font-weight: 700; }
 .checkbox input { width: auto; }
 .success { padding: 18px; border-radius: 16px; background: rgba(22,196,127,.12); color: var(--secondary); font-weight: 900; }
@@ -280,8 +296,9 @@ textarea { min-height: 120px; resize: vertical; }
   .newsletter { flex-direction: column; }
   .dashboard aside { grid-template-columns: 1fr; }
   .client-service-grid { grid-template-columns: 1fr; }
+  .client-toolbar, .payment-reject-form { grid-template-columns: 1fr; display: grid; }
   .client-bill-card, .client-bill-actions { grid-template-columns: 1fr; display: grid; justify-content: stretch; }
-  .client-bill-actions button { width: 100%; }
+  .client-bill-actions button, .client-service-actions button, .payment-review-actions button { width: 100%; }
   main section { padding: 62px 18px; }
   .chatbot { right: 12px; left: 12px; bottom: 12px; max-width: none; display: grid; justify-items: end; pointer-events: none; }
   .chatbot > * { pointer-events: auto; }

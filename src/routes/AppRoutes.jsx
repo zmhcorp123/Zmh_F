@@ -90,11 +90,16 @@ function AdminOrderRoute() {
   return user.role === "admin" ? <AdminOrderDetails /> : <Navigate to="/user-dashboard" replace />;
 }
 
-function UserDashboardRoute({ section = "Dashboard" }) {
+function UserDashboardRoute({ section = "Dashboard", serviceId = "" }) {
   const { authReady, user } = useAuth();
   if (!authReady) return null;
   if (!user) return <Navigate to="/login" replace />;
-  return user.role === "admin" ? <Navigate to="/admin-dashboard" replace /> : <Dashboard section={section} />;
+  return user.role === "admin" ? <Navigate to="/admin-dashboard" replace /> : <Dashboard section={section} serviceId={serviceId} />;
+}
+
+function UserServiceDetailsRoute() {
+  const { serviceId } = useParams();
+  return <UserDashboardRoute section="Service Details" serviceId={serviceId} />;
 }
 
 function DashboardRoute() {
@@ -150,6 +155,8 @@ export function AppRoutes() {
         <Route path="/notifications" element={<UserDashboardRoute section="Notifications" />} />
         <Route path="/support-tickets" element={<UserDashboardRoute section="Support Tickets" />} />
         <Route path="/my-services" element={<UserDashboardRoute section="My Services" />} />
+        <Route path="/my-services/:serviceId" element={<UserServiceDetailsRoute />} />
+        <Route path="/cancelled-services" element={<UserDashboardRoute section="Cancelled Services" />} />
         <Route path="/calendar" element={<UserDashboardRoute section="Calendar" />} />
         <Route path="/book-service" element={<BookService />} />
         <Route path="/book-meeting" element={<BookMeeting />} />
