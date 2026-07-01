@@ -67,6 +67,8 @@ export const dashboardApi = {
 
 export const adminApi = {
   users: () => request("/admin/users?db=mongodb"),
+  approvals: () => request("/admin/approvals"),
+  approveUser: (id) => request("/admin/users/" + id + "/approve", { method: "POST" }),
   updateUser: (id, payload) => request("/admin/users/" + id, { method: "PATCH", body: payload }),
   bookings: () => request("/admin/bookings?db=mongodb"),
   updateBooking: (id, payload) => request("/admin/bookings/" + id, { method: "PATCH", body: payload }),

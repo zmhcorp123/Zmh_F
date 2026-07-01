@@ -16,8 +16,8 @@ export function LoginPage() {
     const form = new FormData(event.currentTarget);
 
     try {
-      await login({ email: form.get("email"), password: form.get("password") });
-      navigate("/dashboard");
+      const data = await login({ email: form.get("email"), password: form.get("password") });
+      navigate(data.user?.role === "admin" ? "/admin-dashboard" : "/user-dashboard");
     } catch (err) {
       setError(err.message || "Login failed");
     } finally {

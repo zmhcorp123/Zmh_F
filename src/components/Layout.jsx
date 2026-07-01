@@ -54,7 +54,7 @@ export function Layout({ children }) {
         </button>
         <nav className={open ? "nav open" : "nav"} aria-label="Primary navigation">
           {nav.map(([label, to]) => <LinkButton key={to} to={to} onClick={closeMenu}>{label}</LinkButton>)}
-          <button className="text-link mobile-auth-link" onClick={() => { navigate(isAuthenticated ? "/dashboard" : "/login"); closeMenu(); }}>
+          <button className="text-link mobile-auth-link" onClick={() => { navigate(isAuthenticated ? (user?.role === "admin" ? "/admin-dashboard" : "/user-dashboard") : "/login"); closeMenu(); }}>
             {isAuthenticated ? (user?.role === "admin" ? "Admin" : "Dashboard") : "Login"}
           </button>
           <button className="text-link mobile-auth-link primary" onClick={() => { navigate("/book-service"); closeMenu(); }}>Book Audit</button>
@@ -64,7 +64,7 @@ export function Layout({ children }) {
             <Icon name={dark ? "sun" : "moon"} />
           </button>
           {isAuthenticated ? (
-            <button className="ghost-small" onClick={() => navigate("/dashboard")}>{user?.role === "admin" ? "Admin" : "Dashboard"}</button>
+            <button className="ghost-small" onClick={() => navigate(user?.role === "admin" ? "/admin-dashboard" : "/user-dashboard")}>{user?.role === "admin" ? "Admin" : "Dashboard"}</button>
           ) : (
             <button className="ghost-small" onClick={() => navigate("/login")}>Login</button>
           )}

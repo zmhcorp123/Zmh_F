@@ -1,4 +1,4 @@
-import { Route, Routes, useParams } from "react-router-dom";
+import { Navigate, Route, Routes, useParams } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { industries, packages, services, teamProfiles } from "./data/siteData";
 import { AdminPage } from "./pages/AdminPage";
@@ -37,8 +37,24 @@ function TeamProfileRoute() {
 }
 
 function AdminRoute() {
-  const { user } = useAuth();
-  return user?.role === "admin" ? <AdminPage /> : <NotFound />;
+  const { authReady, user } = useAuth();
+  if (!authReady) return null;
+  if (!user) return <Navigate to="/login" replace />;
+  return user.role === "admin" ? <AdminPage /> : <Navigate to="/user-dashboard" replace />;
+}
+
+function UserDashboardRoute({ section = "Dashboard" }) {
+  const { authReady, user } = useAuth();
+  if (!authReady) return null;
+  if (!user) return <Navigate to="/login" replace />;
+  return user.role === "admin" ? <Navigate to="/admin-dashboard" replace /> : <Dashboard section={section} />;
+}
+
+function DashboardRoute() {
+  const { authReady, user } = useAuth();
+  if (!authReady) return null;
+  if (!user) return <Navigate to="/login" replace />;
+  return <Navigate to={user.role === "admin" ? "/admin-dashboard" : "/user-dashboard"} replace />;
 }
 
 export default function App() {
@@ -60,6 +76,7 @@ export default function App() {
         <Route path="/faq" element={<FAQ />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/admin" element={<AdminRoute />} />
+        <Route path="/admin-dashboard" element={<AdminRoute />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/careers" element={<Careers />} />
         <Route path="/privacy-policy" element={<Legal type="Privacy Policy" />} />
@@ -70,16 +87,17 @@ export default function App() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/otp-verification" element={<OtpVerificationPage />} />
-        <Route path="/dashboard" element={<Dashboard section="Dashboard" />} />
-        <Route path="/profile" element={<Dashboard section="Profile" />} />
-        <Route path="/bookings" element={<Dashboard section="Bookings" />} />
-        <Route path="/settings" element={<Dashboard section="Settings" />} />
-        <Route path="/invoices" element={<Dashboard section="Invoices" />} />
-        <Route path="/messages" element={<Dashboard section="Messages" />} />
-        <Route path="/notifications" element={<Dashboard section="Notifications" />} />
-        <Route path="/support-tickets" element={<Dashboard section="Support Tickets" />} />
-        <Route path="/my-services" element={<Dashboard section="My Services" />} />
-        <Route path="/calendar" element={<Dashboard section="Calendar" />} />
+        <Route path="/dashboard" element={<DashboardRoute />} />
+        <Route path="/user-dashboard" element={<UserDashboardRoute section="Dashboard" />} />
+        <Route path="/profile" element={<UserDashboardRoute section="Profile" />} />
+        <Route path="/bookings" element={<UserDashboardRoute section="Bookings" />} />
+        <Route path="/settings" element={<UserDashboardRoute section="Settings" />} />
+        <Route path="/invoices" element={<UserDashboardRoute section="Invoices" />} />
+        <Route path="/messages" element={<UserDashboardRoute section="Messages" />} />
+        <Route path="/notifications" element={<UserDashboardRoute section="Notifications" />} />
+        <Route path="/support-tickets" element={<UserDashboardRoute section="Support Tickets" />} />
+        <Route path="/my-services" element={<UserDashboardRoute section="My Services" />} />
+        <Route path="/calendar" element={<UserDashboardRoute section="Calendar" />} />
         <Route path="/book-service" element={<BookService />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

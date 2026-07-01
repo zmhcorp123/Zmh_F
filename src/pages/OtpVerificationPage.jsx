@@ -23,6 +23,7 @@ export function OtpVerificationPage() {
       const data = await authApi.verifyOtp({ email, otp: form.get("otp"), purpose: "signup" });
       clearPendingEmail();
       setNotice(data.message || "Email verified. Your account is waiting for admin approval.");
+      navigate("/");
     } catch (err) {
       setError(err.message || "OTP verification failed");
     } finally {

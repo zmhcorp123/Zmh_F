@@ -6,6 +6,7 @@ import { adminApi } from "../services/api";
 
 const adminTabs = [
   { name: "Overview", icon: "shield" },
+  { name: "Approvals", icon: "users" },
   { name: "Users", icon: "users" },
   { name: "Bookings", icon: "calendar" },
   { name: "Bills", icon: "bill" },
@@ -67,6 +68,7 @@ export function AdminPage() {
   const [bookings, setBookings] = useState([]);
   const [bills, setBills] = useState([]);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [savingId, setSavingId] = useState("");
 
   useEffect(() => {
@@ -86,16 +88,35 @@ export function AdminPage() {
     return () => { active = false; };
   }, []);
 
+  const pendingUsers = useMemo(() => users.filter((user) => user.status === "pending"), [users]);
+  const verifiedPendingUsers = useMemo(() => pendingUsers.filter((user) => user.isEmailVerified), [pendingUsers]);
+
   const metrics = useMemo(() => [
+    ["Pending approvals", pendingUsers.length, "users"],
     ["Users", users.length, "users"],
     ["Bookings", bookings.length, "calendar"],
-    ["Bills", bills.length, "bill"],
     ["Need response", bookings.filter((booking) => !booking.adminResponse).length, "mail"],
-  ], [users, bookings, bills]);
+  ], [users, pendingUsers, bookings]);
+
+  const approveUser = async (id) => {
+    setSavingId(id);
+    setError("");
+    setNotice("");
+    try {
+      const data = await adminApi.approveUser(id);
+      setUsers((current) => current.map((user) => user._id === id ? data.user : user));
+      setNotice(data.message || "User approved and email sent.");
+    } catch (err) {
+      setError(err.message || "Could not approve user.");
+    } finally {
+      setSavingId("");
+    }
+  };
 
   const updateUser = async (id, payload) => {
     setSavingId(id);
     setError("");
+    setNotice("");
     try {
       const data = await adminApi.updateUser(id, payload);
       setUsers((current) => current.map((user) => user._id === id ? data.user : user));
@@ -146,10 +167,11 @@ export function AdminPage() {
               <h2>{tab === "Overview" ? "Manage users, bookings, bills, and responses" : tab}</h2>
               <p>Review booking requests, confirm dates, and send responses that clients can see in their portal.</p>
             </div>
-            <Button to="/dashboard" variant="secondary" icon="user">Client Portal</Button>
+            <Button to="/user-dashboard" variant="secondary" icon="user">User Dashboard</Button>
           </div>
 
           {error && <div className="form-error">{error}</div>}
+          {notice && <div className="success">{notice}</div>}
 
           {tab === "Overview" && (
             <>
@@ -160,6 +182,30 @@ export function AdminPage() {
               </div>
               <SettingsPanel />
             </>
+          )}
+
+          {tab === "Approvals" && (
+            <div className="admin-table-wrap">
+              <div className="approval-summary">
+                <strong>{pendingUsers.length} pending accounts</strong>
+                <span>{verifiedPendingUsers.length} verified by OTP and ready for admin approval</span>
+              </div>
+              <table className="admin-table">
+                <thead><tr><th>Name</th><th>Company</th><th>Email</th><th>OTP</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody>
+                  {pendingUsers.length ? pendingUsers.map((user) => (
+                    <tr key={user._id}>
+                      <td data-label="Name">{user.name}</td>
+                      <td data-label="Company">{user.company || "-"}</td>
+                      <td data-label="Email">{user.email}</td>
+                      <td data-label="OTP">{user.isEmailVerified ? "Verified" : "Not verified"}</td>
+                      <td data-label="Status">{user.status}</td>
+                      <td data-label="Action"><button type="button" className="table-action" disabled={savingId === user._id} onClick={() => approveUser(user._id)}>{savingId === user._id ? "Approving" : "Approve & email"}</button></td>
+                    </tr>
+                  )) : <tr><td colSpan="6">No pending approvals.</td></tr>}
+                </tbody>
+              </table>
+            </div>
           )}
 
           {tab === "Users" && (
@@ -174,7 +220,7 @@ export function AdminPage() {
                       <td data-label="Email">{user.email}</td>
                       <td data-label="Role">{user.role}</td>
                       <td data-label="Status"><select defaultValue={user.status} onChange={(event) => updateUser(user._id, { status: event.target.value })}>{userStatuses.map((status) => <option key={status} value={status}>{status}</option>)}</select></td>
-                      <td data-label="Action"><button type="button" className="table-action" disabled={savingId === user._id} onClick={() => updateUser(user._id, { status: "active", isEmailVerified: true })}>{savingId === user._id ? "Saving" : "Approve"}</button></td>
+                      <td data-label="Action"><button type="button" className="table-action" disabled={savingId === user._id || user.status === "active"} onClick={() => approveUser(user._id)}>{savingId === user._id ? "Saving" : user.status === "active" ? "Approved" : "Approve & email"}</button></td>
                     </tr>
                   )) : <tr><td colSpan="6">No users found.</td></tr>}
                 </tbody>
