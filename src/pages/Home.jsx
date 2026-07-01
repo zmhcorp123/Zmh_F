@@ -13,7 +13,7 @@ export function Home() {
           <span className="eyebrow">ZMH USA Corp.</span>
           <h1>Your Remote Operations Department for Home Service Companies</h1>
           <p>Helping HVAC, Plumbing, Roofing, Electrical and Home Service Businesses grow through professional remote operations support.</p>
-          <div className="hero-actions"><Button to="/book-service" icon="calendar">Book Free Operations Audit</Button><Button to="/services" variant="secondary">Explore Services</Button></div>
+          <div className="hero-actions"><Button to="/book-meeting" icon="calendar">Book Free Operations Audit</Button><Button to="/services" variant="secondary">Explore Services</Button></div>
           <div className="stats">{[["125K+", "Calls Answered"], ["41K+", "Appointments Scheduled"], ["97.8%", "Client Satisfaction"], ["58K+", "Jobs Managed"]].map(([value, label]) => <div key={label}><strong>{value}</strong><span>{label}</span></div>)}</div>
         </div>
         <div className="hero-visual reveal delay"><div className="ops-card"><span>Live Ops Board</span><strong>97.8%</strong><small>Client satisfaction</small></div><div className="glass-grid">{["Calls", "Dispatch", "CRM", "Billing"].map((item) => <div key={item}>{item}<b>Active</b></div>)}</div></div>

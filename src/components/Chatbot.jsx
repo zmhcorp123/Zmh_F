@@ -51,7 +51,7 @@ export function Chatbot() {
           <div className="chat-faqs">
             {faqs.slice(0, 4).map(([question]) => <button type="button" key={question} onClick={() => addQuestion(question)}>{question}</button>)}
           </div>
-          <div className="chat-actions"><button type="button" onClick={() => navigate("/book-service")}>Book Meeting</button><button type="button" onClick={() => navigate("/contact")}>Contact Support</button><a href="mailto:hello@zmhusacorp.com">Email Us</a></div></div>
+          <div className="chat-actions"><button type="button" onClick={() => navigate("/book-meeting")}>Book Meeting</button><button type="button" onClick={() => navigate("/contact")}>Contact Support</button><a href="mailto:hello@zmhusacorp.com">Email Us</a></div></div>
           <form onSubmit={send}><input value={input} onChange={(event) => setInput(event.target.value)} placeholder="Ask a question..." aria-label="Ask a question" /><button type="submit">Send</button></form>
         </section>
       )}

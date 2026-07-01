@@ -8,7 +8,7 @@ export function PageHero({ eyebrow, title, text, primary = "Book a Free Operatio
         <span className="eyebrow">{eyebrow}</span>
         <h1>{title}</h1>
         <p>{text}</p>
-        <div className="hero-actions"><Button to="/book-service" icon="calendar">{primary}</Button>{secondary && <Button to={secondary.to} variant="secondary">{secondary.label}</Button>}</div>
+        <div className="hero-actions"><Button to="/book-meeting" icon="calendar">{primary}</Button>{secondary && <Button to={secondary.to} variant="secondary">{secondary.label}</Button>}</div>
       </div>
       {image && <div className="hero-visual reveal delay"><div className="ops-card"><span>Live Ops Board</span><strong>Ops</strong><small>Workflow visibility</small></div><div className="glass-grid">{["Calls", "Dispatch", "CRM", "Billing"].map((item) => <div key={item}>{item}<b>Active</b></div>)}</div></div>}
     </section>
@@ -24,5 +24,5 @@ export function Card({ icon, title, text, children }) {
 }
 
 export function CTA() {
-  return <section className="cta"><span className="eyebrow">Ready when you are</span><h2>Build your remote operations department without slowing down your field team.</h2><p>Start with a free operations audit and receive a practical roadmap for calls, dispatch, CRM, reporting, and admin coverage.</p><Button to="/book-service" icon="calendar">Book a Free Operations Audit</Button></section>;
+  return <section className="cta"><span className="eyebrow">Ready when you are</span><h2>Build your remote operations department without slowing down your field team.</h2><p>Start with a free operations audit and receive a practical roadmap for calls, dispatch, CRM, reporting, and admin coverage.</p><Button to="/book-meeting" icon="calendar">Book a Free Operations Audit</Button></section>;
 }

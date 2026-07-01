@@ -28,8 +28,8 @@ const companyLinks = [
   ["FAQ", "/faq"],
   ["Blog", "/blog"],
   ["Careers", "/careers"],
-  ["Privacy Policy", "/privacy-policy"],
-  ["Terms & Conditions", "/terms-conditions"],
+  ["Privacy Policy", "/privacy"],
+  ["Terms & Conditions", "/terms"],
   ["Cookie Policy", "/cookie-policy"],
 ];
 
@@ -57,7 +57,7 @@ export function Layout({ children }) {
           <button className="text-link mobile-auth-link" onClick={() => { navigate(isAuthenticated ? (user?.role === "admin" ? "/admin-dashboard" : "/user-dashboard") : "/login"); closeMenu(); }}>
             {isAuthenticated ? (user?.role === "admin" ? "Admin" : "Dashboard") : "Login"}
           </button>
-          <button className="text-link mobile-auth-link primary" onClick={() => { navigate("/book-service"); closeMenu(); }}>Book Audit</button>
+          <button className="text-link mobile-auth-link primary" onClick={() => { navigate("/book-meeting"); closeMenu(); }}>Book Audit</button>
         </nav>
         <div className="nav-actions">
           <button className="icon-btn theme-toggle" title={dark ? "Switch to day mode" : "Switch to night mode"} aria-label={dark ? "Switch to day mode" : "Switch to night mode"} onClick={() => setDark((value) => !value)}>
@@ -68,7 +68,7 @@ export function Layout({ children }) {
           ) : (
             <button className="ghost-small" onClick={() => navigate("/login")}>Login</button>
           )}
-          <Button to="/book-service" icon="calendar">Book Audit</Button>
+          <Button to="/book-meeting" icon="calendar">Book Audit</Button>
           <button className="icon-btn menu-btn" onClick={() => setOpen((value) => !value)} aria-label={open ? "Close menu" : "Open menu"}><Icon name={open ? "close" : "menu"} /></button>
         </div>
       </header>
