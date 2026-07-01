@@ -185,6 +185,24 @@ textarea { min-height: 120px; resize: vertical; }
 .portal-row p { margin: 8px 0 0; }
 .status-pill { display: inline-flex; align-items: center; justify-content: center; min-height: 34px; padding: 0 12px; border-radius: 999px; background: rgba(11,95,255,.09); color: var(--primary); font-weight: 900; white-space: nowrap; }
 .empty-state { padding: 20px; border: 1px dashed var(--line); border-radius: 18px; color: var(--muted); background: rgba(255,255,255,.5); }
+.client-service-list, .client-bill-list { display: grid; gap: 16px; }
+.client-service-card { grid-template-columns: 1fr; align-items: stretch; }
+.client-service-head, .client-bill-actions, .client-progress-wrap > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.client-service-head strong, .client-bill-card strong { font-size: 18px; color: var(--text); }
+.client-progress-wrap { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--line); border-radius: 14px; background: rgba(11,95,255,.05); }
+.client-progress-wrap span { color: var(--muted); font-weight: 900; text-transform: uppercase; font-size: 12px; }
+.client-progress-wrap strong { color: var(--primary); font-size: 24px; }
+.client-service-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.client-service-grid > span { display: grid; gap: 4px; min-width: 0; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.72); color: var(--muted); overflow-wrap: anywhere; }
+.client-service-grid strong { color: var(--text); font-size: 11px; text-transform: uppercase; }
+.client-service-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.client-service-tags span { margin: 0; padding: 8px 10px; border-radius: 999px; color: #047857; background: rgba(22,196,127,.12); font-weight: 800; }
+.client-timeline { display: grid; gap: 10px; }
+.client-timeline div { display: grid; gap: 4px; padding: 12px; border-left: 3px solid var(--primary); border-radius: 12px; background: rgba(255,255,255,.68); }
+.client-timeline strong { color: var(--text); }
+.client-timeline p { margin: 0; }
+.client-bill-card { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+.client-bill-actions { justify-content: flex-end; }
 .checkbox { display: flex; align-items: center; gap: 10px; font-weight: 700; }
 .checkbox input { width: auto; }
 .success { padding: 18px; border-radius: 16px; background: rgba(22,196,127,.12); color: var(--secondary); font-weight: 900; }
@@ -261,6 +279,9 @@ textarea { min-height: 120px; resize: vertical; }
   .footer-top, .footer-bottom { grid-template-columns: 1fr; display: grid; }
   .newsletter { flex-direction: column; }
   .dashboard aside { grid-template-columns: 1fr; }
+  .client-service-grid { grid-template-columns: 1fr; }
+  .client-bill-card, .client-bill-actions { grid-template-columns: 1fr; display: grid; justify-content: stretch; }
+  .client-bill-actions button { width: 100%; }
   main section { padding: 62px 18px; }
   .chatbot { right: 12px; left: 12px; bottom: 12px; max-width: none; display: grid; justify-items: end; pointer-events: none; }
   .chatbot > * { pointer-events: auto; }
