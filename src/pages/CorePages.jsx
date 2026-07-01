@@ -117,7 +117,7 @@ export function AuthPage({ mode }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [passwordValue, setPasswordValue] = useState("");
-  const title = { login: "Welcome back", signup: "Create your account", forgot: "Reset your password", reset: "Set a new password", otp: "Verify OTP" }[mode];
+  const title = { login: "Login", signup: "Signup", forgot: "Forgot password", reset: "Reset password", otp: "Verify OTP" }[mode];
   const pendingEmail = localStorage.getItem("zmh_pending_email") || "";
 
   const passwordScore = useMemo(() => {
@@ -161,6 +161,7 @@ export function AuthPage({ mode }) {
         await authApi.forgotPassword({ email });
         localStorage.setItem("zmh_pending_email", email);
         setNotice("Password reset OTP sent. Check your email.");
+        navigate("/reset-password");
         return;
       }
 
@@ -172,6 +173,7 @@ export function AuthPage({ mode }) {
 
       if (mode === "otp") {
         const data = await authApi.verifyOtp({ email, otp: form.get("otp"), purpose: "signup" });
+        localStorage.removeItem("zmh_pending_email");
         setNotice(data.message || "Email verified. Your account is waiting for admin approval.");
         return;
       }
@@ -200,19 +202,19 @@ export function AuthPage({ mode }) {
   };
 
   if (mode === "login") {
-    return <><SEO title={title} /><section className="auth-wrap"><form className="auth-card" onSubmit={submit}><span className="eyebrow">Secure client portal</span><h1>{title}</h1><label>Email<input name="email" type="email" placeholder="you@company.com" required /></label><label>Password<input name="password" type="password" placeholder="Password" required /></label><Button type="submit" icon="lock">{loading ? "Checking..." : "Login"}</Button>{notice && <div className="success">{notice}</div>}{error && <div className="form-error">{error}</div>}<p><button type="button" className="learn" onClick={() => navigate("/forgot-password")}>Forgot password?</button> <button type="button" className="learn" onClick={() => navigate("/signup")}>Signup</button></p></form></section></>;
+    return <><SEO title={title} /><section className="auth-wrap"><form className="auth-card" onSubmit={submit}><span className="eyebrow">Secure client portal</span><h1>{title}</h1><label>Email<input name="email" type="email" placeholder="you@company.com" required /></label><label>Password<input name="password" type="password" placeholder="Password" required /></label><Button type="submit" icon="lock">{loading ? "Checking..." : "Login"}</Button>{notice && <div className="success">{notice}</div>}{error && <div className="form-error">{error}</div>}<p><button type="button" className="learn" onClick={() => navigate("/forgot-password")}>Forgot password?</button> <button type="button" className="learn" onClick={() => navigate("/signup")}>Create account</button></p></form></section></>;
   }
 
   if (mode === "signup") {
-    return <><SEO title={title} /><section className="auth-wrap"><form className="auth-card" onSubmit={submit}><span className="eyebrow">Secure client portal</span><h1>{title}</h1><label>Name<input name="name" placeholder="Full name" required /></label><label>Company<input name="company" placeholder="Company name" /></label><label>Email<input name="email" type="email" placeholder="you@company.com" required /></label><label>Password<input name="password" type="password" placeholder="Password" required value={passwordValue} onChange={(event) => setPasswordValue(event.target.value)} /></label><div className={"strength score-" + passwordScore} aria-label={"Password strength " + passwordLabel}><span></span><span></span><span></span><small>{passwordLabel} password</small></div><Button type="submit" icon="lock">{loading ? "Creating..." : "Create account"}</Button><div className="inline-note">After signup, verify your OTP. Admin approval is required before login.</div>{notice && <div className="success">{notice}</div>}{error && <div className="form-error">{error}</div>}<p><button type="button" className="learn" onClick={() => navigate("/login")}>Already have an account?</button></p></form></section></>;
+    return <><SEO title={title} /><section className="auth-wrap"><form className="auth-card" onSubmit={submit}><span className="eyebrow">Secure client portal</span><h1>{title}</h1><label>Name<input name="name" placeholder="Full name" required /></label><label>Company<input name="company" placeholder="Company name" /></label><label>Email<input name="email" type="email" placeholder="you@company.com" required /></label><label>Password<input name="password" type="password" placeholder="Password" required value={passwordValue} onChange={(event) => setPasswordValue(event.target.value)} /></label><div className={"strength score-" + passwordScore} aria-label={"Password strength " + passwordLabel}><span></span><span></span><span></span><small>{passwordLabel} password</small></div><Button type="submit" icon="lock">{loading ? "Creating..." : "Create account"}</Button><div className="inline-note">After signup, enter the OTP sent to your email. Then your account waits for admin approval before login.</div>{notice && <div className="success">{notice}</div>}{error && <div className="form-error">{error}</div>}<p><button type="button" className="learn" onClick={() => navigate("/login")}>Already have an account?</button></p></form></section></>;
   }
 
   if (mode === "otp") {
-    return <><SEO title={title} /><section className="auth-wrap"><form className="auth-card" onSubmit={submit}><span className="eyebrow">Email verification</span><h1>{title}</h1><label>Email<input name="email" type="email" placeholder="you@company.com" defaultValue={pendingEmail} required /></label><label>OTP Code<input name="otp" inputMode="numeric" placeholder="000000" required /></label><Button type="submit" icon="lock">{loading ? "Verifying..." : "Verify OTP"}</Button><button type="button" className="ghost-small wide" onClick={resendOtp}>Resend OTP</button>{notice && <div className="success">{notice}</div>}{error && <div className="form-error">{error}</div>}<p><button type="button" className="learn" onClick={() => navigate("/login")}>Go to login</button></p></form></section></>;
+    return <><SEO title={title} /><section className="auth-wrap"><form className="auth-card" onSubmit={submit}><span className="eyebrow">Email verification</span><h1>{title}</h1><label>Email<input name="email" type="email" placeholder="you@company.com" defaultValue={pendingEmail} required /></label><label>OTP Code<input name="otp" inputMode="numeric" placeholder="000000" required /></label><Button type="submit" icon="lock">{loading ? "Verifying..." : "Verify OTP"}</Button><button type="button" className="ghost-small wide" onClick={resendOtp}>Resend OTP</button><div className="inline-note">After verification, an admin must approve your account before you can login.</div>{notice && <div className="success">{notice}</div>}{error && <div className="form-error">{error}</div>}<p><button type="button" className="learn" onClick={() => navigate("/login")}>Go to login</button></p></form></section></>;
   }
 
   if (mode === "forgot") {
-    return <><SEO title={title} /><section className="auth-wrap"><form className="auth-card" onSubmit={submit}><span className="eyebrow">Secure client portal</span><h1>{title}</h1><label>Email<input name="email" type="email" placeholder="you@company.com" required /></label><Button type="submit" icon="mail">{loading ? "Sending..." : "Send reset OTP"}</Button>{notice && <div className="success">{notice}</div>}{error && <div className="form-error">{error}</div>}<p><button type="button" className="learn" onClick={() => navigate("/reset-password")}>Enter reset OTP</button></p></form></section></>;
+    return <><SEO title={title} /><section className="auth-wrap"><form className="auth-card" onSubmit={submit}><span className="eyebrow">Secure client portal</span><h1>{title}</h1><label>Email<input name="email" type="email" placeholder="you@company.com" defaultValue={pendingEmail} required /></label><Button type="submit" icon="mail">{loading ? "Sending..." : "Send reset OTP"}</Button>{notice && <div className="success">{notice}</div>}{error && <div className="form-error">{error}</div>}<p><button type="button" className="learn" onClick={() => navigate("/login")}>Back to login</button> <button type="button" className="learn" onClick={() => navigate("/reset-password")}>I already have an OTP</button></p></form></section></>;
   }
 
   if (mode === "reset") {

@@ -144,7 +144,7 @@ summary { font-weight: 900; cursor: pointer; }
 .newsletter input, .newsletter button { min-height: 38px; border-radius: 10px; border: 1px solid rgba(255,255,255,.16); padding: 0 12px; }
 .newsletter input { min-width: 0; }
 .newsletter button { background: var(--secondary); color: white; font-weight: 800; }
-.inline-note { display: block; margin-top: 10px; color: rgba(255,255,255,.68); }
+.inline-note { display: block; margin-top: 10px; color: var(--muted); }
 .footer-bottom { max-width: 1180px; margin: 24px auto 0; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.12); display: flex; justify-content: space-between; gap: 18px; color: rgba(255,255,255,.62); font-size: 14px; }
 
 .form-card, .auth-card { display: grid; gap: 14px; padding: 30px; }
