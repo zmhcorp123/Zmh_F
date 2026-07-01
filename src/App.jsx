@@ -2,8 +2,14 @@ import { Route, Routes, useParams } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { industries, packages, services, teamProfiles } from "./data/siteData";
 import { AdminPage } from "./pages/AdminPage";
-import { About, AuthPage, Blog, BookService, Careers, CaseStudies, Contact, Dashboard, FAQ, HowItWorks, IndustriesPage, IndustryDetail, Legal, NotFound, PackageDetail, PricingPage, ServiceDetail, ServicesPage, TeamPage, TeamProfile } from "./pages/CorePages";
+import { Blog, Careers } from "./pages/CorePages";
+import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
 import { Home } from "./pages/Home";
+import { LoginPage } from "./pages/LoginPage";
+import { OtpVerificationPage } from "./pages/OtpVerificationPage";
+import { ResetPasswordPage } from "./pages/ResetPasswordPage";
+import { SignupPage } from "./pages/SignupPage";
+import { About, BookService, CaseStudies, Contact, Dashboard, FAQ, HowItWorks, IndustriesPage, IndustryDetail, Legal, NotFound, PackageDetail, PricingPage, ServiceDetail, ServicesPage, TeamPage, TeamProfile } from "./pages/CorePages";
 import { useAuth } from "./context/useAuth";
 
 function ServiceRoute() {
@@ -59,11 +65,11 @@ export default function App() {
         <Route path="/privacy-policy" element={<Legal type="Privacy Policy" />} />
         <Route path="/terms-conditions" element={<Legal type="Terms & Conditions" />} />
         <Route path="/cookie-policy" element={<Legal type="Cookie Policy" />} />
-        <Route path="/login" element={<AuthPage mode="login" />} />
-        <Route path="/signup" element={<AuthPage mode="signup" />} />
-        <Route path="/forgot-password" element={<AuthPage mode="forgot" />} />
-        <Route path="/reset-password" element={<AuthPage mode="reset" />} />
-        <Route path="/otp-verification" element={<AuthPage mode="otp" />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/otp-verification" element={<OtpVerificationPage />} />
         <Route path="/dashboard" element={<Dashboard section="Dashboard" />} />
         <Route path="/profile" element={<Dashboard section="Profile" />} />
         <Route path="/bookings" element={<Dashboard section="Bookings" />} />

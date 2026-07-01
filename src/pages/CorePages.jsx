@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { blogPosts, caseStudies, company, faqs, industries, packages, services, teamProfiles } from "../data/siteData";
 import { Button } from "../components/Button";
 import { Card, CTA, PageHero, SectionHeader } from "../components/Sections";
@@ -6,7 +6,7 @@ import { Icon } from "../components/icons";
 import { SEO } from "../components/SEO";
 import { navigate } from "../utils/router";
 import { useAuth } from "../context/useAuth";
-import { authApi, bookingApi, contactApi, dashboardApi } from "../services/api";
+import { bookingApi, contactApi, dashboardApi } from "../services/api";
 
 const workflowSteps = ["Customer Calls", "ZMH Answers", "Appointment Scheduled", "Technician Dispatched", "Job Completed", "Invoice Sent", "Customer Follow-up"];
 const aboutServices = ["Live customer call handling", "Appointment scheduling", "Dispatch coordination", "CRM management", "Customer follow-ups", "Lead qualification", "Administrative support", "Job tracking", "Reporting and workflow management"];
@@ -109,119 +109,6 @@ export function Careers() {
 export function Legal({ type }) {
   const title = type || "Privacy Policy";
   return <><SEO title={title} /><PageHero eyebrow="Legal" title={title} text="Current policy information for website visitors and client portal users." image={false} /><section className="legal"><h2>{title}</h2><p>ZMH USA Corp. uses submitted information to respond to inquiries, manage client accounts, process booking requests, and provide operational support services.</p><p>Last updated: June 30, 2026.</p></section></>;
-}
-
-export function AuthPage({ mode }) {
-  const { login } = useAuth();
-  const [notice, setNotice] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [passwordValue, setPasswordValue] = useState("");
-  const title = { login: "Login", signup: "Signup", forgot: "Forgot password", reset: "Reset password", otp: "Verify OTP" }[mode];
-  const pendingEmail = localStorage.getItem("zmh_pending_email") || "";
-
-  const passwordScore = useMemo(() => {
-    let score = 0;
-    if (passwordValue.length >= 8) score += 1;
-    if (/[A-Z]/.test(passwordValue) && /[a-z]/.test(passwordValue)) score += 1;
-    if (/\d/.test(passwordValue) && /[^A-Za-z0-9]/.test(passwordValue)) score += 1;
-    return score;
-  }, [passwordValue]);
-
-  const passwordLabel = ["Weak", "Fair", "Good", "Strong"][passwordScore];
-
-  const submit = async (event) => {
-    event.preventDefault();
-    setNotice("");
-    setError("");
-    setLoading(true);
-    const form = new FormData(event.currentTarget);
-    const email = form.get("email") || "client@zmhusacorp.com";
-
-    try {
-      if (mode === "login") {
-        await login({ email, password: form.get("password") });
-        navigate("/dashboard");
-        return;
-      }
-
-      if (mode === "signup") {
-        await authApi.signup({
-          name: form.get("name"),
-          company: form.get("company"),
-          email,
-          password: form.get("password"),
-        });
-        localStorage.setItem("zmh_pending_email", email);
-        navigate("/otp-verification");
-        return;
-      }
-
-      if (mode === "forgot") {
-        await authApi.forgotPassword({ email });
-        localStorage.setItem("zmh_pending_email", email);
-        setNotice("Password reset OTP sent. Check your email.");
-        navigate("/reset-password");
-        return;
-      }
-
-      if (mode === "reset") {
-        await authApi.resetPassword({ email, otp: form.get("otp"), password: form.get("password") });
-        setNotice("Password updated. You can log in after your account is approved.");
-        return;
-      }
-
-      if (mode === "otp") {
-        const data = await authApi.verifyOtp({ email, otp: form.get("otp"), purpose: "signup" });
-        localStorage.removeItem("zmh_pending_email");
-        setNotice(data.message || "Email verified. Your account is waiting for admin approval.");
-        return;
-      }
-    } catch (err) {
-      setError(err.message || "Something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const resendOtp = async () => {
-    setNotice("");
-    setError("");
-    const email = document.querySelector("input[name='email']")?.value || pendingEmail;
-    if (!email) {
-      setError("Enter your email before requesting another OTP.");
-      return;
-    }
-    try {
-      await authApi.resendOtp({ email, purpose: "signup" });
-      localStorage.setItem("zmh_pending_email", email);
-      setNotice("A new OTP was sent to your email.");
-    } catch (err) {
-      setError(err.message || "Could not resend OTP");
-    }
-  };
-
-  if (mode === "login") {
-    return <><SEO title={title} /><section className="auth-wrap"><form className="auth-card" onSubmit={submit}><span className="eyebrow">Secure client portal</span><h1>{title}</h1><label>Email<input name="email" type="email" placeholder="you@company.com" required /></label><label>Password<input name="password" type="password" placeholder="Password" required /></label><Button type="submit" icon="lock">{loading ? "Checking..." : "Login"}</Button>{notice && <div className="success">{notice}</div>}{error && <div className="form-error">{error}</div>}<p><button type="button" className="learn" onClick={() => navigate("/forgot-password")}>Forgot password?</button> <button type="button" className="learn" onClick={() => navigate("/signup")}>Create account</button></p></form></section></>;
-  }
-
-  if (mode === "signup") {
-    return <><SEO title={title} /><section className="auth-wrap"><form className="auth-card" onSubmit={submit}><span className="eyebrow">Secure client portal</span><h1>{title}</h1><label>Name<input name="name" placeholder="Full name" required /></label><label>Company<input name="company" placeholder="Company name" /></label><label>Email<input name="email" type="email" placeholder="you@company.com" required /></label><label>Password<input name="password" type="password" placeholder="Password" required value={passwordValue} onChange={(event) => setPasswordValue(event.target.value)} /></label><div className={"strength score-" + passwordScore} aria-label={"Password strength " + passwordLabel}><span></span><span></span><span></span><small>{passwordLabel} password</small></div><Button type="submit" icon="lock">{loading ? "Creating..." : "Create account"}</Button><div className="inline-note">After signup, enter the OTP sent to your email. Then your account waits for admin approval before login.</div>{notice && <div className="success">{notice}</div>}{error && <div className="form-error">{error}</div>}<p><button type="button" className="learn" onClick={() => navigate("/login")}>Already have an account?</button></p></form></section></>;
-  }
-
-  if (mode === "otp") {
-    return <><SEO title={title} /><section className="auth-wrap"><form className="auth-card" onSubmit={submit}><span className="eyebrow">Email verification</span><h1>{title}</h1><label>Email<input name="email" type="email" placeholder="you@company.com" defaultValue={pendingEmail} required /></label><label>OTP Code<input name="otp" inputMode="numeric" placeholder="000000" required /></label><Button type="submit" icon="lock">{loading ? "Verifying..." : "Verify OTP"}</Button><button type="button" className="ghost-small wide" onClick={resendOtp}>Resend OTP</button><div className="inline-note">After verification, an admin must approve your account before you can login.</div>{notice && <div className="success">{notice}</div>}{error && <div className="form-error">{error}</div>}<p><button type="button" className="learn" onClick={() => navigate("/login")}>Go to login</button></p></form></section></>;
-  }
-
-  if (mode === "forgot") {
-    return <><SEO title={title} /><section className="auth-wrap"><form className="auth-card" onSubmit={submit}><span className="eyebrow">Secure client portal</span><h1>{title}</h1><label>Email<input name="email" type="email" placeholder="you@company.com" defaultValue={pendingEmail} required /></label><Button type="submit" icon="mail">{loading ? "Sending..." : "Send reset OTP"}</Button>{notice && <div className="success">{notice}</div>}{error && <div className="form-error">{error}</div>}<p><button type="button" className="learn" onClick={() => navigate("/login")}>Back to login</button> <button type="button" className="learn" onClick={() => navigate("/reset-password")}>I already have an OTP</button></p></form></section></>;
-  }
-
-  if (mode === "reset") {
-    return <><SEO title={title} /><section className="auth-wrap"><form className="auth-card" onSubmit={submit}><span className="eyebrow">Secure client portal</span><h1>{title}</h1><label>Email<input name="email" type="email" placeholder="you@company.com" defaultValue={pendingEmail} required /></label><label>OTP Code<input name="otp" inputMode="numeric" placeholder="000000" required /></label><label>Password<input name="password" type="password" placeholder="New password" required value={passwordValue} onChange={(event) => setPasswordValue(event.target.value)} /></label><div className={"strength score-" + passwordScore} aria-label={"Password strength " + passwordLabel}><span></span><span></span><span></span><small>{passwordLabel} password</small></div><Button type="submit" icon="lock">{loading ? "Updating..." : "Reset password"}</Button>{notice && <div className="success">{notice}</div>}{error && <div className="form-error">{error}</div>}<p><button type="button" className="learn" onClick={() => navigate("/login")}>Back to login</button></p></form></section></>;
-  }
-
-  return null;
 }
 
 export function Dashboard({ section = "Dashboard" }) {
