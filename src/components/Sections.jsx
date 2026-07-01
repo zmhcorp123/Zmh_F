@@ -10,7 +10,7 @@ export function PageHero({ eyebrow, title, text, primary = "Book a Free Operatio
         <p>{text}</p>
         <div className="hero-actions"><Button to="/book-service" icon="calendar">{primary}</Button>{secondary && <Button to={secondary.to} variant="secondary">{secondary.label}</Button>}</div>
       </div>
-      {image && <div className="hero-visual reveal delay"><div className="ops-card"><span>Live Ops Board</span><strong>97.8%</strong><small>Client satisfaction</small></div><div className="glass-grid">{["Calls", "Dispatch", "CRM", "Billing"].map((item) => <div key={item}>{item}<b>Active</b></div>)}</div></div>}
+      {image && <div className="hero-visual reveal delay"><div className="ops-card"><span>Live Ops Board</span><strong>Ops</strong><small>Workflow visibility</small></div><div className="glass-grid">{["Calls", "Dispatch", "CRM", "Billing"].map((item) => <div key={item}>{item}<b>Active</b></div>)}</div></div>}
     </section>
   );
 }

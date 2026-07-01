@@ -29,7 +29,7 @@ export const services = [
     "Calendar management that keeps crews booked and customers updated.",
     "Friendly support that turns daily questions into loyalty.",
     "Clean CRM hygiene, notes, updates, and pipeline visibility.",
-    "Invoice, payment, and billing support prepared for your finance flow.",
+    "Invoice, payment, and billing support for cleaner finance workflows.",
     "Inbound lead screening that filters urgency, fit, and next steps.",
     "Evening and weekend coverage for urgent customer needs.",
     "Back-office admin help that removes repetitive operational drag.",
@@ -71,17 +71,11 @@ export const faqs = [
   ["Do agents receive US accent training?", "Yes. Training focuses on clarity, tone, service vocabulary, and your custom scripts."],
   ["What is the average response time?", "Most inbound workflows are designed around fast pickup, accurate qualification, and immediate CRM documentation."],
   ["Do you cover after hours?", "Yes. Coverage can be configured for evenings, weekends, emergency calls, and overflow windows."],
-  ["Which CRMs are compatible?", "The frontend is prepared for integrations with common home service CRMs and custom backend connectors."],
+  ["Which CRMs are compatible?", "ZMH can support workflows around common home service CRMs and custom operating processes."],
   ["Can you dispatch technicians?", "Yes. Dispatch workflows can include priority rules, technician calendars, job notes, and escalation steps."],
-  ["How is data security handled?", "Access levels, SOPs, and future backend API layers are prepared for secure role-based workflows."],
+  ["How is data security handled?", "Access levels, documented SOPs, and role-based workflows help keep operational data controlled."],
   ["Can we use custom SOPs?", "Absolutely. ZMH works best when your playbooks are documented and continuously improved."],
   ["Can the team scale with us?", "Yes. Packages are designed to grow from light support to a dedicated remote operations department."],
-];
-
-export const testimonials = [
-  { quote: "ZMH helped us capture calls we used to miss and gave our dispatch board real structure.", name: "Operations Manager", company: "Residential HVAC Group" },
-  { quote: "Their team feels like part of our office. Customers get updates, and technicians get clean notes.", name: "Founder", company: "Plumbing Contractor" },
-  { quote: "We finally have a repeatable admin workflow without hiring a full in-house department.", name: "Director", company: "Property Management Firm" },
 ];
 
 export const teamProfiles = [
@@ -92,7 +86,7 @@ export const teamProfiles = [
     location: "United States",
     linkedin: "https://www.linkedin.com/",
     summary: "Leads the company vision, client strategy, and long-term operating standards for ZMH USA Corp.",
-    bio: "The founder role is responsible for shaping ZMH USA Corp. as a trusted remote operations partner for home service businesses. This profile is prepared for admin-managed biography, photo, LinkedIn URL, contact details, and professional background.",
+    bio: "The founder role is responsible for shaping ZMH USA Corp. as a trusted remote operations partner for home service businesses, including client relationships, service standards, and long-term strategy.",
     focus: ["Company vision", "Client relationships", "Strategic growth", "Operating standards"],
   },
   {
@@ -112,7 +106,7 @@ export const teamProfiles = [
     location: "Bangladesh Operations Center",
     linkedin: "https://www.linkedin.com/",
     summary: "Oversees daily workflows, scheduling, dispatch coordination, CRM updates, and SOP execution.",
-    bio: "The operations lead profile is prepared for the person responsible for managing daily service delivery, team quality, process adherence, and performance reporting from the Bangladesh operations center.",
+    bio: "The operations lead is responsible for managing daily service delivery, team quality, process adherence, and performance reporting from the Bangladesh operations center.",
     focus: ["Daily workflows", "SOP execution", "Quality control", "Team coordination"],
   },
   {
@@ -122,7 +116,7 @@ export const teamProfiles = [
     location: "Remote Operations",
     linkedin: "https://www.linkedin.com/",
     summary: "Supports onboarding, reporting, customer experience, and continuous improvement for client accounts.",
-    bio: "This profile is ready for a client success stakeholder who helps clients onboard, monitor outcomes, improve workflows, and maintain strong communication with the ZMH operations team.",
+    bio: "This profile represents client success leadership responsible for onboarding clients, monitoring outcomes, improving workflows, and maintaining strong communication with the ZMH operations team.",
     focus: ["Client onboarding", "Reporting", "Workflow improvement", "Customer experience"],
   },
 ];

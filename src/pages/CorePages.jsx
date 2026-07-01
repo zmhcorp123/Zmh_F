@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { blogPosts, caseStudies, company, faqs, industries, packages, services, teamProfiles } from "../data/siteData";
 import { Button } from "../components/Button";
 import { Card, CTA, PageHero, SectionHeader } from "../components/Sections";
@@ -6,6 +6,7 @@ import { Icon } from "../components/icons";
 import { SEO } from "../components/SEO";
 import { navigate } from "../utils/router";
 import { useAuth } from "../context/useAuth";
+import { authApi, bookingApi, contactApi, dashboardApi } from "../services/api";
 
 const workflowSteps = ["Customer Calls", "ZMH Answers", "Appointment Scheduled", "Technician Dispatched", "Job Completed", "Invoice Sent", "Customer Follow-up"];
 const aboutServices = ["Live customer call handling", "Appointment scheduling", "Dispatch coordination", "CRM management", "Customer follow-ups", "Lead qualification", "Administrative support", "Job tracking", "Reporting and workflow management"];
@@ -35,7 +36,7 @@ export function IndustryDetail({ industry }) {
 }
 
 export function PricingPage() {
-  return <><SEO title="Pricing" /><PageHero eyebrow="Packages" title="Flexible operations support packages" text="Packages are ready for your future quote engine while staying clean for frontend review today." /><section><div className="grid four">{packages.map((item) => <Card key={item.slug} title={item.name} text={item.bestFor}><strong className="price">{item.price}</strong><ul>{item.features.map((f) => <li key={f}>{f}</li>)}</ul><button className="learn" onClick={() => navigate("/pricing/" + item.slug)}>Package details</button></Card>)}</div></section><CTA /></>;
+  return <><SEO title="Pricing" /><PageHero eyebrow="Packages" title="Flexible operations support packages" text="Choose the package that matches your call volume, scheduling complexity, and operational support needs." /><section><div className="grid four">{packages.map((item) => <Card key={item.slug} title={item.name} text={item.bestFor}><strong className="price">{item.price}</strong><ul>{item.features.map((f) => <li key={f}>{f}</li>)}</ul><button className="learn" onClick={() => navigate("/pricing/" + item.slug)}>Package details</button></Card>)}</div></section><CTA /></>;
 }
 
 export function PackageDetail({ plan }) {
@@ -51,11 +52,11 @@ export function About() {
 }
 
 function TeamSection() {
-  return <section id="team"><SectionHeader eyebrow="Leadership & Stakeholders" title="A professional team structure ready for real profiles" text="Founder and stakeholder profiles are prepared as individual pages, so the admin/backend can add more people later without changing the page design." /><div className="team-grid">{teamProfiles.map((profile) => <article className="team-card reveal" key={profile.slug}><button className="team-profile-link" type="button" onClick={() => navigate("/team/" + profile.slug)}><span className="team-avatar">{profile.name.split(" ").map((word) => word[0]).join("").slice(0, 2)}</span><span><strong>{profile.name}</strong><small>{profile.role}</small></span></button><p>{profile.summary}</p><div className="team-card-actions"><button className="learn" type="button" onClick={() => navigate("/team/" + profile.slug)}>View profile</button><a className="linkedin-button" href={profile.linkedin} target="_blank" rel="noreferrer" aria-label={"Open " + profile.name + " on LinkedIn"} title="LinkedIn"><Icon name="linkedin" size={18} /></a></div></article>)}</div></section>;
+  return <section id="team"><SectionHeader eyebrow="Leadership & Stakeholders" title="The people structure behind ZMH USA Corp." text="Founder and stakeholder profiles show the leadership responsibilities behind client delivery and operations quality." /><div className="team-grid">{teamProfiles.map((profile) => <article className="team-card reveal" key={profile.slug}><button className="team-profile-link" type="button" onClick={() => navigate("/team/" + profile.slug)}><span className="team-avatar">{profile.name.split(" ").map((word) => word[0]).join("").slice(0, 2)}</span><span><strong>{profile.name}</strong><small>{profile.role}</small></span></button><p>{profile.summary}</p><div className="team-card-actions"><button className="learn" type="button" onClick={() => navigate("/team/" + profile.slug)}>View profile</button><a className="linkedin-button" href={profile.linkedin} target="_blank" rel="noreferrer" aria-label={"Open " + profile.name + " on LinkedIn"} title="LinkedIn"><Icon name="linkedin" size={18} /></a></div></article>)}</div></section>;
 }
 
 export function TeamPage() {
-  return <><SEO title="Leadership & Stakeholders" description="Founder and stakeholder profiles for ZMH USA Corp." /><PageHero eyebrow="Team" title="Founder and stakeholder profiles" text="Meet the people structure behind ZMH USA Corp. Each profile is prepared as its own page and ready for admin-managed details later." image={false} /><TeamSection /><CTA /></>;
+  return <><SEO title="Leadership & Stakeholders" description="Founder and stakeholder profiles for ZMH USA Corp." /><PageHero eyebrow="Team" title="Founder and stakeholder profiles" text="Meet the people structure behind ZMH USA Corp. and the operating responsibilities that support client delivery." image={false} /><TeamSection /><CTA /></>;
 }
 
 export function TeamProfile({ profile }) {
@@ -63,7 +64,7 @@ export function TeamProfile({ profile }) {
 }
 
 export function CaseStudies() {
-  return <><SEO title="Case Studies" /><PageHero eyebrow="Proof" title="Case study layouts ready for real client outcomes" text="Use these layouts to publish results once your backend CMS is connected." /><section><div className="case-timeline">{caseStudies.map((item) => <article key={item.title}><span>{item.metric}</span><h3>{item.title}</h3><p>{item.body}</p></article>)}</div></section></>;
+  return <><SEO title="Case Studies" /><PageHero eyebrow="Proof" title="Operational outcomes by service area" text="Selected examples of how disciplined remote operations support can improve field-service workflows." /><section><div className="case-timeline">{caseStudies.map((item) => <article key={item.title}><span>{item.metric}</span><h3>{item.title}</h3><p>{item.body}</p></article>)}</div></section></>;
 }
 
 export function FAQ() {
@@ -71,47 +72,154 @@ export function FAQ() {
 }
 
 export function Contact() {
-  return <><SEO title="Contact" /><PageHero eyebrow="Contact" title="Talk with an operations specialist" text="Use the form, email, phone, or consultation area to start your audit." /><section className="split"><div className="premium-panel"><h3>Business Information</h3><p>{company.phone}</p><p>{company.email}</p><p>{company.address}</p><div className="map">Map area ready for Google Maps embed.</div></div><ContactForm /></section></>;
+  return <><SEO title="Contact" /><PageHero eyebrow="Contact" title="Talk with an operations specialist" text="Use the form, email, or phone number to start your operations audit." /><section className="split"><div className="premium-panel"><h3>Business Information</h3><p>{company.phone}</p><p>{company.email}</p><p>{company.address}</p></div><ContactForm /></section></>;
 }
 
 function ContactForm() {
   const [sent, setSent] = useState(false);
-  return <form className="form-card" onSubmit={(event) => { event.preventDefault(); setSent(true); }}><h3>Contact Form</h3>{["Name", "Company", "Email", "Phone"].map((item) => <label key={item}>{item}<input required={item !== "Phone"} type={item === "Email" ? "email" : "text"} placeholder={item} /></label>)}<label>Message<textarea required placeholder="Tell us what you need..." /></label><Button type="submit" icon="mail">Send Inquiry</Button>{sent && <div className="success">Thanks. Your inquiry is ready for backend submission.</div>}<div className="map small">Consultation calendar ready for backend scheduling.</div></form>;
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const submit = async (event) => {
+    event.preventDefault();
+    setSent(false);
+    setError("");
+    setLoading(true);
+    const form = new FormData(event.currentTarget);
+    try {
+      await contactApi.send(Object.fromEntries(form.entries()));
+      event.currentTarget.reset();
+      setSent(true);
+    } catch (err) {
+      setError(err.message || "Could not send inquiry.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  return <form className="form-card" onSubmit={submit}><h3>Contact Form</h3>{["Name", "Company", "Email", "Phone"].map((item) => <label key={item}>{item}<input name={item.toLowerCase()} required={item !== "Phone" && item !== "Company"} type={item === "Email" ? "email" : "text"} placeholder={item} /></label>)}<label>Message<textarea name="message" required placeholder="Tell us what you need..." /></label><Button type="submit" icon="mail">{loading ? "Sending..." : "Send Inquiry"}</Button>{sent && <div className="success">Thanks. Your inquiry has been received.</div>}{error && <div className="form-error">{error}</div>}</form>;
 }
 
 export function Blog() {
-  return <><SEO title="Blog" /><PageHero eyebrow="Resources" title="Operations insights for home service leaders" text="CMS-ready cards for articles, playbooks, and growth guides." /><section><div className="grid two">{blogPosts.map((post) => <Card key={post} title={post} text="Article excerpt ready for backend or CMS content." />)}</div></section></>;
+  return <><SEO title="Blog" /><PageHero eyebrow="Resources" title="Operations insights for home service leaders" text="Articles, playbooks, and growth guides for better service operations." /><section><div className="grid two">{blogPosts.map((post) => <Card key={post} title={post} text="Practical guidance for improving calls, scheduling, CRM hygiene, and customer follow-up." />)}</div></section></>;
 }
 
 export function Careers() {
-  return <><SEO title="Careers" /><PageHero eyebrow="Careers" title="Join a team building better remote operations" text="Career listings are prepared for backend job posting integration." /><section><div className="grid three">{["Operations Specialist", "Client Success Manager", "Quality Analyst"].map((job) => <Card key={job} title={job} text="Remote-friendly role with apply flow ready for backend connection." />)}</div></section></>;
+  return <><SEO title="Careers" /><PageHero eyebrow="Careers" title="Join a team building better remote operations" text="Explore roles focused on reliable client support and disciplined operations delivery." /><section><div className="grid three">{["Operations Specialist", "Client Success Manager", "Quality Analyst"].map((job) => <Card key={job} title={job} text="Remote-friendly role supporting home service clients with documented processes and quality standards." />)}</div></section></>;
 }
 
 export function Legal({ type }) {
   const title = type || "Privacy Policy";
-  return <><SEO title={title} /><PageHero eyebrow="Legal" title={title} text="Legal content area prepared for reviewed policy language before launch." image={false} /><section className="legal"><h2>{title}</h2><p>This page is prepared for production legal content covering data use, website terms, cookies, service limitations, and user responsibilities.</p><p>Last updated: June 30, 2026.</p></section></>;
+  return <><SEO title={title} /><PageHero eyebrow="Legal" title={title} text="Current policy information for website visitors and client portal users." image={false} /><section className="legal"><h2>{title}</h2><p>ZMH USA Corp. uses submitted information to respond to inquiries, manage client accounts, process booking requests, and provide operational support services.</p><p>Last updated: June 30, 2026.</p></section></>;
 }
 
 export function AuthPage({ mode }) {
   const { login } = useAuth();
   const [notice, setNotice] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [passwordValue, setPasswordValue] = useState("");
   const title = { login: "Welcome back", signup: "Create your account", forgot: "Reset your password", reset: "Set a new password", otp: "Verify OTP" }[mode];
+  const pendingEmail = localStorage.getItem("zmh_pending_email") || "";
 
-  const submit = (event) => {
+  const passwordScore = useMemo(() => {
+    let score = 0;
+    if (passwordValue.length >= 8) score += 1;
+    if (/[A-Z]/.test(passwordValue) && /[a-z]/.test(passwordValue)) score += 1;
+    if (/\d/.test(passwordValue) && /[^A-Za-z0-9]/.test(passwordValue)) score += 1;
+    return score;
+  }, [passwordValue]);
+
+  const passwordLabel = ["Weak", "Fair", "Good", "Strong"][passwordScore];
+
+  const submit = async (event) => {
     event.preventDefault();
+    setNotice("");
+    setError("");
+    setLoading(true);
     const form = new FormData(event.currentTarget);
     const email = form.get("email") || "client@zmhusacorp.com";
-    if (mode === "login" || mode === "signup") {
-      login({ name: form.get("name"), email });
-      navigate("/dashboard");
-      return;
+
+    try {
+      if (mode === "login") {
+        await login({ email, password: form.get("password") });
+        navigate("/dashboard");
+        return;
+      }
+
+      if (mode === "signup") {
+        await authApi.signup({
+          name: form.get("name"),
+          company: form.get("company"),
+          email,
+          password: form.get("password"),
+        });
+        localStorage.setItem("zmh_pending_email", email);
+        navigate("/otp-verification");
+        return;
+      }
+
+      if (mode === "forgot") {
+        await authApi.forgotPassword({ email });
+        localStorage.setItem("zmh_pending_email", email);
+        setNotice("Password reset OTP sent. Check your email.");
+        return;
+      }
+
+      if (mode === "reset") {
+        await authApi.resetPassword({ email, otp: form.get("otp"), password: form.get("password") });
+        setNotice("Password updated. You can log in after your account is approved.");
+        return;
+      }
+
+      if (mode === "otp") {
+        const data = await authApi.verifyOtp({ email, otp: form.get("otp"), purpose: "signup" });
+        setNotice(data.message || "Email verified. Your account is waiting for admin approval.");
+        return;
+      }
+    } catch (err) {
+      setError(err.message || "Something went wrong");
+    } finally {
+      setLoading(false);
     }
-    if (mode === "forgot") setNotice("Password reset instructions are ready for backend email delivery.");
-    if (mode === "reset") setNotice("New password is ready for backend reset submission.");
-    if (mode === "otp") setNotice("OTP code is ready for backend verification.");
   };
 
-  return <><SEO title={title} /><section className="auth-wrap"><form className="auth-card" onSubmit={submit}><span className="eyebrow">Secure client portal</span><h1>{title}</h1>{mode === "signup" && <label>Name<input name="name" placeholder="Full name" required /></label>}{mode !== "otp" && <label>Email<input name="email" type="email" placeholder="you@company.com" required /></label>}{(mode === "login" || mode === "signup" || mode === "reset") && <label>Password<input name="password" type="password" placeholder="Password" required /></label>}{mode === "otp" && <label>OTP Code<input name="otp" inputMode="numeric" placeholder="000000" required /></label>}{(mode === "signup" || mode === "reset") && <div className="strength"><span></span><span></span><span></span><small>Password strength</small></div>}<Button type="submit" icon="lock">{mode === "login" ? "Login" : "Continue"}</Button>{notice && <div className="success">{notice}</div>}<div className="social-login"><button type="button">Google</button><button type="button">Microsoft</button></div><p><button type="button" className="learn" onClick={() => navigate("/forgot-password")}>Forgot password?</button> <button type="button" className="learn" onClick={() => navigate("/signup")}>Signup</button></p></form></section></>;
+  const resendOtp = async () => {
+    setNotice("");
+    setError("");
+    const email = document.querySelector("input[name='email']")?.value || pendingEmail;
+    if (!email) {
+      setError("Enter your email before requesting another OTP.");
+      return;
+    }
+    try {
+      await authApi.resendOtp({ email, purpose: "signup" });
+      localStorage.setItem("zmh_pending_email", email);
+      setNotice("A new OTP was sent to your email.");
+    } catch (err) {
+      setError(err.message || "Could not resend OTP");
+    }
+  };
+
+  if (mode === "login") {
+    return <><SEO title={title} /><section className="auth-wrap"><form className="auth-card" onSubmit={submit}><span className="eyebrow">Secure client portal</span><h1>{title}</h1><label>Email<input name="email" type="email" placeholder="you@company.com" required /></label><label>Password<input name="password" type="password" placeholder="Password" required /></label><Button type="submit" icon="lock">{loading ? "Checking..." : "Login"}</Button>{notice && <div className="success">{notice}</div>}{error && <div className="form-error">{error}</div>}<p><button type="button" className="learn" onClick={() => navigate("/forgot-password")}>Forgot password?</button> <button type="button" className="learn" onClick={() => navigate("/signup")}>Signup</button></p></form></section></>;
+  }
+
+  if (mode === "signup") {
+    return <><SEO title={title} /><section className="auth-wrap"><form className="auth-card" onSubmit={submit}><span className="eyebrow">Secure client portal</span><h1>{title}</h1><label>Name<input name="name" placeholder="Full name" required /></label><label>Company<input name="company" placeholder="Company name" /></label><label>Email<input name="email" type="email" placeholder="you@company.com" required /></label><label>Password<input name="password" type="password" placeholder="Password" required value={passwordValue} onChange={(event) => setPasswordValue(event.target.value)} /></label><div className={"strength score-" + passwordScore} aria-label={"Password strength " + passwordLabel}><span></span><span></span><span></span><small>{passwordLabel} password</small></div><Button type="submit" icon="lock">{loading ? "Creating..." : "Create account"}</Button><div className="inline-note">After signup, verify your OTP. Admin approval is required before login.</div>{notice && <div className="success">{notice}</div>}{error && <div className="form-error">{error}</div>}<p><button type="button" className="learn" onClick={() => navigate("/login")}>Already have an account?</button></p></form></section></>;
+  }
+
+  if (mode === "otp") {
+    return <><SEO title={title} /><section className="auth-wrap"><form className="auth-card" onSubmit={submit}><span className="eyebrow">Email verification</span><h1>{title}</h1><label>Email<input name="email" type="email" placeholder="you@company.com" defaultValue={pendingEmail} required /></label><label>OTP Code<input name="otp" inputMode="numeric" placeholder="000000" required /></label><Button type="submit" icon="lock">{loading ? "Verifying..." : "Verify OTP"}</Button><button type="button" className="ghost-small wide" onClick={resendOtp}>Resend OTP</button>{notice && <div className="success">{notice}</div>}{error && <div className="form-error">{error}</div>}<p><button type="button" className="learn" onClick={() => navigate("/login")}>Go to login</button></p></form></section></>;
+  }
+
+  if (mode === "forgot") {
+    return <><SEO title={title} /><section className="auth-wrap"><form className="auth-card" onSubmit={submit}><span className="eyebrow">Secure client portal</span><h1>{title}</h1><label>Email<input name="email" type="email" placeholder="you@company.com" required /></label><Button type="submit" icon="mail">{loading ? "Sending..." : "Send reset OTP"}</Button>{notice && <div className="success">{notice}</div>}{error && <div className="form-error">{error}</div>}<p><button type="button" className="learn" onClick={() => navigate("/reset-password")}>Enter reset OTP</button></p></form></section></>;
+  }
+
+  if (mode === "reset") {
+    return <><SEO title={title} /><section className="auth-wrap"><form className="auth-card" onSubmit={submit}><span className="eyebrow">Secure client portal</span><h1>{title}</h1><label>Email<input name="email" type="email" placeholder="you@company.com" defaultValue={pendingEmail} required /></label><label>OTP Code<input name="otp" inputMode="numeric" placeholder="000000" required /></label><label>Password<input name="password" type="password" placeholder="New password" required value={passwordValue} onChange={(event) => setPasswordValue(event.target.value)} /></label><div className={"strength score-" + passwordScore} aria-label={"Password strength " + passwordLabel}><span></span><span></span><span></span><small>{passwordLabel} password</small></div><Button type="submit" icon="lock">{loading ? "Updating..." : "Reset password"}</Button>{notice && <div className="success">{notice}</div>}{error && <div className="form-error">{error}</div>}<p><button type="button" className="learn" onClick={() => navigate("/login")}>Back to login</button></p></form></section></>;
+  }
+
+  return null;
 }
 
 export function Dashboard({ section = "Dashboard" }) {
@@ -130,27 +238,98 @@ export function Dashboard({ section = "Dashboard" }) {
 }
 
 function DashboardCards({ section }) {
-  return <div className="grid three dash-cards">{["Open bookings", "Pending invoices", "Unread messages", "Notifications", "Active services", "Calendar events"].map((item, index) => <Card key={item} title={item} text={section + " data card ready for backend API."}><strong className="price">{index + 2}</strong></Card>)}</div>;
+  const [profile, setProfile] = useState(null);
+  const [bookings, setBookings] = useState([]);
+  const [invoices, setInvoices] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    async function loadDashboard() {
+      setError("");
+      try {
+        const [profileData, bookingData, invoiceData, notificationData] = await Promise.all([
+          dashboardApi.profile(),
+          bookingApi.list(),
+          dashboardApi.invoices(),
+          dashboardApi.notifications(),
+        ]);
+        if (!active) return;
+        setProfile(profileData);
+        setBookings(bookingData.bookings || []);
+        setInvoices(invoiceData.invoices || []);
+        setNotifications(notificationData.notifications || []);
+      } catch (err) {
+        if (active) setError(err.message || "Could not load dashboard data.");
+      }
+    }
+    loadDashboard();
+    return () => { active = false; };
+  }, []);
+
+  const bookingRows = bookings.map((booking) => ({
+    id: booking._id,
+    title: booking.companyName,
+    date: booking.requestedDate ? new Date(booking.requestedDate).toLocaleDateString() : "No date",
+    status: booking.status,
+    response: booking.adminResponse || "Waiting for admin response",
+  }));
+
+  if (section === "Bookings" || section === "Calendar" || section === "My Services") {
+    return <div className="portal-list">{error && <div className="form-error">{error}</div>}{bookingRows.length ? bookingRows.map((booking) => <article className="portal-row" key={booking.id}><div><strong>{booking.title}</strong><span>{booking.date}</span><p>{booking.response}</p></div><span className="status-pill">{booking.status}</span></article>) : <div className="empty-state">No bookings yet. Submit a booking request to see it here.</div>}</div>;
+  }
+
+  if (section === "Invoices") {
+    return <div className="portal-list">{error && <div className="form-error">{error}</div>}{invoices.length ? invoices.map((invoice) => <article className="portal-row" key={invoice._id}><div><strong>{invoice.invoice}</strong><span>{invoice.company}</span></div><span className="status-pill">{invoice.status}</span></article>) : <div className="empty-state">No invoices found.</div>}</div>;
+  }
+
+  if (section === "Notifications" || section === "Messages") {
+    return <div className="portal-list">{error && <div className="form-error">{error}</div>}{notifications.length ? notifications.map((item) => <article className="portal-row" key={item._id}><div><strong>{item.title}</strong><p>{item.body}</p></div><span className="status-pill">{item.type}</span></article>) : <div className="empty-state">No notifications yet.</div>}</div>;
+  }
+
+  const stats = profile?.stats || {};
+  return <div className="grid three dash-cards">{[
+    ["Bookings", stats.bookings || bookings.length || 0],
+    ["Invoices", stats.invoices || invoices.length || 0],
+    ["Notifications", stats.notifications || notifications.length || 0],
+    ["Admin responses", bookings.filter((booking) => booking.adminResponse).length],
+    ["Confirmed", bookings.filter((booking) => booking.status === "confirmed").length],
+    ["Calendar events", bookings.filter((booking) => booking.requestedDate).length],
+  ].map(([item, value]) => <Card key={item} title={item} text={error || "Live account data from the backend."}><strong className="price">{value}</strong></Card>)}</div>;
 }
 
 export function BookService() {
   const [step, setStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
-  const [booking, setBooking] = useState({ services: [] });
-  const labels = ["Company Information", "Select Services", "Business Hours", "CRM", "Review", "Confirmation"];
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [createdBooking, setCreatedBooking] = useState(null);
+  const [booking, setBooking] = useState({ services: [], requestedDate: "" });
+  const labels = ["Company Information", "Select Services", "Business Hours", "CRM", "Select Date", "Review"];
 
   const updateField = (field, value) => setBooking((current) => ({ ...current, [field]: value }));
   const toggleService = (name) => setBooking((current) => ({ ...current, services: current.services.includes(name) ? current.services.filter((item) => item !== name) : [...current.services, name] }));
-  const continueFlow = (event) => {
+  const continueFlow = async (event) => {
     event.preventDefault();
     if (step === 6) {
-      setSubmitted(true);
+      setLoading(true);
+      setError("");
+      try {
+        const data = await bookingApi.create(booking);
+        setCreatedBooking(data.booking);
+        setSubmitted(true);
+      } catch (err) {
+        setError(err.message || "Could not submit booking.");
+      } finally {
+        setLoading(false);
+      }
       return;
     }
     setStep((value) => Math.min(6, value + 1));
   };
 
-  return <><SEO title="Book Service" /><section className="booking"><div className="wizard"><div className="wizard-steps">{labels.map((label, index) => <button type="button" key={label} title={label} className={step === index + 1 ? "active" : ""} onClick={() => setStep(index + 1)}>{index + 1}</button>)}</div><form className="form-card" onSubmit={continueFlow}><span className="eyebrow">Step {step} of 6</span><h1>{labels[step - 1]}</h1>{step === 1 && ["Company Name", "Business Type", "Employees", "Website", "Phone", "Address"].map((item) => <label key={item}>{item}<input value={booking[item] || ""} onChange={(event) => updateField(item, event.target.value)} placeholder={item} required={item !== "Website"} /></label>)}{step === 2 && services.slice(0, 8).map((item) => <label key={item.slug} className="checkbox"><input type="checkbox" checked={booking.services.includes(item.name)} onChange={() => toggleService(item.name)} /> {item.name}</label>)}{step === 3 && <><label>Opening Hours<input value={booking.hours || ""} onChange={(event) => updateField("hours", event.target.value)} placeholder="Mon-Fri 8am-5pm" /></label><label>After Hours Needs<textarea value={booking.afterHours || ""} onChange={(event) => updateField("afterHours", event.target.value)} /></label></>}{step === 4 && <><label>Current CRM<input value={booking.crm || ""} onChange={(event) => updateField("crm", event.target.value)} placeholder="ServiceTitan, Housecall Pro, Jobber..." /></label><label>Integration Notes<textarea value={booking.integrationNotes || ""} onChange={(event) => updateField("integrationNotes", event.target.value)} /></label></>}{step === 5 && <div className="review-box"><p><strong>Company:</strong> {booking["Company Name"] || "Not entered"}</p><p><strong>Services:</strong> {booking.services.length ? booking.services.join(", ") : "No services selected"}</p><p><strong>Hours:</strong> {booking.hours || "Not entered"}</p><p><strong>CRM:</strong> {booking.crm || "Not entered"}</p></div>}{step === 6 && <div className="success">Your booking request is ready for backend submission. Confirmation screen prepared.</div>}{submitted && <div className="success">Booking saved in the frontend flow. Connect bookingApi.create when your backend is ready.</div>}<div className="wizard-actions">{step > 1 && <button type="button" className="ghost-small" onClick={() => setStep((value) => Math.max(1, value - 1))}>Back</button>}<Button type="submit" icon="arrow">{step === 6 ? "Finish" : "Continue"}</Button></div></form></div></section></>;
+  return <><SEO title="Book Service" /><section className="booking"><div className="wizard"><div className="wizard-steps">{labels.map((label, index) => <button type="button" key={label} title={label} className={step === index + 1 ? "active" : ""} onClick={() => setStep(index + 1)}>{index + 1}</button>)}</div><form className="form-card" onSubmit={continueFlow}><span className="eyebrow">Step {step} of 6</span><h1>{labels[step - 1]}</h1>{step === 1 && ["Company Name", "Business Type", "Employees", "Website", "Phone", "Address"].map((item) => <label key={item}>{item}<input value={booking[item] || ""} onChange={(event) => updateField(item, event.target.value)} placeholder={item} required={item !== "Website"} /></label>)}{step === 2 && services.slice(0, 8).map((item) => <label key={item.slug} className="checkbox"><input type="checkbox" checked={booking.services.includes(item.name)} onChange={() => toggleService(item.name)} /> {item.name}</label>)}{step === 3 && <><label>Opening Hours<input value={booking.hours || ""} onChange={(event) => updateField("hours", event.target.value)} placeholder="Mon-Fri 8am-5pm" /></label><label>After Hours Needs<textarea value={booking.afterHours || ""} onChange={(event) => updateField("afterHours", event.target.value)} /></label></>}{step === 4 && <><label>Current CRM<input value={booking.crm || ""} onChange={(event) => updateField("crm", event.target.value)} placeholder="ServiceTitan, Housecall Pro, Jobber..." /></label><label>Integration Notes<textarea value={booking.integrationNotes || ""} onChange={(event) => updateField("integrationNotes", event.target.value)} /></label></>}{step === 5 && <label>Preferred Booking Date<input type="date" value={booking.requestedDate || ""} min={new Date().toISOString().slice(0, 10)} onChange={(event) => updateField("requestedDate", event.target.value)} required /></label>}{step === 6 && <div className="review-box"><p><strong>Company:</strong> {booking["Company Name"] || "Not entered"}</p><p><strong>Services:</strong> {booking.services.length ? booking.services.join(", ") : "No services selected"}</p><p><strong>Date:</strong> {booking.requestedDate || "No date selected"}</p><p><strong>Hours:</strong> {booking.hours || "Not entered"}</p><p><strong>CRM:</strong> {booking.crm || "Not entered"}</p></div>}{submitted && <div className="success">Booking submitted. Admin will review and respond in your client portal.{createdBooking?.requestedDate ? " Requested date: " + new Date(createdBooking.requestedDate).toLocaleDateString() + "." : ""}</div>}{error && <div className="form-error">{error}</div>}<div className="wizard-actions">{step > 1 && !submitted && <button type="button" className="ghost-small" onClick={() => setStep((value) => Math.max(1, value - 1))}>Back</button>}<Button type="submit" icon="arrow">{loading ? "Submitting..." : step === 6 ? "Submit Booking" : "Continue"}</Button></div></form></div></section></>;
 }
 
 export function NotFound() {

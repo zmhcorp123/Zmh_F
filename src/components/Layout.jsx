@@ -4,6 +4,7 @@ import { navigate } from "../utils/router";
 import { Button } from "./Button";
 import { Icon } from "./icons";
 import { Chatbot } from "./Chatbot";
+import { useAuth } from "../context/useAuth";
 
 const nav = [
   ["Home", "/"],
@@ -40,6 +41,7 @@ export function Layout({ children }) {
   const [open, setOpen] = useState(false);
   const [dark, setDark] = useState(false);
   const [newsletterSaved, setNewsletterSaved] = useState(false);
+  const { isAuthenticated, user } = useAuth();
 
   const closeMenu = () => setOpen(false);
 
@@ -57,7 +59,11 @@ export function Layout({ children }) {
           <button className="icon-btn theme-toggle" title={dark ? "Switch to day mode" : "Switch to night mode"} aria-label={dark ? "Switch to day mode" : "Switch to night mode"} onClick={() => setDark((value) => !value)}>
             <Icon name={dark ? "sun" : "moon"} />
           </button>
-          <button className="ghost-small" onClick={() => navigate("/login")}>Login</button>
+          {isAuthenticated ? (
+            <button className="ghost-small" onClick={() => navigate("/dashboard")}>{user?.role === "admin" ? "Admin" : "Dashboard"}</button>
+          ) : (
+            <button className="ghost-small" onClick={() => navigate("/login")}>Login</button>
+          )}
           <Button to="/book-service" icon="calendar">Book Audit</Button>
           <button className="icon-btn menu-btn" onClick={() => setOpen((value) => !value)} aria-label={open ? "Close menu" : "Open menu"}><Icon name={open ? "close" : "menu"} /></button>
         </div>
