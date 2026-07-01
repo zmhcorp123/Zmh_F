@@ -4,6 +4,7 @@ import { Icon } from "../components/icons";
 import { SEO } from "../components/SEO";
 import { adminApi } from "../services/api";
 import { packages as defaultPackages } from "../data/siteData";
+import { navigate } from "../utils/router";
 
 const adminTabs = [
   { name: "Overview", icon: "shield" },
@@ -27,20 +28,71 @@ function formatDate(value) {
 function SettingsPanel() {
   const [saved, setSaved] = useState("");
   const [error, setError] = useState("");
-  const [packageRows, setPackageRows] = useState(defaultPackages);
+  const [accountSaved, setAccountSaved] = useState("");
+  const [accountDetails, setAccountDetails] = useState({
+    beneficiaryName: "ZMH USA Corp",
+    bankName: "Contact sales for bank details",
+    accountNumber: "Provided on request",
+    routingSwift: "Provided on request",
+    referencePrefix: "ZMH",
+    paymentInstructions: "Include the invoice or order reference with your transfer.",
+  });
+  const [packageRows, setPackageRows] = useState(defaultPackages.map((item, index) => ({
+    ...item,
+    description: item.bestFor,
+    displayOrder: index,
+    highlightBadge: "",
+    buttonText: "Package details",
+    buttonLink: `/pricing/${item.slug}`,
+    status: "active",
+    recommended: item.slug === "professional",
+  })));
 
   useEffect(() => {
     let active = true;
-    adminApi.getSettings().then((data) => {
+    Promise.all([adminApi.pricing(), adminApi.getSettings()]).then(([pricingData, settingsData]) => {
       if (!active) return;
-      const packageSetting = (data.settings || []).find((item) => item.key === "packages");
-      if (Array.isArray(packageSetting?.value)) setPackageRows(packageSetting.value);
+      if (Array.isArray(pricingData.packages) && pricingData.packages.length) setPackageRows(pricingData.packages);
+      const accountSetting = (settingsData.settings || []).find((item) => item.key === "accountDetails");
+      if (accountSetting?.value) setAccountDetails((current) => ({ ...current, ...accountSetting.value }));
     }).catch(() => {});
     return () => { active = false; };
   }, []);
 
-  const updatePackage = (slug, field, value) => {
-    setPackageRows((current) => current.map((item) => item.slug === slug ? { ...item, [field]: value } : item));
+  const updatePackage = (index, field, value) => {
+    setPackageRows((current) => current.map((item, rowIndex) => rowIndex === index ? { ...item, [field]: value } : item));
+  };
+
+  const updateFeature = (packageIndex, featureIndex, value) => {
+    setPackageRows((current) => current.map((item, rowIndex) => {
+      if (rowIndex !== packageIndex) return item;
+      const features = [...(item.features || [])];
+      features[featureIndex] = value;
+      return { ...item, features };
+    }));
+  };
+
+  const addFeature = (packageIndex) => {
+    setPackageRows((current) => current.map((item, rowIndex) => rowIndex === packageIndex ? { ...item, features: [...(item.features || []), "New included feature"] } : item));
+  };
+
+  const removeFeature = (packageIndex, featureIndex) => {
+    setPackageRows((current) => current.map((item, rowIndex) => {
+      if (rowIndex !== packageIndex) return item;
+      return { ...item, features: (item.features || []).filter((_, index) => index !== featureIndex) };
+    }));
+  };
+
+  const moveFeature = (packageIndex, from, to) => {
+    if (from === to || to < 0) return;
+    setPackageRows((current) => current.map((item, rowIndex) => {
+      if (rowIndex !== packageIndex) return item;
+      const features = [...(item.features || [])];
+      if (to >= features.length) return item;
+      const [feature] = features.splice(from, 1);
+      features.splice(to, 0, feature);
+      return { ...item, features };
+    }));
   };
 
   const save = async (event) => {
@@ -48,28 +100,94 @@ function SettingsPanel() {
     setSaved("");
     setError("");
     try {
-      await adminApi.settings({ packages: packageRows });
+      const payload = packageRows.map((item, index) => ({ ...item, displayOrder: Number(item.displayOrder ?? index), features: item.features || [] }));
+      const data = await adminApi.savePricing(payload);
+      setPackageRows(data.packages || payload);
       setSaved("Package pricing saved.");
     } catch (err) {
       setError(err.message || "Could not save settings.");
     }
   };
 
+  const updateAccount = (field, value) => {
+    setAccountDetails((current) => ({ ...current, [field]: value }));
+  };
+
+  const saveAccountDetails = async (event) => {
+    event.preventDefault();
+    setAccountSaved("");
+    setError("");
+    try {
+      await adminApi.settings({ accountDetails });
+      setAccountSaved("Account details saved.");
+    } catch (err) {
+      setError(err.message || "Could not save account details.");
+    }
+  };
+
   return (
     <div className="admin-settings">
+      <form className="form-card account-settings-form" onSubmit={saveAccountDetails}>
+        <h3>Account / Bank Transfer Details</h3>
+        <div className="form-grid compact">
+          <label>Beneficiary Name<input value={accountDetails.beneficiaryName} onChange={(event) => updateAccount("beneficiaryName", event.target.value)} /></label>
+          <label>Bank Name<input value={accountDetails.bankName} onChange={(event) => updateAccount("bankName", event.target.value)} /></label>
+          <label>Account Number<input value={accountDetails.accountNumber} onChange={(event) => updateAccount("accountNumber", event.target.value)} /></label>
+          <label>Routing Number / SWIFT<input value={accountDetails.routingSwift} onChange={(event) => updateAccount("routingSwift", event.target.value)} /></label>
+          <label>Reference Prefix<input value={accountDetails.referencePrefix} onChange={(event) => updateAccount("referencePrefix", event.target.value)} /></label>
+        </div>
+        <label>Payment Instructions<textarea value={accountDetails.paymentInstructions} onChange={(event) => updateAccount("paymentInstructions", event.target.value)} /></label>
+        <Button type="submit" icon="settings">Save Account Details</Button>
+      </form>
       <form className="form-card package-settings-form" onSubmit={save}>
         <h3>Package Pricing</h3>
         <div className="package-settings-grid">
-          {packageRows.map((item) => (
-          <div className="package-setting-card" key={item.slug}>
-            <label>{item.name} price<input value={item.price || ""} onChange={(event) => updatePackage(item.slug, "price", event.target.value)} placeholder="Custom" /></label>
-            <label>Included items<textarea value={(item.features || []).join("\n")} onChange={(event) => updatePackage(item.slug, "features", event.target.value.split("\n").map((line) => line.trim()).filter(Boolean))} placeholder="One included item per line" /></label>
+          {packageRows.map((item, packageIndex) => (
+          <div className="package-setting-card" key={item.slug || packageIndex}>
+            <div className="settings-card-head">
+              <h4>{item.name || "Package"}</h4>
+              <label className="checkbox"><input type="checkbox" checked={Boolean(item.recommended)} onChange={(event) => updatePackage(packageIndex, "recommended", event.target.checked)} /> Recommended</label>
+            </div>
+            <div className="form-grid compact">
+              <label>Name<input value={item.name || ""} onChange={(event) => updatePackage(packageIndex, "name", event.target.value)} /></label>
+              <label>Slug<input value={item.slug || ""} onChange={(event) => updatePackage(packageIndex, "slug", event.target.value)} /></label>
+              <label>Price<input value={item.price || ""} onChange={(event) => updatePackage(packageIndex, "price", event.target.value)} placeholder="Custom" /></label>
+              <label>Display Order<input type="number" value={item.displayOrder ?? packageIndex} onChange={(event) => updatePackage(packageIndex, "displayOrder", event.target.value)} /></label>
+              <label>Badge<input value={item.highlightBadge || ""} onChange={(event) => updatePackage(packageIndex, "highlightBadge", event.target.value)} placeholder="Most popular" /></label>
+              <label>Status<select value={item.status || "active"} onChange={(event) => updatePackage(packageIndex, "status", event.target.value)}><option value="active">Active</option><option value="inactive">Inactive</option></select></label>
+              <label>Button Text<input value={item.buttonText || ""} onChange={(event) => updatePackage(packageIndex, "buttonText", event.target.value)} /></label>
+              <label>Button Link<input value={item.buttonLink || ""} onChange={(event) => updatePackage(packageIndex, "buttonLink", event.target.value)} /></label>
+            </div>
+            <label>Description<textarea value={item.description || item.bestFor || ""} onChange={(event) => updatePackage(packageIndex, "description", event.target.value)} /></label>
+            <div className="feature-manager">
+              <div className="settings-card-head">
+                <strong>Included Features</strong>
+                <button type="button" className="table-action" onClick={() => addFeature(packageIndex)}>Add feature</button>
+              </div>
+              {(item.features || []).map((feature, featureIndex) => (
+                <div
+                  className="feature-row"
+                  key={`${item.slug}-${featureIndex}`}
+                  draggable
+                  onDragStart={(event) => event.dataTransfer.setData("text/plain", String(featureIndex))}
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={(event) => moveFeature(packageIndex, Number(event.dataTransfer.getData("text/plain")), featureIndex)}
+                >
+                  <span className="drag-handle">::</span>
+                  <input value={feature} onChange={(event) => updateFeature(packageIndex, featureIndex, event.target.value)} />
+                  <button type="button" className="table-action" onClick={() => moveFeature(packageIndex, featureIndex, featureIndex - 1)}>Up</button>
+                  <button type="button" className="table-action" onClick={() => moveFeature(packageIndex, featureIndex, featureIndex + 1)}>Down</button>
+                  <button type="button" className="table-action danger-link" onClick={() => removeFeature(packageIndex, featureIndex)}>Delete</button>
+                </div>
+              ))}
+            </div>
           </div>
           ))}
         </div>
         <Button type="submit" icon="settings">Save Package Settings</Button>
       </form>
       {saved && <div className="success admin-save">{saved}</div>}
+      {accountSaved && <div className="success admin-save">{accountSaved}</div>}
       {error && <div className="form-error admin-save">{error}</div>}
     </div>
   );
@@ -84,6 +202,9 @@ export function AdminPage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [savingId, setSavingId] = useState("");
+  const [orderSearch, setOrderSearch] = useState("");
+  const [orderSort, setOrderSort] = useState("newest");
+  const [orderFilter, setOrderFilter] = useState("all");
 
   useEffect(() => {
     let active = true;
@@ -108,6 +229,20 @@ export function AdminPage() {
   const verifiedPendingUsers = useMemo(() => pendingUsers.filter((user) => user.isEmailVerified), [pendingUsers]);
   const newBookings = useMemo(() => bookings.filter((booking) => !["ongoing", "cancelled"].includes(booking.status)), [bookings]);
   const ongoingBookings = useMemo(() => bookings.filter((booking) => booking.status === "ongoing"), [bookings]);
+  const visibleOngoingBookings = useMemo(() => {
+    const term = orderSearch.trim().toLowerCase();
+    const filtered = ongoingBookings.filter((booking) => {
+      const haystack = [booking.companyName, booking.email, booking.user?.email, booking.phone, booking.packageName, booking.assignedStaff].join(" ").toLowerCase();
+      const matchesSearch = !term || haystack.includes(term);
+      const matchesFilter = orderFilter === "all" || booking.paymentStatus === orderFilter;
+      return matchesSearch && matchesFilter;
+    });
+    return [...filtered].sort((a, b) => {
+      if (orderSort === "company") return String(a.companyName || "").localeCompare(String(b.companyName || ""));
+      if (orderSort === "progress") return Number(b.progressPercent || 0) - Number(a.progressPercent || 0);
+      return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+    });
+  }, [ongoingBookings, orderSearch, orderSort, orderFilter]);
   const cancelledBookings = useMemo(() => bookings.filter((booking) => booking.status === "cancelled"), [bookings]);
   const openTickets = useMemo(() => tickets.filter((ticket) => ticket.status !== "resolved"), [tickets]);
 
@@ -288,6 +423,34 @@ export function AdminPage() {
     </div>
   );
 
+  const renderOrderTable = (items) => (
+    <div className="order-management">
+      <div className="order-toolbar">
+        <label>Search<input value={orderSearch} onChange={(event) => setOrderSearch(event.target.value)} placeholder="Company, email, phone, package..." /></label>
+        <label>Filter<select value={orderFilter} onChange={(event) => setOrderFilter(event.target.value)}><option value="all">All ongoing</option><option value="pending">Payment pending</option><option value="sent">Invoice sent</option><option value="paid">Paid</option><option value="overdue">Overdue</option></select></label>
+        <label>Sort<select value={orderSort} onChange={(event) => setOrderSort(event.target.value)}><option value="newest">Newest</option><option value="company">Company</option><option value="progress">Progress</option></select></label>
+      </div>
+      <div className="admin-table-wrap">
+        <table className="admin-table order-table">
+          <thead><tr><th>Order</th><th>Contact</th><th>Package</th><th>Progress</th><th>Billing</th><th>Assigned</th><th>Action</th></tr></thead>
+          <tbody>
+            {items.length ? items.map((booking) => (
+              <tr key={booking._id}>
+                <td data-label="Order"><strong>{booking.companyName}</strong><span>Ordered {formatDate(booking.createdAt)}</span></td>
+                <td data-label="Contact">{booking.contactPerson || booking.user?.name || "Public booking"}<span>{booking.email || booking.user?.email || "No email"}<br />{booking.phone || "No phone"}</span></td>
+                <td data-label="Package">{booking.packageName || "Custom support"}<span>{booking.packagePrice || "Custom"}</span></td>
+                <td data-label="Progress"><div className="progress-meter"><span style={{ width: `${Number(booking.progressPercent || 0)}%` }} /></div><small>{Number(booking.progressPercent || 0)}%</small></td>
+                <td data-label="Billing"><span className="status-pill">{booking.paymentStatus || "pending"}</span><small>Next {formatDate(booking.nextBillingDate)}</small></td>
+                <td data-label="Assigned">{booking.assignedStaff || "Unassigned"}</td>
+                <td data-label="Action"><button type="button" className="table-action" onClick={() => navigate(`/admin/orders/${booking._id}`)}>Open details</button></td>
+              </tr>
+            )) : <tr><td colSpan="7">No ongoing orders match this view.</td></tr>}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
   return (
     <>
       <SEO title="Admin Panel" description="Manage real MongoDB users, bookings, bills, and admin responses." />
@@ -373,7 +536,7 @@ export function AdminPage() {
           )}
 
           {tab === "Ongoing" && (
-            renderOrderProfiles(ongoingBookings)
+            renderOrderTable(visibleOngoingBookings)
           )}
 
           {tab === "Cancelled Orders" && (

@@ -85,4 +85,15 @@ export const adminApi = {
   updateSupportTicket: (id, payload) => request("/admin/support-tickets/" + id, { method: "PATCH", body: payload }),
   getSettings: () => request("/admin/settings"),
   settings: (payload) => request("/admin/settings", { method: "POST", body: payload }),
+  orders: (params = {}) => {
+    const query = new URLSearchParams(Object.entries(params).filter(([, value]) => value !== undefined && value !== null && value !== "")).toString();
+    return request("/admin/orders" + (query ? `?${query}` : ""));
+  },
+  order: (id) => request("/admin/orders/" + id),
+  updateOrder: (id, payload) => request("/admin/orders/" + id, { method: "PATCH", body: payload }),
+  addOrderProgress: (id, payload) => request("/admin/orders/" + id + "/progress", { method: "POST", body: payload }),
+  generateOrderPdf: (id) => request("/admin/orders/" + id + "/pdf", { method: "POST" }),
+  sendInvoiceSummary: (id, payload = {}) => request("/admin/orders/" + id + "/send-invoice-summary", { method: "POST", body: payload }),
+  pricing: () => request("/admin/pricing"),
+  savePricing: (packages) => request("/admin/pricing", { method: "PUT", body: { packages } }),
 };

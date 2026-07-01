@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect } from "react";
 import { Navigate, Route, Routes, useNavigate, useParams } from "react-router-dom";
 import { AdminPage } from "../pages/AdminPage";
+import { AdminOrderDetails } from "../pages/AdminOrderDetails";
 import { ServiceDetail } from "../pages/ServiceDetail";
 import { Services } from "../pages/Services";
 import { industries, packages, services, teamProfiles } from "../data/siteData";
@@ -82,6 +83,13 @@ function AdminRoute() {
   return user.role === "admin" ? <AdminPage /> : <Navigate to="/user-dashboard" replace />;
 }
 
+function AdminOrderRoute() {
+  const { authReady, user } = useAuth();
+  if (!authReady) return null;
+  if (!user) return <Navigate to="/login" replace />;
+  return user.role === "admin" ? <AdminOrderDetails /> : <Navigate to="/user-dashboard" replace />;
+}
+
 function UserDashboardRoute({ section = "Dashboard" }) {
   const { authReady, user } = useAuth();
   if (!authReady) return null;
@@ -119,6 +127,7 @@ export function AppRoutes() {
         <Route path="/faq" element={<FAQ />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/admin" element={<AdminRoute />} />
+        <Route path="/admin/orders/:orderId" element={<AdminOrderRoute />} />
         <Route path="/admin-dashboard" element={<AdminRoute />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/careers" element={<Careers />} />
