@@ -54,6 +54,10 @@ export const bookingApi = {
   list: () => request("/bookings"),
 };
 
+export const settingsApi = {
+  packages: () => request("/settings/packages"),
+};
+
 export const contactApi = {
   send: (payload) => request("/contact", { method: "POST", body: payload }),
 };
@@ -74,5 +78,6 @@ export const adminApi = {
   updateBooking: (id, payload) => request("/admin/bookings/" + id, { method: "PATCH", body: payload }),
   bills: () => request("/admin/bills?db=mongodb"),
   updateBill: (id, payload) => request("/admin/bills/" + id, { method: "PATCH", body: payload }),
+  getSettings: () => request("/admin/settings"),
   settings: (payload) => request("/admin/settings", { method: "POST", body: payload }),
 };

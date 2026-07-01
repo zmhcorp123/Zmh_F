@@ -3,17 +3,20 @@ import { Button } from "../components/Button";
 import { Icon } from "../components/icons";
 import { SEO } from "../components/SEO";
 import { adminApi } from "../services/api";
+import { packages as defaultPackages } from "../data/siteData";
 
 const adminTabs = [
   { name: "Overview", icon: "shield" },
   { name: "Approvals", icon: "users" },
   { name: "Users", icon: "users" },
   { name: "Bookings", icon: "calendar" },
+  { name: "Ongoing", icon: "route" },
+  { name: "Cancelled Orders", icon: "bill" },
   { name: "Bills", icon: "bill" },
   { name: "Settings", icon: "settings" },
 ];
 
-const bookingStatuses = ["new", "needs review", "confirmed", "completed", "cancelled"];
+const bookingStatuses = ["new", "needs review", "ongoing", "completed", "cancelled"];
 const userStatuses = ["pending", "active", "suspended"];
 
 function formatDate(value) {
@@ -23,16 +26,29 @@ function formatDate(value) {
 function SettingsPanel() {
   const [saved, setSaved] = useState("");
   const [error, setError] = useState("");
+  const [packageRows, setPackageRows] = useState(defaultPackages);
 
-  const save = async (event, group) => {
+  useEffect(() => {
+    let active = true;
+    adminApi.getSettings().then((data) => {
+      if (!active) return;
+      const packageSetting = (data.settings || []).find((item) => item.key === "packages");
+      if (Array.isArray(packageSetting?.value)) setPackageRows(packageSetting.value);
+    }).catch(() => {});
+    return () => { active = false; };
+  }, []);
+
+  const updatePackage = (slug, field, value) => {
+    setPackageRows((current) => current.map((item) => item.slug === slug ? { ...item, [field]: value } : item));
+  };
+
+  const save = async (event) => {
     event.preventDefault();
     setSaved("");
     setError("");
-    const form = new FormData(event.currentTarget);
-    const payload = Object.fromEntries(form.entries());
     try {
-      await adminApi.settings({ [group]: payload });
-      setSaved(group + " settings saved.");
+      await adminApi.settings({ packages: packageRows });
+      setSaved("Package pricing saved.");
     } catch (err) {
       setError(err.message || "Could not save settings.");
     }
@@ -40,21 +56,15 @@ function SettingsPanel() {
 
   return (
     <div className="admin-settings">
-      <form className="form-card" onSubmit={(event) => save(event, "mongodb")}>
-        <h3>Backend</h3>
-        <label>MongoDB Connection Name<input name="connectionName" placeholder="MONGODB_URI" /></label>
-        <label>Database Name<input name="databaseName" placeholder="zmh_operations" /></label>
-        <label>Default User Role<select name="defaultRole" defaultValue="client"><option value="client">Client</option><option value="admin">Admin</option><option value="agent">Agent</option></select></label>
-        <label>Booking Approval Mode<select name="bookingApprovalMode" defaultValue="manual"><option value="manual">Manual approval</option><option value="auto">Auto confirm after payment</option></select></label>
-        <Button type="submit" icon="server">Save Backend Settings</Button>
-      </form>
-      <form className="form-card" onSubmit={(event) => save(event, "otp")}>
-        <h3>Resend OTP</h3>
-        <label>Resend API Key Env<input name="apiKeyEnv" placeholder="RESEND_API_KEY" /></label>
-        <label>OTP From Email<input name="fromEmail" placeholder="verify@zmhusacorp.com" /></label>
-        <label>OTP Expiry Minutes<input name="expiryMinutes" type="number" min="1" defaultValue="10" /></label>
-        <label className="checkbox"><input name="allowResend" type="checkbox" defaultChecked /> Allow resend OTP after 60 seconds</label>
-        <Button type="submit" icon="mail">Save OTP Settings</Button>
+      <form className="form-card package-settings-form" onSubmit={save}>
+        <h3>Package Pricing</h3>
+        {packageRows.map((item) => (
+          <div className="package-setting-row" key={item.slug}>
+            <label>{item.name} price<input value={item.price || ""} onChange={(event) => updatePackage(item.slug, "price", event.target.value)} placeholder="Custom" /></label>
+            <label>Included items<textarea value={(item.features || []).join("\n")} onChange={(event) => updatePackage(item.slug, "features", event.target.value.split("\n").map((line) => line.trim()).filter(Boolean))} placeholder="One included item per line" /></label>
+          </div>
+        ))}
+        <Button type="submit" icon="settings">Save Package Settings</Button>
       </form>
       {saved && <div className="success admin-save">{saved}</div>}
       {error && <div className="form-error admin-save">{error}</div>}
@@ -90,13 +100,16 @@ export function AdminPage() {
 
   const pendingUsers = useMemo(() => users.filter((user) => user.status === "pending"), [users]);
   const verifiedPendingUsers = useMemo(() => pendingUsers.filter((user) => user.isEmailVerified), [pendingUsers]);
+  const newBookings = useMemo(() => bookings.filter((booking) => !["ongoing", "completed", "cancelled"].includes(booking.status)), [bookings]);
+  const ongoingBookings = useMemo(() => bookings.filter((booking) => booking.status === "ongoing"), [bookings]);
+  const cancelledBookings = useMemo(() => bookings.filter((booking) => booking.status === "cancelled"), [bookings]);
 
   const metrics = useMemo(() => [
     ["Pending approvals", pendingUsers.length, "users"],
     ["Users", users.length, "users"],
     ["Bookings", bookings.length, "calendar"],
-    ["Need response", bookings.filter((booking) => !booking.adminResponse).length, "mail"],
-  ], [users, pendingUsers, bookings]);
+    ["Ongoing", ongoingBookings.length, "route"],
+  ], [users, pendingUsers, bookings, ongoingBookings]);
 
   const approveUser = async (id) => {
     setSavingId(id);
@@ -140,12 +153,35 @@ export function AdminPage() {
         notes: form.get("notes"),
       });
       setBookings((current) => current.map((item) => item._id === booking._id ? data.booking : item));
+      setNotice(data.emailSent ? "Booking saved and customer email sent." : "Booking saved.");
     } catch (err) {
       setError(err.message || "Could not update booking.");
     } finally {
       setSavingId("");
     }
   };
+
+  const renderBookingCards = (items, emptyText, readOnly = false) => (
+    <div className="booking-admin-list">
+      {items.length ? items.map((booking) => (
+        <form className="booking-admin-card" key={booking._id} onSubmit={(event) => updateBooking(event, booking)}>
+          <div>
+            <span className="eyebrow">{booking.email || booking.user?.email || "Public request"}</span>
+            <h3>{booking.companyName}</h3>
+            <p>{booking.services?.join(", ") || "No services selected"}</p>
+          </div>
+          <label>Status<select name="status" defaultValue={booking.status} disabled={readOnly}>{bookingStatuses.map((status) => <option key={status} value={status}>{status}</option>)}</select></label>
+          <label>Requested Date<input name="requestedDate" type="date" defaultValue={booking.requestedDate ? booking.requestedDate.slice(0, 10) : ""} disabled={readOnly} /></label>
+          <label>Admin Response<textarea name="adminResponse" defaultValue={booking.adminResponse || ""} placeholder="Write the response the user will see..." disabled={readOnly} /></label>
+          <label>Internal Notes<textarea name="notes" defaultValue={booking.notes || ""} placeholder="Private admin notes" disabled={readOnly} /></label>
+          <div className="booking-admin-footer">
+            <span>Created {formatDate(booking.createdAt)}</span>
+            {readOnly ? <span className="status-pill">{booking.status}</span> : <button type="submit" className="table-action" disabled={savingId === booking._id}>{savingId === booking._id ? "Saving" : "Send response"}</button>}
+          </div>
+        </form>
+      )) : <div className="empty-state">{emptyText}</div>}
+    </div>
+  );
 
   return (
     <>
@@ -229,22 +265,15 @@ export function AdminPage() {
           )}
 
           {tab === "Bookings" && (
-            <div className="booking-admin-list">
-              {bookings.length ? bookings.map((booking) => (
-                <form className="booking-admin-card" key={booking._id} onSubmit={(event) => updateBooking(event, booking)}>
-                  <div>
-                    <span className="eyebrow">{booking.user?.email || "Public request"}</span>
-                    <h3>{booking.companyName}</h3>
-                    <p>{booking.services?.join(", ") || "No services selected"}</p>
-                  </div>
-                  <label>Status<select name="status" defaultValue={booking.status}>{bookingStatuses.map((status) => <option key={status} value={status}>{status}</option>)}</select></label>
-                  <label>Requested Date<input name="requestedDate" type="date" defaultValue={booking.requestedDate ? booking.requestedDate.slice(0, 10) : ""} /></label>
-                  <label>Admin Response<textarea name="adminResponse" defaultValue={booking.adminResponse || ""} placeholder="Write the response the user will see..." /></label>
-                  <label>Internal Notes<textarea name="notes" defaultValue={booking.notes || ""} placeholder="Private admin notes" /></label>
-                  <div className="booking-admin-footer"><span>Created {formatDate(booking.createdAt)}</span><button type="submit" className="table-action" disabled={savingId === booking._id}>{savingId === booking._id ? "Saving" : "Send response"}</button></div>
-                </form>
-              )) : <div className="empty-state">No bookings found.</div>}
-            </div>
+            renderBookingCards(newBookings, "No new booking requests found.")
+          )}
+
+          {tab === "Ongoing" && (
+            renderBookingCards(ongoingBookings, "No ongoing orders yet.")
+          )}
+
+          {tab === "Cancelled Orders" && (
+            renderBookingCards(cancelledBookings, "No cancelled orders yet.", true)
           )}
 
           {tab === "Bills" && (
