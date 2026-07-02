@@ -16,8 +16,9 @@ const adminTabs = [
   { name: "Cancelled Orders", icon: "bill" },
   { name: "Bills", icon: "bill" },
   { name: "Send Bills", icon: "mail" },
-  { name: "Payment Verification", icon: "bill" },
+  { name: "Payment Approval", icon: "bill" },
   { name: "Support Tickets", icon: "mail" },
+  { name: "Archived Tickets", icon: "mail" },
   { name: "Settings", icon: "settings" },
 ];
 
@@ -483,6 +484,7 @@ export function AdminPage() {
   const [bills, setBills] = useState([]);
   const [payments, setPayments] = useState([]);
   const [tickets, setTickets] = useState([]);
+  const [archivedTickets, setArchivedTickets] = useState([]);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [savingId, setSavingId] = useState("");
@@ -503,13 +505,15 @@ export function AdminPage() {
       adminApi.bills(),
       adminApi.payments(),
       adminApi.supportTickets(),
-    ]).then(([userData, bookingData, billData, paymentData, ticketData]) => {
+      adminApi.archivedSupportTickets(),
+    ]).then(([userData, bookingData, billData, paymentData, ticketData, archivedTicketData]) => {
       if (!active) return;
       setUsers(userData.users || []);
       setBookings(bookingData.bookings || []);
       setBills(billData.bills || []);
       setPayments(paymentData.payments || []);
       setTickets(ticketData.tickets || []);
+      setArchivedTickets(archivedTicketData.tickets || []);
     }).catch((err) => {
       if (active) setError(err.message || "Could not load admin data.");
     });
@@ -607,8 +611,14 @@ export function AdminPage() {
         status: form.get("status"),
         adminResponse: form.get("adminResponse"),
       });
-      setTickets((current) => current.map((item) => item._id === ticket._id ? data.ticket : item));
-      setNotice("Support ticket updated.");
+      if (data.ticket.status === "resolved") {
+        setTickets((current) => current.filter((item) => item._id !== ticket._id));
+        setArchivedTickets((current) => [data.ticket, ...current.filter((item) => item._id !== ticket._id)]);
+        setNotice("Support ticket resolved and moved to archived tickets.");
+      } else {
+        setTickets((current) => current.map((item) => item._id === ticket._id ? data.ticket : item));
+        setNotice("Support ticket updated.");
+      }
     } catch (err) {
       setError(err.message || "Could not update support ticket.");
     } finally {
@@ -880,7 +890,7 @@ export function AdminPage() {
             </form>
           )}
 
-          {tab === "Payment Verification" && (
+          {tab === "Payment Approval" && (
             <div className="booking-admin-list payment-review-list">
               {payments.length ? payments.map((payment) => (
                 <article className="support-ticket-card payment-review-card" key={payment._id}>
@@ -890,13 +900,19 @@ export function AdminPage() {
                       <h3>{payment.user?.name || "Client"} - {payment.invoice?.invoice || "Invoice"}</h3>
                       <p>{payment.order?.companyName || payment.invoice?.company || payment.user?.company || "Company"} | {payment.order?.packageName || "Package pending"}</p>
                     </div>
-                    <span className="status-pill">{payment.status === "submitted" ? "Waiting for verification" : payment.status}</span>
+                    <span className="status-pill">{payment.status === "submitted" ? "Pending Admin Approval" : payment.status}</span>
+                  </div>
+                  <div className="profile-facts">
+                    <span><strong>User</strong>{payment.user?.name || "-"}</span>
+                    <span><strong>Company</strong>{payment.invoice?.company || payment.user?.company || "-"}</span>
+                    <span><strong>Invoice Number</strong>{payment.invoice?.invoice || "-"}</span>
+                    <span><strong>Submission Date</strong>{formatDate(payment.createdAt)}</span>
                   </div>
                   <div className="profile-facts">
                     <span><strong>Amount</strong>{payment.currency} {Number(payment.amount || payment.invoice?.amount || 0).toFixed(2)}</span>
                     <span><strong>Payment Date</strong>{formatDate(payment.paymentDate)}</span>
-                    <span><strong>Transaction ID</strong>{payment.transactionId}</span>
-                    <span><strong>Submitted</strong>{formatDate(payment.createdAt)}</span>
+                    <span><strong>Invoice Details</strong>{payment.invoice?.message || payment.order?.packageName || "Monthly service bill"}</span>
+                    <span><strong>Status</strong>{payment.status}</span>
                   </div>
                   <div className="profile-facts">
                     <span><strong>Method</strong>{payment.paymentMethod}</span>
@@ -935,11 +951,32 @@ export function AdminPage() {
                     <span><strong>Status</strong>{ticket.status}</span>
                     <span><strong>Created</strong>{formatDate(ticket.createdAt)}</span>
                   </div>
-                  <label>Status<select name="status" defaultValue={ticket.status}><option value="open">Open</option><option value="in review">In review</option><option value="resolved">Resolved</option></select></label>
+                  <label>Status<select name="status" defaultValue={ticket.status}><option value="open">Open</option><option value="in progress">In Progress</option><option value="resolved">Resolved</option></select></label>
                   <label>Admin response<textarea name="adminResponse" defaultValue={ticket.adminResponse || ""} placeholder="Write the resolution or update for the user" /></label>
                   <div className="booking-admin-footer"><span>{ticket.resolvedAt ? "Resolved " + formatDate(ticket.resolvedAt) : "Waiting for admin"}</span><button type="submit" className="table-action" disabled={savingId === ticket._id}>{savingId === ticket._id ? "Saving" : "Update ticket"}</button></div>
                 </form>
               )) : <div className="empty-state">No support tickets yet.</div>}
+            </div>
+          )}
+
+          {tab === "Archived Tickets" && (
+            <div className="booking-admin-list">
+              {archivedTickets.length ? archivedTickets.map((ticket) => (
+                <article className="support-ticket-card" key={ticket._id}>
+                  <div>
+                    <span className="eyebrow">{ticket.user?.email}</span>
+                    <h3>{ticket.subject}</h3>
+                    <p>{ticket.message}</p>
+                    {ticket.adminResponse && <p><strong>Final reply:</strong> {ticket.adminResponse}</p>}
+                  </div>
+                  <div className="profile-facts">
+                    <span><strong>User</strong>{ticket.user?.name || "-"}</span>
+                    <span><strong>Company</strong>{ticket.user?.company || "-"}</span>
+                    <span><strong>Status</strong>{ticket.status}</span>
+                    <span><strong>Resolved</strong>{formatDate(ticket.resolvedAt)}</span>
+                  </div>
+                </article>
+              )) : <div className="empty-state">No resolved ticket history yet.</div>}
             </div>
           )}
 

@@ -4,6 +4,7 @@ import { Button } from "../components/Button";
 import { PageHero } from "../components/Sections";
 import { SEO } from "../components/SEO";
 import { contactApi, settingsApi } from "../services/api";
+import { navigate } from "../utils/router";
 
 export function Contact() {
   const [companyDetails, setCompanyDetails] = useState({ officePhone: company.phone, officeAddress: company.address });
@@ -32,14 +33,16 @@ function ContactForm() {
   const [loading, setLoading] = useState(false);
   const submit = async (event) => {
     event.preventDefault();
+    const formElement = event.currentTarget;
     setSent(false);
     setError("");
     setLoading(true);
-    const form = new FormData(event.currentTarget);
+    const form = new FormData(formElement);
     try {
       await contactApi.send(Object.fromEntries(form.entries()));
-      event.currentTarget.reset();
+      formElement.reset();
       setSent(true);
+      navigate("/request-success?type=inquiry");
     } catch (err) {
       setError(err.message || "Could not send inquiry.");
     } finally {

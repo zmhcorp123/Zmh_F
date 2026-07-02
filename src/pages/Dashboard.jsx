@@ -38,7 +38,8 @@ function fileToDataUrl(file) {
 }
 
 function StatusBadge({ value }) {
-  return <span className={`status-pill ${String(value || "pending").replace(/\s+/g, "-")}`}>{value || "pending"}</span>;
+  const label = value === "in progress" ? "In Progress" : value === "open" ? "Open" : value === "resolved" ? "Resolved" : value || "pending";
+  return <span className={`status-pill ${String(value || "pending").replace(/\s+/g, "-")}`}>{label}</span>;
 }
 
 function fieldValue(value) {
@@ -46,7 +47,7 @@ function fieldValue(value) {
 }
 
 function DashboardShell({ section, user, children, onLogout }) {
-  const items = ["Dashboard", "Bookings", "My Services", "Cancelled Services", "Invoices", "Notifications", "Profile", "Settings", "Support Tickets", "Book Service", "Calendar"];
+  const items = ["Dashboard", "Bookings", "My Services", "Cancelled Services", "Invoices", "Payment Confirmation", "Notifications", "Profile", "Settings", "Support Tickets", "Book Service", "Calendar"];
   return (
     <>
       <SEO title={section} />
@@ -139,9 +140,9 @@ function ServiceCard({ service, onDownload, onPayment }) {
 function ProfilePanel() {
   const { updateUser } = useAuth();
   const [profile, setProfile] = useState(null);
-  const [preview, setPreview] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
 
@@ -154,7 +155,6 @@ function ProfilePanel() {
         const data = await dashboardApi.profile();
         if (!active) return;
         setProfile(data.user);
-        setPreview(data.user?.profilePicture || "");
       } catch (err) {
         if (active) setError(err.message || "Could not load profile.");
       } finally {
@@ -164,27 +164,6 @@ function ProfilePanel() {
     loadProfile();
     return () => { active = false; };
   }, []);
-
-  const updatePreview = async (event) => {
-    const file = event.target.files?.[0];
-    setError("");
-    if (!file) {
-      setPreview(profile?.profilePicture || "");
-      return;
-    }
-    if (!file.type.startsWith("image/")) {
-      setError("Profile picture must be an image file.");
-      event.target.value = "";
-      return;
-    }
-    if (file.size > 1.5 * 1024 * 1024) {
-      setError("Profile picture must be smaller than 1.5 MB.");
-      event.target.value = "";
-      return;
-    }
-    const image = await fileToDataUrl(file);
-    setPreview(image?.dataUrl || "");
-  };
 
   const saveProfile = async (event) => {
     event.preventDefault();
@@ -197,7 +176,7 @@ function ProfilePanel() {
       username: String(form.get("username") || "").trim(),
       company: String(form.get("company") || "").trim(),
       phone: String(form.get("phone") || "").trim(),
-      profilePicture: preview || "",
+      email: String(form.get("email") || "").trim(),
     };
 
     if (!payload.name) {
@@ -215,17 +194,52 @@ function ProfilePanel() {
       setSaving(false);
       return;
     }
+    if (payload.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) {
+      setError("Enter a valid email address.");
+      setSaving(false);
+      return;
+    }
 
     try {
       const data = await dashboardApi.updateProfile(payload);
       setProfile(data.user);
-      setPreview(data.user?.profilePicture || "");
       updateUser(data.user);
       setNotice("Profile updated successfully.");
     } catch (err) {
       setError(err.message || "Could not update profile.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const changePassword = async (event) => {
+    event.preventDefault();
+    setSavingPassword(true);
+    setNotice("");
+    setError("");
+    const form = new FormData(event.currentTarget);
+    const newPassword = String(form.get("newPassword") || "");
+    if (newPassword.length < 8) {
+      setError("New password must be at least 8 characters.");
+      setSavingPassword(false);
+      return;
+    }
+    if (newPassword !== form.get("confirmPassword")) {
+      setError("New password and confirmation do not match.");
+      setSavingPassword(false);
+      return;
+    }
+    try {
+      const data = await dashboardApi.changePassword({
+        currentPassword: form.get("currentPassword"),
+        newPassword,
+      });
+      setNotice(data.message || "Password updated successfully.");
+      event.currentTarget.reset();
+    } catch (err) {
+      setError(err.message || "Could not update password.");
+    } finally {
+      setSavingPassword(false);
     }
   };
 
@@ -236,7 +250,7 @@ function ProfilePanel() {
       {error && <div className="form-error">{error}</div>}
       {notice && <div className="success">{notice}</div>}
       <div className="profile-overview-card">
-        <div className="profile-avatar">{preview ? <img src={preview} alt="" /> : <span>{fieldValue(profile?.name).slice(0, 2).toUpperCase()}</span>}</div>
+        <div className="profile-avatar"><span>{fieldValue(profile?.name).slice(0, 2).toUpperCase()}</span></div>
         <div>
           <span className="eyebrow">Account profile</span>
           <h3>{fieldValue(profile?.name)}</h3>
@@ -259,14 +273,20 @@ function ProfilePanel() {
         <label>Username<input name="username" defaultValue={profile?.username || ""} placeholder="username" /></label>
         <label>Company Name<input name="company" defaultValue={profile?.company || ""} placeholder="Company name" /></label>
         <label>Phone Number<input name="phone" defaultValue={profile?.phone || ""} placeholder="+1 555 000 0000" /></label>
-        <label>Profile Picture<input name="profilePicture" type="file" accept="image/*" onChange={updatePreview} /></label>
+        <label>Email Address<input name="email" type="email" defaultValue={profile?.email || ""} placeholder="name@example.com" /></label>
         <div className="read-only-grid">
-          <label>Email Address<input value={fieldValue(profile?.email)} readOnly /></label>
           <label>User Role<input value={fieldValue(profile?.role)} readOnly /></label>
           <label>Account Status<input value={fieldValue(profile?.status)} readOnly /></label>
           <label>Created<input value={profile?.createdAt ? formatDate(profile.createdAt) : "Not Provided"} readOnly /></label>
         </div>
         <Button type="submit">{saving ? "Saving..." : "Save profile"}</Button>
+      </form>
+      <form className="form-card inline profile-edit-form" onSubmit={changePassword}>
+        <h3>Change password</h3>
+        <label>Current Password<input name="currentPassword" type="password" required /></label>
+        <label>New Password<input name="newPassword" type="password" minLength="8" required /></label>
+        <label>Confirm New Password<input name="confirmPassword" type="password" minLength="8" required /></label>
+        <Button type="submit">{savingPassword ? "Updating..." : "Update password"}</Button>
       </form>
     </div>
   );
@@ -277,7 +297,7 @@ export function Dashboard({ section = "Dashboard", serviceId = "" }) {
 
   return (
     <DashboardShell section={section} user={user} onLogout={logout}>
-      {section === "Profile" ? <ProfilePanel /> : <DashboardCards section={section} serviceId={serviceId} />}
+      {section === "Profile" || section === "Settings" ? <ProfilePanel /> : <DashboardCards section={section} serviceId={serviceId} />}
     </DashboardShell>
   );
 }
@@ -289,11 +309,14 @@ function DashboardCards({ section, serviceId }) {
   const [invoices, setInvoices] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [tickets, setTickets] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [downloading, setDownloading] = useState("");
   const [paymentModal, setPaymentModal] = useState(null);
   const [savingPayment, setSavingPayment] = useState(false);
+  const [savingConfirmation, setSavingConfirmation] = useState(false);
+  const [ticketSubmitting, setTicketSubmitting] = useState(false);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [page, setPage] = useState(1);
@@ -302,6 +325,7 @@ function DashboardCards({ section, serviceId }) {
   useEffect(() => {
     let active = true;
     async function loadDashboard() {
+      setLoading(true);
       setError("");
       try {
         const [profileData, bookingData, invoiceData, serviceData, notificationData, ticketData] = await Promise.all([
@@ -321,6 +345,8 @@ function DashboardCards({ section, serviceId }) {
         setTickets(ticketData.tickets || []);
       } catch (err) {
         if (active) setError(err.message || "Could not load dashboard data.");
+      } finally {
+        if (active) setLoading(false);
       }
     }
     loadDashboard();
@@ -385,6 +411,8 @@ function DashboardCards({ section, serviceId }) {
         screenshot,
       });
       setServices((current) => current.map((service) => service._id === form.get("orderId") ? { ...service, paymentStatus: "payment submitted" } : service));
+      const invoiceData = await dashboardApi.invoices();
+      setInvoices(invoiceData.invoices || []);
       setPaymentModal(null);
       setNotice("Payment submitted. Waiting for admin verification.");
     } catch (err) {
@@ -396,18 +424,45 @@ function DashboardCards({ section, serviceId }) {
 
   const createTicket = async (event) => {
     event.preventDefault();
+    const ticketForm = event.currentTarget;
+    setTicketSubmitting(true);
+    setError("");
+    setNotice("");
+    const form = new FormData(ticketForm);
+    try {
+      const data = await dashboardApi.createSupportTicket({ subject: form.get("subject"), message: form.get("message") });
+      const refreshed = await dashboardApi.supportTickets();
+      setTickets(refreshed.tickets?.length ? refreshed.tickets : [data.ticket, ...tickets]);
+      setNotice(data.message || "Support ticket created successfully. Our support team will review your request and respond as soon as possible.");
+      ticketForm.reset();
+    } catch (err) {
+      setError(err.message || "Could not create support ticket.");
+    } finally {
+      setTicketSubmitting(false);
+    }
+  };
+
+  const submitPaymentConfirmation = async (event) => {
+    event.preventDefault();
+    setSavingConfirmation(true);
     setError("");
     setNotice("");
     const form = new FormData(event.currentTarget);
     try {
-      const data = await dashboardApi.createSupportTicket({ subject: form.get("subject"), message: form.get("message") });
-      setTickets((current) => [data.ticket, ...current]);
-      setNotice("Support ticket created. Our team has been notified.");
+      const data = await dashboardApi.confirmPayment({ invoiceNumber: form.get("invoiceNumber") });
+      const [invoiceData, notificationData] = await Promise.all([dashboardApi.invoices(), dashboardApi.notifications()]);
+      setInvoices(invoiceData.invoices || []);
+      setNotifications(notificationData.notifications || []);
+      setNotice(data.message || "Payment confirmation submitted successfully. Please wait for admin approval.");
       event.currentTarget.reset();
     } catch (err) {
-      setError(err.message || "Could not create support ticket.");
+      setError(err.message || "Could not submit payment confirmation.");
+    } finally {
+      setSavingConfirmation(false);
     }
   };
+
+  if (loading) return <div className="form-card inline">Loading dashboard...</div>;
 
   if (section === "Service Details") {
     if (!selectedService) return <div className="empty-state">Service not found or still loading.</div>;
@@ -452,8 +507,12 @@ function DashboardCards({ section, serviceId }) {
     return <div className="portal-list cancelled-service-list">{categorized.cancelled.length ? categorized.cancelled.map((service) => <article className="portal-row client-bill-card cancelled-service-card" key={service._id}><div><strong>{service.companyName}</strong><span>{service.email || service.user?.email || "No email available"}</span></div><StatusBadge value="cancelled" /></article>) : <div className="empty-state">No cancelled services.</div>}</div>;
   }
 
+  if (section === "Payment Confirmation") {
+    return <div className="portal-list client-bill-list">{error && <div className="form-error">{error}</div>}{notice && <div className="success">{notice}</div>}<form className="form-card inline" onSubmit={submitPaymentConfirmation}><h3>Payment Confirmation</h3><label>Invoice Number<input name="invoiceNumber" required placeholder="INV-2026-001" /></label><Button type="submit">{savingConfirmation ? "Submitting..." : "Submit"}</Button></form></div>;
+  }
+
   if (section === "Invoices") {
-    return <div className="portal-list client-bill-list">{error && <div className="form-error">{error}</div>}{notice && <div className="success">{notice}</div>}{invoices.length ? invoices.map((invoice) => <article className="portal-row client-bill-card" key={invoice._id}><div><strong>{invoice.invoice}</strong><span>{invoice.company} | {invoice.billingMonth || formatDate(invoice.createdAt)}</span><p>{currency(invoice)} due {formatDate(invoice.dueDate)}</p></div><div className="client-bill-actions"><StatusBadge value={invoice.paymentSubmission?.status === "submitted" ? "Payment Submitted" : invoice.status} /><button type="button" className="table-action" onClick={() => downloadInvoice(invoice)} disabled={downloading === invoice._id}>{downloading === invoice._id ? "Preparing..." : "Download PDF"}</button></div></article>) : <div className="empty-state">No monthly bills found. Bills appear here after admin generates them.</div>}</div>;
+    return <div className="portal-list client-bill-list">{error && <div className="form-error">{error}</div>}{notice && <div className="success">{notice}</div>}{invoices.length ? invoices.map((invoice) => <article className="portal-row client-bill-card" key={invoice._id}><div><strong>{invoice.invoice}</strong><span>{invoice.company} | {invoice.billingMonth || formatDate(invoice.createdAt)}</span><p>{currency(invoice)} due {formatDate(invoice.dueDate)}</p><p>{invoice.message || "Invoice details available in the PDF."}</p></div><div className="client-bill-actions"><StatusBadge value={invoice.paymentSubmission?.status === "submitted" ? "Pending Admin Approval" : invoice.paymentSubmission?.status || invoice.status} /><button type="button" className="table-action" onClick={() => downloadInvoice(invoice)} disabled={downloading === invoice._id}>{downloading === invoice._id ? "Preparing..." : "Download PDF"}</button></div></article>) : <div className="empty-state">No monthly bills found. Bills appear here after admin generates them.</div>}</div>;
   }
 
   if (section === "Notifications") {
@@ -461,7 +520,7 @@ function DashboardCards({ section, serviceId }) {
   }
 
   if (section === "Support Tickets") {
-    return <div className="portal-list">{error && <div className="form-error">{error}</div>}{notice && <div className="success">{notice}</div>}<form className="form-card inline" onSubmit={createTicket}><h3>Create support ticket</h3><label>Subject<input name="subject" required placeholder="What do you need help with?" /></label><label>Message<textarea name="message" required placeholder="Describe the issue or request" /></label><Button type="submit">Create ticket</Button></form>{tickets.length ? tickets.map((ticket) => <article className="portal-row" key={ticket._id}><div><strong>{ticket.subject}</strong><span>{formatDate(ticket.createdAt)}</span><p>{ticket.adminResponse || ticket.message}</p></div><StatusBadge value={ticket.status} /></article>) : <div className="empty-state">No support tickets yet.</div>}</div>;
+    return <div className="portal-list">{error && <div className="form-error">{error}</div>}{notice && <div className="success">{notice}</div>}<form className="form-card inline" onSubmit={createTicket}><h3>Create support ticket</h3><label>Subject<input name="subject" required placeholder="What do you need help with?" /></label><label>Message<textarea name="message" required placeholder="Describe the issue or request" /></label><Button type="submit">{ticketSubmitting ? "Creating..." : "Create ticket"}</Button></form>{tickets.length ? tickets.map((ticket) => <article className="portal-row" key={ticket._id}><div><strong>{ticket.subject}</strong><span>{formatDate(ticket.createdAt)}</span><p>{ticket.message}</p>{ticket.adminResponse && <p><strong>Latest admin reply:</strong> {ticket.adminResponse}</p>}{ticket.resolvedAt && <p>Resolved {formatDate(ticket.resolvedAt)}</p>}</div><StatusBadge value={ticket.status} /></article>) : <div className="empty-state">No support tickets yet.</div>}</div>;
   }
 
   const stats = profile?.stats || {};

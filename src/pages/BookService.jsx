@@ -17,13 +17,16 @@ export function BookService() {
 
   const submitBooking = async (event) => {
     event.preventDefault();
+    const form = event.currentTarget;
     setLoading(true);
     setError("");
     try {
       const data = await bookingApi.create(booking);
       setCreatedBooking(data.booking);
       setSubmitted(true);
-      navigate("/");
+      form.reset();
+      setBooking({ services: [], requestedDate: "" });
+      navigate("/request-success?type=booking");
     } catch (err) {
       setError(err.message || "Could not submit booking.");
     } finally {

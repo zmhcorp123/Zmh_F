@@ -39,6 +39,7 @@ const OtpVerificationPage = lazyNamed(() => import("../pages/OtpVerificationPage
 const Dashboard = lazyNamed(() => import("../pages/Dashboard"), "Dashboard");
 const BookService = lazyNamed(() => import("../pages/BookService"), "BookService");
 const BookMeeting = lazyNamed(() => import("../pages/BookMeeting"), "BookMeeting");
+const RequestSuccess = lazyNamed(() => import("../pages/RequestSuccess"), "RequestSuccess");
 const NotFound = lazyNamed(() => import("../pages/NotFound"), "NotFound");
 
 function RouterNavigateBinder() {
@@ -146,6 +147,7 @@ export function AppRoutes() {
         <Route path="/bookings" element={<UserDashboardRoute section="Bookings" />} />
         <Route path="/settings" element={<UserDashboardRoute section="Settings" />} />
         <Route path="/invoices" element={<UserDashboardRoute section="Invoices" />} />
+        <Route path="/payment-confirmation" element={<UserDashboardRoute section="Payment Confirmation" />} />
         <Route path="/notifications" element={<UserDashboardRoute section="Notifications" />} />
         <Route path="/support-tickets" element={<UserDashboardRoute section="Support Tickets" />} />
         <Route path="/my-services" element={<UserDashboardRoute section="My Services" />} />
@@ -154,6 +156,7 @@ export function AppRoutes() {
         <Route path="/calendar" element={<UserDashboardRoute section="Calendar" />} />
         <Route path="/book-service" element={<BookService />} />
         <Route path="/book-meeting" element={<BookMeeting />} />
+        <Route path="/request-success" element={<RequestSuccess />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
