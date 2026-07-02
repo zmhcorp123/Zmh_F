@@ -5,6 +5,7 @@ import { SEO } from "../components/SEO";
 import { adminApi } from "../services/api";
 import { packages as defaultPackages } from "../data/siteData";
 import { navigate } from "../utils/router";
+import { useAuth } from "../context/useAuth";
 
 const adminTabs = [
   { name: "Overview", icon: "shield" },
@@ -37,6 +38,11 @@ const defaultAccountDetails = {
   bankAddress: "",
   referencePrefix: "ZMH",
   paymentInstructions: "Include the invoice or order reference with your transfer.",
+};
+
+const defaultCompanyDetails = {
+  officePhone: "+1 (555) 018-2048",
+  officeAddress: "Serving home service companies across the United States",
 };
 
 const defaultPackageRows = defaultPackages.map((item, index) => ({
@@ -89,19 +95,19 @@ function FormField({ label, helper, icon = "settings", children }) {
 function BankDetailsForm({ accountDetails, onChange, onSave, onReset, onTest, saving }) {
   const update = (field) => (event) => onChange(field, event.target.value);
   return (
-    <SettingsCard eyebrow="Payments" title="Bank Transfer Details" description="These details appear on invoice summaries and client payment documents.">
+    <SettingsCard eyebrow="Payments" title="Bank Transfer Details" description="Used on invoice summaries and client payment documents.">
       <form className="bank-details-form" onSubmit={onSave}>
         <div className="settings-form-grid">
-          <FormField label="Beneficiary Name" helper="Legal receiving account name." icon="user"><input value={accountDetails.beneficiaryName || ""} onChange={update("beneficiaryName")} placeholder="ZMH USA Corp" required /></FormField>
-          <FormField label="Bank Name" helper="Receiving bank or financial institution." icon="database"><input value={accountDetails.bankName || ""} onChange={update("bankName")} placeholder="Bank name" required /></FormField>
-          <FormField label="Account Number" helper="Primary receiving account number." icon="bill"><input value={accountDetails.accountNumber || ""} onChange={update("accountNumber")} placeholder="Account number" required /></FormField>
-          <FormField label="Routing Number" helper="ACH or domestic routing number." icon="route"><input value={accountDetails.routingNumber || ""} onChange={update("routingNumber")} placeholder="Routing number" /></FormField>
-          <FormField label="SWIFT Code" helper="International transfer code." icon="server"><input value={accountDetails.swiftCode || ""} onChange={update("swiftCode")} placeholder="SWIFT / BIC" /></FormField>
-          <FormField label="Branch Name" helper="Optional branch identifier." icon="briefcase"><input value={accountDetails.branchName || ""} onChange={update("branchName")} placeholder="Branch name" /></FormField>
-          <FormField label="Bank Address" helper="Street, city, state, and country." icon="map"><input value={accountDetails.bankAddress || ""} onChange={update("bankAddress")} placeholder="Bank address" /></FormField>
-          <FormField label="Reference" helper="Prefix used before the order ID." icon="receipt"><input value={accountDetails.referencePrefix || ""} onChange={update("referencePrefix")} placeholder="ZMH" /></FormField>
+          <FormField label="Beneficiary" helper="Legal receiving name." icon="user"><input value={accountDetails.beneficiaryName || ""} onChange={update("beneficiaryName")} placeholder="ZMH USA Corp" required /></FormField>
+          <FormField label="Bank" helper="Receiving institution." icon="database"><input value={accountDetails.bankName || ""} onChange={update("bankName")} placeholder="Bank name" required /></FormField>
+          <FormField label="Account No." helper="Primary account number." icon="bill"><input value={accountDetails.accountNumber || ""} onChange={update("accountNumber")} placeholder="Account number" required /></FormField>
+          <FormField label="Routing No." helper="ACH or domestic routing." icon="route"><input value={accountDetails.routingNumber || ""} onChange={update("routingNumber")} placeholder="Routing number" /></FormField>
+          <FormField label="SWIFT" helper="International transfer code." icon="server"><input value={accountDetails.swiftCode || ""} onChange={update("swiftCode")} placeholder="SWIFT / BIC" /></FormField>
+          <FormField label="Branch" helper="Optional branch name." icon="briefcase"><input value={accountDetails.branchName || ""} onChange={update("branchName")} placeholder="Branch name" /></FormField>
+          <FormField label="Bank Address" helper="Street, city, country." icon="map"><input value={accountDetails.bankAddress || ""} onChange={update("bankAddress")} placeholder="Bank address" /></FormField>
+          <FormField label="Reference" helper="Prefix before order ID." icon="receipt"><input value={accountDetails.referencePrefix || ""} onChange={update("referencePrefix")} placeholder="ZMH" /></FormField>
         </div>
-        <FormField label="Payment Instructions" helper="Shown to the client below the transfer details." icon="mail"><textarea value={accountDetails.paymentInstructions || ""} onChange={update("paymentInstructions")} placeholder="Include the invoice reference with your transfer." /></FormField>
+        <FormField label="Instructions" helper="Shown below transfer details." icon="mail"><textarea value={accountDetails.paymentInstructions || ""} onChange={update("paymentInstructions")} placeholder="Include the invoice reference with your transfer." /></FormField>
         <div className="settings-footer-actions">
           <button type="submit" className="settings-primary-action" disabled={saving}>{saving ? "Saving..." : "Save Changes"}</button>
           <button type="button" className="settings-secondary-action" onClick={onReset}>Reset</button>
@@ -109,6 +115,22 @@ function BankDetailsForm({ accountDetails, onChange, onSave, onReset, onTest, sa
         </div>
       </form>
     </SettingsCard>
+  );
+}
+
+function CompanyDetailsForm({ companyDetails, onChange, onSave, onReset, saving }) {
+  const update = (field) => (event) => onChange(field, event.target.value);
+  return (
+    <form className="company-details-form" onSubmit={onSave}>
+      <div className="settings-form-grid">
+        <FormField label="Office Number" helper="Shown on public contact areas." icon="phone"><input value={companyDetails.officePhone || ""} onChange={update("officePhone")} placeholder="+1 (555) 018-2048" /></FormField>
+        <FormField label="Office Address" helper="Shown on the contact page." icon="map"><input value={companyDetails.officeAddress || ""} onChange={update("officeAddress")} placeholder="Office address" /></FormField>
+      </div>
+      <div className="settings-footer-actions">
+        <button type="submit" className="settings-primary-action" disabled={saving}>{saving ? "Saving..." : "Save Office Details"}</button>
+        <button type="button" className="settings-secondary-action" onClick={onReset}>Reset</button>
+      </div>
+    </form>
   );
 }
 
@@ -197,10 +219,12 @@ function SettingsPanel() {
   const [saved, setSaved] = useState("");
   const [error, setError] = useState("");
   const [accountDetails, setAccountDetails] = useState(defaultAccountDetails);
+  const [companyDetails, setCompanyDetails] = useState(defaultCompanyDetails);
   const [packageRows, setPackageRows] = useState(defaultPackageRows);
   const [editingIndex, setEditingIndex] = useState(null);
   const [packageDraft, setPackageDraft] = useState(null);
   const [savingBank, setSavingBank] = useState(false);
+  const [savingCompany, setSavingCompany] = useState(false);
   const [savingPackage, setSavingPackage] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -210,7 +234,9 @@ function SettingsPanel() {
       if (!active) return;
       if (Array.isArray(pricingData.packages) && pricingData.packages.length) setPackageRows(pricingData.packages);
       const accountSetting = (settingsData.settings || []).find((item) => item.key === "accountDetails");
+      const companySetting = (settingsData.settings || []).find((item) => item.key === "companyDetails");
       if (accountSetting?.value) setAccountDetails((current) => ({ ...current, ...accountSetting.value }));
+      if (companySetting?.value) setCompanyDetails((current) => ({ ...current, ...companySetting.value }));
     }).catch((err) => {
       if (active) setError(err.message || "Could not load settings.");
     }).finally(() => {
@@ -221,6 +247,25 @@ function SettingsPanel() {
 
   const updateAccount = (field, value) => {
     setAccountDetails((current) => ({ ...current, [field]: value }));
+  };
+
+  const updateCompany = (field, value) => {
+    setCompanyDetails((current) => ({ ...current, [field]: value }));
+  };
+
+  const saveCompanyDetails = async (event) => {
+    event.preventDefault();
+    setSaved("");
+    setError("");
+    setSavingCompany(true);
+    try {
+      await adminApi.settings({ companyDetails });
+      setSaved("Office details saved.");
+    } catch (err) {
+      setError(err.message || "Could not save office details.");
+    } finally {
+      setSavingCompany(false);
+    }
   };
 
   const savePricingRows = async (rows, message = "Package pricing saved.") => {
@@ -386,9 +431,10 @@ function SettingsPanel() {
           <div className="settings-left-column">
             <SettingsCard eyebrow="Company" title="Company Settings" description="Core company identity used throughout the admin experience.">
               <div className="company-settings-summary">
-                <div className="brand-mark">Z</div>
+                <div className="brand-mark"><img src="/brand/zmh-usa-corp-mark.png" alt="" /></div>
                 <div><strong>ZMH USA Corp.</strong><span>Remote operations support for home service companies.</span></div>
               </div>
+              <CompanyDetailsForm companyDetails={companyDetails} onChange={updateCompany} onSave={saveCompanyDetails} onReset={() => setCompanyDetails(defaultCompanyDetails)} saving={savingCompany} />
             </SettingsCard>
             <BankDetailsForm accountDetails={accountDetails} onChange={updateAccount} onSave={saveAccountDetails} onReset={() => setAccountDetails(defaultAccountDetails)} onTest={testTransferDetails} saving={savingBank} />
           </div>
@@ -430,6 +476,7 @@ function SettingsPanel() {
 }
 
 export function AdminPage() {
+  const { logout } = useAuth();
   const [tab, setTab] = useState("Overview");
   const [users, setUsers] = useState([]);
   const [bookings, setBookings] = useState([]);
@@ -442,6 +489,11 @@ export function AdminPage() {
   const [orderSearch, setOrderSearch] = useState("");
   const [orderSort, setOrderSort] = useState("newest");
   const [orderFilter, setOrderFilter] = useState("all");
+  const [billScope, setBillScope] = useState("individual");
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
 
   useEffect(() => {
     let active = true;
@@ -584,6 +636,7 @@ export function AdminPage() {
       setBills((current) => [...(data.bills || []), ...current]);
       setNotice(`Bills sent to ${data.bills?.length || 0} user(s). Emails sent: ${data.emailsSent || 0}.`);
       event.currentTarget.reset();
+      setBillScope("individual");
     } catch (err) {
       setError(err.message || "Could not send bills.");
     } finally {
@@ -629,15 +682,17 @@ export function AdminPage() {
   const renderBookingCards = (items, emptyText, readOnly = false) => (
     <div className="booking-admin-list">
       {items.length ? items.map((booking) => (
-        <form className="booking-admin-card" key={booking._id} onSubmit={(event) => updateBooking(event, booking)}>
+        <form className={readOnly ? "booking-admin-card cancelled-admin-card" : "booking-admin-card"} key={booking._id} onSubmit={(event) => updateBooking(event, booking)}>
           <div>
             <span className="eyebrow">{booking.email || booking.user?.email || "Public request"}</span>
             <h3>{booking.companyName}</h3>
-            <p>{booking.services?.join(", ") || "No services selected"}</p>
+            {!readOnly && <p>{booking.services?.join(", ") || "No services selected"}</p>}
           </div>
-          <label>Requested Date<input name="requestedDate" type="date" defaultValue={booking.requestedDate ? booking.requestedDate.slice(0, 10) : ""} disabled={readOnly} /></label>
-          <label>Admin Response<textarea name="adminResponse" defaultValue={booking.adminResponse || ""} placeholder="Write the response the user will see..." disabled={readOnly} /></label>
-          <label>Internal Notes<textarea name="notes" defaultValue={booking.notes || ""} placeholder="Private admin notes" disabled={readOnly} /></label>
+          {!readOnly && <>
+            <label>Requested Date<input name="requestedDate" type="date" defaultValue={booking.requestedDate ? booking.requestedDate.slice(0, 10) : ""} /></label>
+            <label>Admin Response<textarea name="adminResponse" defaultValue={booking.adminResponse || ""} placeholder="Write the response the user will see..." /></label>
+            <label>Internal Notes<textarea name="notes" defaultValue={booking.notes || ""} placeholder="Private admin notes" /></label>
+          </>}
           <div className="booking-admin-footer">
             <span>Created {formatDate(booking.createdAt)}</span>
             {readOnly ? <span className="status-pill">{booking.status}</span> : <div className="decision-actions">
@@ -695,11 +750,13 @@ export function AdminPage() {
         <div className="admin-main">
           <div className="admin-hero">
             <div>
-              <span className="eyebrow">MongoDB connected</span>
               <h2>{tab === "Overview" ? "Manage users, orders, bills, and support" : tab}</h2>
               <p>Review bookings, manage ongoing order profiles, resolve support tickets, and send client bills.</p>
             </div>
-            <Button to="/user-dashboard" variant="secondary" icon="user">User Dashboard</Button>
+            <div className="admin-hero-actions">
+              <Button to="/user-dashboard" variant="secondary" icon="user">User Dashboard</Button>
+              <button type="button" className="ghost-small admin-logout-button" onClick={handleLogout}>Logout</button>
+            </div>
           </div>
 
           {error && <div className="form-error">{error}</div>}
@@ -786,19 +843,40 @@ export function AdminPage() {
 
           {tab === "Send Bills" && (
             <form className="form-card send-bills-form" onSubmit={sendBills}>
-              <div className="form-grid compact">
-                <label>Send to<select name="scope" defaultValue="individual"><option value="individual">Individual user</option><option value="custom">Custom selected users</option><option value="all">All active users</option></select></label>
-                <label>Individual user<select name="userId" defaultValue=""><option value="">Select user</option>{users.filter((user) => user.role !== "admin").map((user) => <option key={user._id} value={user._id}>{user.name} - {user.email}</option>)}</select></label>
-                <label>Amount<input name="amount" type="number" min="0" step="0.01" required /></label>
-                <label>Currency<input name="currency" defaultValue="USD" /></label>
-                <label>Due date<input name="dueDate" type="date" /></label>
-                <label>Line item<input name="label" defaultValue="Service bill" /></label>
+              <div className="send-bill-header">
+                <div>
+                  <span className="eyebrow">Monthly billing</span>
+                  <h3>Send client bill</h3>
+                  <p>Create a monthly bill and email it to one client, selected clients, or all active users.</p>
+                </div>
+                <span>{users.filter((user) => user.role !== "admin").length} billable users</span>
               </div>
-              <div className="custom-user-box">
-                {users.filter((user) => user.role !== "admin").map((user) => <label className="checkbox" key={user._id}><input type="checkbox" name="userIds" value={user._id} /> {user.name} ({user.email})</label>)}
+              <div className="send-bill-section">
+                <h4>Recipients</h4>
+                <div className="form-grid compact send-bill-recipient-grid">
+                  <label>Send to<select name="scope" value={billScope} onChange={(event) => setBillScope(event.target.value)}><option value="individual">Individual user</option><option value="custom">Custom selected users</option><option value="all">All active users</option></select></label>
+                  {billScope === "individual" && <label>Individual user<select name="userId" defaultValue="" required><option value="">Select user</option>{users.filter((user) => user.role !== "admin").map((user) => <option key={user._id} value={user._id}>{user.name} - {user.email}</option>)}</select></label>}
+                  {billScope === "all" && <div className="send-bill-audience"><strong>All active users</strong><span>The bill will be sent to every active non-admin user.</span></div>}
+                </div>
+                {billScope === "custom" && <div className="custom-user-box send-bill-user-list">
+                  {users.filter((user) => user.role !== "admin").map((user) => <label className="checkbox" key={user._id}><input type="checkbox" name="userIds" value={user._id} /> <span><strong>{user.name}</strong><small>{user.email}</small></span></label>)}
+                </div>}
               </div>
-              <label>Bill message<textarea name="message" placeholder="Optional message for the bill email" /></label>
-              <Button type="submit" icon="mail">{savingId === "send-bills" ? "Sending..." : "Send bills"}</Button>
+              <div className="send-bill-section">
+                <h4>Bill details</h4>
+                <div className="form-grid compact">
+                  <label>Amount<input name="amount" type="number" min="0" step="0.01" required /></label>
+                  <label>Currency<input name="currency" defaultValue="USD" /></label>
+                  <label>Due date<input name="dueDate" type="date" /></label>
+                  <label>Line item<input name="label" defaultValue="Service bill" /></label>
+                </div>
+              </div>
+              <div className="send-bill-section">
+                <label>Bill message<textarea name="message" placeholder="Optional message for the bill email" /></label>
+              </div>
+              <div className="send-bill-footer">
+                <Button type="submit" icon="mail">{savingId === "send-bills" ? "Sending..." : "Send bills"}</Button>
+              </div>
             </form>
           )}
 

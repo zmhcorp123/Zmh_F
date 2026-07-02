@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { services, industries, faqs } from "../data/siteData";
+import { company, services, industries, faqs } from "../data/siteData";
 import { navigate } from "../utils/router";
 
 export function Chatbot() {
@@ -12,7 +12,7 @@ export function Chatbot() {
     pricing: "Pricing is custom across Starter, Growth, Professional, and Enterprise packages. Book a free operations audit for a quote.",
     industries: "We support " + industries.map((item) => item.name).join(", ") + " companies.",
     faq: faqs.map(([question, response]) => ({ question, response })),
-    support: "You can contact support by phone, email, or the contact form. Backend AI integration can connect here later.",
+    support: "For customer service or technical support, email " + company.emails.support + " or use the contact form.",
   }), []);
 
   const answer = (text) => {
@@ -51,7 +51,7 @@ export function Chatbot() {
           <div className="chat-faqs">
             {faqs.slice(0, 4).map(([question]) => <button type="button" key={question} onClick={() => addQuestion(question)}>{question}</button>)}
           </div>
-          <div className="chat-actions"><button type="button" onClick={() => navigate("/book-meeting")}>Book Meeting</button><button type="button" onClick={() => navigate("/contact")}>Contact Support</button><a href="mailto:hello@zmhusacorp.com">Email Us</a></div></div>
+          <div className="chat-actions"><button type="button" onClick={() => navigate("/book-meeting")}>Book Meeting</button><button type="button" onClick={() => navigate("/contact")}>Contact Support</button><a href={"mailto:" + company.emails.support}>Email Us</a></div></div>
           <form onSubmit={send}><input value={input} onChange={(event) => setInput(event.target.value)} placeholder="Ask a question..." aria-label="Ask a question" /><button type="submit">Send</button></form>
         </section>
       )}

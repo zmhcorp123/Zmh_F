@@ -1,6 +1,13 @@
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, "");
 const AUTH_TOKEN_KEY = "zmh_auth_token";
 
+const safeApiPath = (path) => {
+  if (typeof path !== "string" || !path.startsWith("/") || path.startsWith("//") || /^[a-z][a-z\d+.-]*:/i.test(path)) {
+    throw new Error("Invalid API path");
+  }
+  return path;
+};
+
 export const tokenStore = {
   get: () => localStorage.getItem(AUTH_TOKEN_KEY),
   set: (token) => {
@@ -18,9 +25,10 @@ const request = async (path, options = {}) => {
   if (hasBody && !isFormData) headers.set("Content-Type", "application/json");
   if (token) headers.set("Authorization", `Bearer ${token}`);
 
-  const response = await fetch(API_BASE_URL + path, {
+  const response = await fetch(API_BASE_URL + safeApiPath(path), {
     method: options.method || "GET",
     credentials: "include",
+    cache: "no-store",
     ...options,
     headers,
     body: hasBody && !isFormData ? JSON.stringify(options.body) : options.body,
@@ -56,6 +64,7 @@ export const bookingApi = {
 
 export const settingsApi = {
   packages: () => request("/settings/packages"),
+  company: () => request("/settings/company"),
 };
 
 export const contactApi = {

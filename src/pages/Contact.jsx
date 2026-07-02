@@ -1,12 +1,29 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { company } from "../data/siteData";
 import { Button } from "../components/Button";
 import { PageHero } from "../components/Sections";
 import { SEO } from "../components/SEO";
-import { contactApi } from "../services/api";
+import { contactApi, settingsApi } from "../services/api";
 
 export function Contact() {
-  return <><SEO title="Contact" /><PageHero eyebrow="Contact" title="Talk with an operations specialist" text="Use the form, email, or phone number to start your operations audit." /><section className="split"><div className="premium-panel"><h3>Business Information</h3><p>{company.phone}</p><p>{company.email}</p><p>{company.address}</p></div><ContactForm /></section></>;
+  const [companyDetails, setCompanyDetails] = useState({ officePhone: company.phone, officeAddress: company.address });
+
+  useEffect(() => {
+    let active = true;
+    settingsApi.company().then((data) => {
+      if (active && data.companyDetails) setCompanyDetails((current) => ({ ...current, ...data.companyDetails }));
+    }).catch(() => {});
+    return () => { active = false; };
+  }, []);
+
+  const contactRows = [
+    ["Phone", companyDetails.officePhone],
+    ["Sales", company.emails.sales],
+    ["Support", company.emails.support],
+    ["Office", companyDetails.officeAddress]
+  ];
+
+  return <><SEO title="Contact" /><PageHero eyebrow="Contact" title="Talk with an operations specialist" text="Use the form, email, or phone number to start your operations audit." /><section className="split contact-page-grid"><div className="premium-panel contact-info-panel"><span className="eyebrow">Business Information</span><h3>Built for fast operational handoffs.</h3><p>Send the details once and our team will route your request to sales, support, billing, or onboarding without making you repeat context.</p><div className="contact-detail-grid">{contactRows.map(([label, value]) => <div key={label}><span>{label}</span><strong>{value}</strong></div>)}</div><Button to="/book-meeting" icon="calendar">Book Free Operations Audit</Button></div><ContactForm /></section></>;
 }
 
 function ContactForm() {

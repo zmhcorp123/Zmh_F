@@ -33,6 +33,9 @@ const companyLinks = [
   ["Cookie Policy", "/cookie-policy"],
 ];
 
+const logoMark = "/brand/zmh-usa-corp-mark.png";
+const logoFull = "/brand/zmh-usa-corp-logo.png";
+
 function LinkButton({ to, children, onClick }) {
   return <button className="text-link" onClick={() => { navigate(to); onClick?.(); }}>{children}</button>;
 }
@@ -41,22 +44,29 @@ export function Layout({ children }) {
   const [open, setOpen] = useState(false);
   const [dark, setDark] = useState(false);
   const [newsletterSaved, setNewsletterSaved] = useState(false);
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
+  const currentPath = window.location.pathname;
 
   const closeMenu = () => setOpen(false);
+  const handleLogout = () => {
+    logout();
+    closeMenu();
+    navigate("/");
+  };
 
   return (
     <div className={dark ? "app dark" : "app"}>
       <header className="navbar">
         <button className="brand" onClick={() => navigate("/")} aria-label="ZMH USA Corp home">
-          <span className="brand-mark">Z</span>
+          <span className="brand-mark"><img src={logoMark} alt="" /></span>
           <span><strong>{company.name}</strong><small>Remote Operations</small></span>
         </button>
         <nav className={open ? "nav open" : "nav"} aria-label="Primary navigation">
-          {nav.map(([label, to]) => <LinkButton key={to} to={to} onClick={closeMenu}>{label}</LinkButton>)}
+          {nav.map(([label, to]) => <button key={to} className={"text-link " + (currentPath === to || (to !== "/" && currentPath.startsWith(to)) ? "active" : "")} onClick={() => { navigate(to); closeMenu(); }}>{label}</button>)}
           <button className="text-link mobile-auth-link" onClick={() => { navigate(isAuthenticated ? (user?.role === "admin" ? "/admin-dashboard" : "/user-dashboard") : "/login"); closeMenu(); }}>
             {isAuthenticated ? (user?.role === "admin" ? "Admin" : "Dashboard") : "Login"}
           </button>
+          {isAuthenticated && <button className="text-link mobile-auth-link" onClick={handleLogout}>Logout</button>}
           <button className="text-link mobile-auth-link primary" onClick={() => { navigate("/book-meeting"); closeMenu(); }}>Book Audit</button>
         </nav>
         <div className="nav-actions">
@@ -64,7 +74,7 @@ export function Layout({ children }) {
             <Icon name={dark ? "sun" : "moon"} />
           </button>
           {isAuthenticated ? (
-            <button className="ghost-small" onClick={() => navigate(user?.role === "admin" ? "/admin-dashboard" : "/user-dashboard")}>{user?.role === "admin" ? "Admin" : "Dashboard"}</button>
+            <><button className="ghost-small" onClick={() => navigate(user?.role === "admin" ? "/admin-dashboard" : "/user-dashboard")}>{user?.role === "admin" ? "Admin" : "Dashboard"}</button><button className="ghost-small logout-button" type="button" onClick={handleLogout} aria-label="Log out of your account">Logout</button></>
           ) : (
             <button className="ghost-small" onClick={() => navigate("/login")}>Login</button>
           )}
@@ -76,7 +86,7 @@ export function Layout({ children }) {
       <footer className="footer">
         <div className="footer-top">
           <div>
-            <div className="brand footer-brand"><span className="brand-mark">Z</span><span><strong>{company.name}</strong><small>{company.tagline}</small></span></div>
+            <div className="brand footer-brand"><span className="footer-logo"><img src={logoFull} alt="ZMH USA Corp. Remote Operations" /></span><span><strong>{company.name}</strong><small>{company.tagline}</small></span></div>
             <p>Premium remote operations support for home service companies that need disciplined call, scheduling, dispatch, CRM, and admin workflows.</p>
             <div className="socials">{socials.map(([label, icon, href]) => <a key={label} href={href} target="_blank" rel="noreferrer" aria-label={label} title={label}><Icon name={icon} size={18} /></a>)}</div>
           </div>
@@ -86,6 +96,10 @@ export function Layout({ children }) {
           <div>
             <h4>Newsletter</h4>
             <p>Operations ideas for service companies.</p>
+            <div className="footer-email-list">
+              <span><strong>Sales</strong>{company.emails.sales}</span>
+              <span><strong>Support</strong>{company.emails.support}</span>
+            </div>
             <form className="newsletter" onSubmit={(event) => { event.preventDefault(); setNewsletterSaved(true); }}>
               <input type="email" required placeholder="Email address" aria-label="Email address" />
               <button type="submit">Join</button>
@@ -93,7 +107,7 @@ export function Layout({ children }) {
             {newsletterSaved && <small className="inline-note">Saved for backend subscription.</small>}
           </div>
         </div>
-        <div className="footer-bottom"><span>Copyright 2026 ZMH USA Corp. All rights reserved.</span><span>{company.email} | {company.phone}</span></div>
+        <div className="footer-bottom"><span>Copyright 2026 ZMH USA Corp. All rights reserved.</span><span>{company.emails.sales} | {company.phone}</span></div>
       </footer>
       <Chatbot />
     </div>

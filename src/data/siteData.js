@@ -2,7 +2,11 @@ export const company = {
   name: "ZMH USA Corp.",
   tagline: "Your Remote Operations Department for Home Service Companies",
   phone: "+1 (555) 018-2048",
-  email: "hello@zmhusacorp.com",
+  email: "sales@zmhusacorp.com",
+  emails: {
+    sales: "sales@zmhusacorp.com",
+    support: "support@zmhusacorp.com",
+  },
   address: "Serving home service companies across the United States",
 };
 
@@ -128,10 +132,12 @@ export const teamProfiles = [
 ];
 
 export const caseStudies = [
-  { title: "Pilot Project", metric: "42% faster follow-up", body: "Built a documented call intake and scheduling process for a service operator validating remote support." },
-  { title: "Residential HVAC", metric: "31% more booked estimates", body: "Captured overflow calls, qualified urgency, and coordinated technician availability during peak season." },
-  { title: "Commercial Plumbing", metric: "24/7 emergency coverage", body: "Introduced after-hours triage and escalation for commercial clients with urgent response needs." },
-  { title: "Property Management", metric: "18 hours saved weekly", body: "Centralized maintenance requests, vendor updates, tenant communication, and status reporting." },
+  { title: "HVAC Overflow Call Coverage", industry: "HVAC", metric: "More booked estimates", body: "ZMH handled missed-call windows, qualified urgency, and captured estimate requests so office staff could stay focused on active jobs.", services: ["Call Answering", "Lead Qualification", "Scheduling"], outcome: "Urgent calls were triaged faster, non-urgent estimates were captured, and owners received cleaner daily summaries." },
+  { title: "Plumbing Dispatch & Scheduling Cleanup", industry: "Plumbing", metric: "Faster field handoffs", body: "Remote operations support organized technician availability, appointment notes, and customer updates for cleaner daily dispatch.", services: ["Dispatch", "Scheduling", "Job Tracking"], outcome: "Technicians received clearer job notes while customers got consistent arrival-window updates." },
+  { title: "Property Management Support Desk", industry: "Property Management", metric: "Single support channel", body: "Tenant questions, vendor updates, and recurring admin requests were routed into a documented workflow with visible dashboard follow-up.", services: ["Customer Support", "Administrative Support", "Workflow Management"], outcome: "Routine requests became easier to track, assign, and close without scattered inbox follow-up." },
+  { title: "Roofing CRM & Reporting Hygiene", industry: "Roofing", metric: "Better owner visibility", body: "Daily CRM notes, job status updates, and summary reporting gave leadership a clearer view of calls, bookings, and service progress.", services: ["CRM Management", "Reporting", "Lead Qualification"], outcome: "Pipeline notes stayed current and leadership could see where leads, estimates, and follow-ups were slowing down." },
+  { title: "Cleaning Company Billing Follow-Up", industry: "Cleaning", metric: "Cleaner monthly billing", body: "Invoice reminders, payment status tracking, and client follow-up helped reduce admin noise and keep billing conversations documented.", services: ["Billing Support", "Customer Support", "Administrative Support"], outcome: "Billing questions moved through one process, keeping client conversations and payment status easier to review." },
+  { title: "Electrical After-Hours Request Routing", industry: "Electrical", metric: "Stronger emergency coverage", body: "After-hours calls were sorted by urgency, documented against the right service category, and escalated using client-approved instructions.", services: ["After Hours Coverage", "Call Answering", "Dispatch"], outcome: "Emergency requests reached the right path without turning every evening call into a field-team interruption." },
 ];
 
 export const blogPosts = [

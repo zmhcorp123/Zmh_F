@@ -3,6 +3,7 @@ import { Button } from "../components/Button";
 import { Card } from "../components/Sections";
 import { SEO } from "../components/SEO";
 import { useAuth } from "../context/useAuth";
+import { company } from "../data/siteData";
 import { bookingApi, dashboardApi } from "../services/api";
 import { navigate } from "../utils/router";
 
@@ -302,7 +303,7 @@ function DashboardCards({ section, serviceId }) {
           <div className="order-enterprise-panel"><div className="panel-body"><h3>Completed Services</h3><div className="client-service-tags">{completed.length ? completed.map((item) => <span key={item}>{item}</span>) : <p>No completed services yet.</p>}</div></div></div>
           <div className="order-enterprise-panel"><div className="panel-body"><h3>Remaining Services</h3><div className="client-service-tags">{remaining.length ? remaining.map((item) => <span key={item}>{item}</span>) : <p>No remaining services listed.</p>}</div></div></div>
           <div className="order-enterprise-panel"><div className="panel-body"><h3>Payment History</h3>{selectedService.paymentHistory?.length ? selectedService.paymentHistory.map((item) => <p key={item._id}><strong>{item.status}</strong> | {formatDate(item.paymentDate)} | {item.transactionId}</p>) : <p>No payment submissions yet.</p>}</div></div>
-          <div className="order-enterprise-panel"><div className="panel-body"><h3>Support Contact</h3><p>For help with this service, contact support@zmhusacorp.com or open a support ticket from your dashboard.</p></div></div>
+          <div className="order-enterprise-panel"><div className="panel-body"><h3>Support Contact</h3><p>For help with this service, contact {company.emails.support} or open a support ticket from your dashboard.</p></div></div>
         </div>
         <PaymentModal service={paymentModal} invoice={paymentModal?.latestInvoice} onClose={() => setPaymentModal(null)} onSubmit={submitPayment} saving={savingPayment} />
       </div>
@@ -327,7 +328,7 @@ function DashboardCards({ section, serviceId }) {
   }
 
   if (section === "Cancelled Services") {
-    return <div className="portal-list">{categorized.cancelled.length ? categorized.cancelled.map((service) => <article className="portal-row client-bill-card" key={service._id}><div><strong>{service.companyName}</strong><span>{service.packageName || "Custom support"} | Cancelled {formatDate(service.updatedAt)}</span><p>{service.adminResponse || service.notes || "Service cancelled."}</p></div><div className="client-bill-actions"><StatusBadge value="cancelled" /><button className="table-action" type="button" onClick={() => downloadInvoice(service.latestInvoice)}>Download Final Invoice</button><button className="table-action" type="button" onClick={() => navigate(`/my-services/${service._id}`)}>View Details</button></div></article>) : <div className="empty-state">No cancelled services.</div>}</div>;
+    return <div className="portal-list cancelled-service-list">{categorized.cancelled.length ? categorized.cancelled.map((service) => <article className="portal-row client-bill-card cancelled-service-card" key={service._id}><div><strong>{service.companyName}</strong><span>{service.email || service.user?.email || "No email available"}</span></div><StatusBadge value="cancelled" /></article>) : <div className="empty-state">No cancelled services.</div>}</div>;
   }
 
   if (section === "Invoices") {
