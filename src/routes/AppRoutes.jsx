@@ -6,6 +6,7 @@ import { ServiceDetail } from "../pages/ServiceDetail";
 import { Services } from "../pages/Services";
 import { industries, packages, services, teamProfiles } from "../data/siteData";
 import { useAuth } from "../context/useAuth";
+import { ProtectedRoute, GuestRoute } from "./RouteGuards";
 import { setRouterNavigate } from "../utils/router";
 
 const lazyNamed = (loader, exportName) => lazy(() => loader().then((module) => ({ default: module[exportName] })));
@@ -76,25 +77,14 @@ function TeamProfileRoute() {
   return profile ? <TeamProfile profile={profile} /> : <NotFound />;
 }
 
-function AdminRoute() {
-  const { authReady, user } = useAuth();
-  if (!authReady) return null;
-  if (!user) return <Navigate to="/login" replace />;
-  return user.role === "admin" ? <AdminPage /> : <Navigate to="/user-dashboard" replace />;
-}
-
-function AdminOrderRoute() {
-  const { authReady, user } = useAuth();
-  if (!authReady) return null;
-  if (!user) return <Navigate to="/login" replace />;
-  return user.role === "admin" ? <AdminOrderDetails /> : <Navigate to="/user-dashboard" replace />;
-}
-
 function UserDashboardRoute({ section = "Dashboard", serviceId = "" }) {
-  const { authReady, user } = useAuth();
-  if (!authReady) return null;
-  if (!user) return <Navigate to="/login" replace />;
-  return user.role === "admin" ? <Navigate to="/admin-dashboard" replace /> : <Dashboard section={section} serviceId={serviceId} />;
+  return <ProtectedRoute><UserDashboardContent section={section} serviceId={serviceId} /></ProtectedRoute>;
+}
+
+function UserDashboardContent({ section, serviceId }) {
+  const { user } = useAuth();
+  if (user?.role === "admin") return <Navigate to="/admin-dashboard" replace />;
+  return <Dashboard section={section} serviceId={serviceId} />;
 }
 
 function UserServiceDetailsRoute() {
@@ -103,10 +93,12 @@ function UserServiceDetailsRoute() {
 }
 
 function DashboardRoute() {
-  const { authReady, user } = useAuth();
-  if (!authReady) return null;
-  if (!user) return <Navigate to="/login" replace />;
-  return <Navigate to={user.role === "admin" ? "/admin-dashboard" : "/user-dashboard"} replace />;
+  return <ProtectedRoute><DashboardRedirect /></ProtectedRoute>;
+}
+
+function DashboardRedirect() {
+  const { user } = useAuth();
+  return <Navigate to={user?.role === "admin" ? "/admin-dashboard" : "/user-dashboard"} replace />;
 }
 
 export function AppRoutes() {
@@ -131,9 +123,9 @@ export function AppRoutes() {
         <Route path="/case-studies" element={<CaseStudies />} />
         <Route path="/faq" element={<FAQ />} />
         <Route path="/contact" element={<Contact />} />
-        <Route path="/admin" element={<AdminRoute />} />
-        <Route path="/admin/orders/:orderId" element={<AdminOrderRoute />} />
-        <Route path="/admin-dashboard" element={<AdminRoute />} />
+        <Route path="/admin" element={<ProtectedRoute role="admin"><AdminPage /></ProtectedRoute>} />
+        <Route path="/admin/orders/:orderId" element={<ProtectedRoute role="admin"><AdminOrderDetails /></ProtectedRoute>} />
+        <Route path="/admin-dashboard" element={<ProtectedRoute role="admin"><AdminPage /></ProtectedRoute>} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/careers" element={<Careers />} />
         <Route path="/privacy" element={<Privacy />} />
@@ -141,11 +133,13 @@ export function AppRoutes() {
         <Route path="/terms" element={<Terms />} />
         <Route path="/terms-conditions" element={<Terms />} />
         <Route path="/cookie-policy" element={<CookiePolicy />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignupPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route path="/otp-verification" element={<OtpVerificationPage />} />
+        <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
+        <Route path="/signin" element={<GuestRoute><LoginPage /></GuestRoute>} />
+        <Route path="/signup" element={<GuestRoute><SignupPage /></GuestRoute>} />
+        <Route path="/register" element={<GuestRoute><SignupPage /></GuestRoute>} />
+        <Route path="/forgot-password" element={<GuestRoute><ForgotPasswordPage /></GuestRoute>} />
+        <Route path="/reset-password" element={<GuestRoute allowAuthenticated><ResetPasswordPage /></GuestRoute>} />
+        <Route path="/otp-verification" element={<GuestRoute><OtpVerificationPage /></GuestRoute>} />
         <Route path="/dashboard" element={<DashboardRoute />} />
         <Route path="/user-dashboard" element={<UserDashboardRoute section="Dashboard" />} />
         <Route path="/profile" element={<UserDashboardRoute section="Profile" />} />

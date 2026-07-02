@@ -1,5 +1,7 @@
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, "");
 const AUTH_TOKEN_KEY = "zmh_auth_token";
+const AUTH_STORAGE_PREFIX = "zmh_";
+let unauthorizedHandler = null;
 
 const safeApiPath = (path) => {
   if (typeof path !== "string" || !path.startsWith("/") || path.startsWith("//") || /^[a-z][a-z\d+.-]*:/i.test(path)) {
@@ -16,6 +18,31 @@ export const tokenStore = {
   clear: () => localStorage.removeItem(AUTH_TOKEN_KEY),
 };
 
+export function clearAuthStorage() {
+  try {
+    Object.keys(localStorage).filter((key) => key.startsWith(AUTH_STORAGE_PREFIX) || key.toLowerCase().includes("auth")).forEach((key) => localStorage.removeItem(key));
+  } catch {
+    tokenStore.clear();
+  }
+
+  try {
+    Object.keys(sessionStorage).filter((key) => key.startsWith(AUTH_STORAGE_PREFIX) || key.toLowerCase().includes("auth")).forEach((key) => sessionStorage.removeItem(key));
+  } catch {
+    // Session storage may be unavailable in some browser modes.
+  }
+
+  document.cookie.split(";").forEach((cookie) => {
+    const name = cookie.split("=")[0]?.trim();
+    if (!name) return;
+    document.cookie = `${name}=; Max-Age=0; path=/`;
+    document.cookie = `${name}=; Max-Age=0; path=/; domain=${window.location.hostname}`;
+  });
+}
+
+export function setUnauthorizedHandler(handler) {
+  unauthorizedHandler = handler;
+}
+
 const request = async (path, options = {}) => {
   const headers = new Headers(options.headers || {});
   const hasBody = Object.prototype.hasOwnProperty.call(options, "body");
@@ -25,21 +52,31 @@ const request = async (path, options = {}) => {
   if (hasBody && !isFormData) headers.set("Content-Type", "application/json");
   if (token) headers.set("Authorization", `Bearer ${token}`);
 
-  const response = await fetch(API_BASE_URL + safeApiPath(path), {
-    method: options.method || "GET",
-    credentials: "include",
-    cache: "no-store",
-    ...options,
-    headers,
-    body: hasBody && !isFormData ? JSON.stringify(options.body) : options.body,
-  });
+  let response;
+  try {
+    response = await fetch(API_BASE_URL + safeApiPath(path), {
+      method: options.method || "GET",
+      credentials: "include",
+      cache: "no-store",
+      ...options,
+      headers,
+      body: hasBody && !isFormData ? JSON.stringify(options.body) : options.body,
+    });
+  } catch (error) {
+    const networkError = new Error("Network unavailable. Please check your connection and try again.");
+    networkError.cause = error;
+    throw networkError;
+  }
 
   const contentType = response.headers.get("content-type") || "";
   const data = contentType.includes("application/json") ? await response.json() : await response.text();
 
   if (!response.ok) {
     const message = typeof data === "object" && data?.message ? data.message : "Request failed";
-    throw new Error(message);
+    const error = new Error(message);
+    error.status = response.status;
+    if (response.status === 401 && token) unauthorizedHandler?.(error);
+    throw error;
   }
 
   if (typeof data === "object" && data?.token) tokenStore.set(data.token);
@@ -54,7 +91,7 @@ export const authApi = {
   verifyOtp: (payload) => request("/auth/otp/verify", { method: "POST", body: payload }),
   forgotPassword: (payload) => request("/auth/forgot-password", { method: "POST", body: payload }),
   resetPassword: (payload) => request("/auth/reset-password", { method: "POST", body: payload }),
-  logout: () => tokenStore.clear(),
+  logout: () => clearAuthStorage(),
 };
 
 export const bookingApi = {
@@ -73,6 +110,7 @@ export const contactApi = {
 
 export const dashboardApi = {
   profile: () => request("/dashboard/profile"),
+  updateProfile: (payload) => request("/dashboard/profile", { method: "PATCH", body: payload }),
   invoices: () => request("/invoices"),
   invoicePdf: (id) => request("/invoices/" + id + "/pdf"),
   services: () => request("/dashboard/services"),

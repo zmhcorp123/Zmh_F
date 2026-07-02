@@ -1,11 +1,14 @@
 import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../components/Button";
 import { SEO } from "../components/SEO";
 import { useAuth } from "../context/useAuth";
 import { navigate } from "../utils/router";
 
 export function LoginPage() {
-  const { login } = useAuth();
+  const { login, sessionMessage, clearSessionMessage } = useAuth();
+  const location = useLocation();
+  const routerNavigate = useNavigate();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -17,7 +20,8 @@ export function LoginPage() {
 
     try {
       const data = await login({ email: form.get("email"), password: form.get("password") });
-      navigate(data.user?.role === "admin" ? "/admin-dashboard" : "/user-dashboard");
+      const from = typeof location.state?.from === "string" && location.state.from.startsWith("/") ? location.state.from : "";
+      routerNavigate(from || (data.user?.role === "admin" ? "/admin-dashboard" : "/user-dashboard"), { replace: true });
     } catch (err) {
       setError(err.message || "Login failed");
     } finally {
@@ -32,6 +36,7 @@ export function LoginPage() {
         <form className="auth-card" onSubmit={submit}>
           <span className="eyebrow">Secure client portal</span>
           <h1>Login</h1>
+          {sessionMessage && <div className="form-error" role="alert">{sessionMessage}<button type="button" className="message-close" onClick={clearSessionMessage} aria-label="Dismiss message">x</button></div>}
           <label>Email<input name="email" type="email" placeholder="you@company.com" required /></label>
           <label>Password<input name="password" type="password" placeholder="Password" required /></label>
           <Button type="submit" icon="lock">{loading ? "Checking..." : "Login"}</Button>

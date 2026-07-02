@@ -41,6 +41,10 @@ function StatusBadge({ value }) {
   return <span className={`status-pill ${String(value || "pending").replace(/\s+/g, "-")}`}>{value || "pending"}</span>;
 }
 
+function fieldValue(value) {
+  return value ? String(value) : "Not Provided";
+}
+
 function DashboardShell({ section, user, children, onLogout }) {
   const items = ["Dashboard", "Bookings", "My Services", "Cancelled Services", "Invoices", "Notifications", "Profile", "Settings", "Support Tickets", "Book Service", "Calendar"];
   return (
@@ -132,31 +136,148 @@ function ServiceCard({ service, onDownload, onPayment }) {
   );
 }
 
-export function Dashboard({ section = "Dashboard", serviceId = "" }) {
-  const { user, updateUser, logout } = useAuth();
-  const [saved, setSaved] = useState(false);
+function ProfilePanel() {
+  const { updateUser } = useAuth();
+  const [profile, setProfile] = useState(null);
+  const [preview, setPreview] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState("");
+  const [error, setError] = useState("");
 
-  const saveProfile = (event) => {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    updateUser({ name: form.get("name"), company: form.get("company") });
-    setSaved(true);
+  useEffect(() => {
+    let active = true;
+    async function loadProfile() {
+      setLoading(true);
+      setError("");
+      try {
+        const data = await dashboardApi.profile();
+        if (!active) return;
+        setProfile(data.user);
+        setPreview(data.user?.profilePicture || "");
+      } catch (err) {
+        if (active) setError(err.message || "Could not load profile.");
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+    loadProfile();
+    return () => { active = false; };
+  }, []);
+
+  const updatePreview = async (event) => {
+    const file = event.target.files?.[0];
+    setError("");
+    if (!file) {
+      setPreview(profile?.profilePicture || "");
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      setError("Profile picture must be an image file.");
+      event.target.value = "";
+      return;
+    }
+    if (file.size > 1.5 * 1024 * 1024) {
+      setError("Profile picture must be smaller than 1.5 MB.");
+      event.target.value = "";
+      return;
+    }
+    const image = await fileToDataUrl(file);
+    setPreview(image?.dataUrl || "");
   };
+
+  const saveProfile = async (event) => {
+    event.preventDefault();
+    setSaving(true);
+    setNotice("");
+    setError("");
+    const form = new FormData(event.currentTarget);
+    const payload = {
+      name: String(form.get("name") || "").trim(),
+      username: String(form.get("username") || "").trim(),
+      company: String(form.get("company") || "").trim(),
+      phone: String(form.get("phone") || "").trim(),
+      profilePicture: preview || "",
+    };
+
+    if (!payload.name) {
+      setError("Full name is required.");
+      setSaving(false);
+      return;
+    }
+    if (payload.username && !/^[a-zA-Z0-9_.-]{3,32}$/.test(payload.username)) {
+      setError("Username must be 3-32 characters and use only letters, numbers, dots, dashes, or underscores.");
+      setSaving(false);
+      return;
+    }
+    if (payload.phone && !/^[+()\-\s\d.]{7,24}$/.test(payload.phone)) {
+      setError("Enter a valid phone number.");
+      setSaving(false);
+      return;
+    }
+
+    try {
+      const data = await dashboardApi.updateProfile(payload);
+      setProfile(data.user);
+      setPreview(data.user?.profilePicture || "");
+      updateUser(data.user);
+      setNotice("Profile updated successfully.");
+    } catch (err) {
+      setError(err.message || "Could not update profile.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) return <div className="form-card inline">Loading profile...</div>;
+
+  return (
+    <div className="profile-workspace">
+      {error && <div className="form-error">{error}</div>}
+      {notice && <div className="success">{notice}</div>}
+      <div className="profile-overview-card">
+        <div className="profile-avatar">{preview ? <img src={preview} alt="" /> : <span>{fieldValue(profile?.name).slice(0, 2).toUpperCase()}</span>}</div>
+        <div>
+          <span className="eyebrow">Account profile</span>
+          <h3>{fieldValue(profile?.name)}</h3>
+          <p>{fieldValue(profile?.company)}</p>
+        </div>
+      </div>
+      <div className="profile-facts user-profile-facts">
+        <span><strong>Full Name</strong>{fieldValue(profile?.name)}</span>
+        <span><strong>Company Name</strong>{fieldValue(profile?.company)}</span>
+        <span><strong>Username</strong>{fieldValue(profile?.username)}</span>
+        <span><strong>Email Address</strong>{fieldValue(profile?.email)}</span>
+        <span><strong>Phone Number</strong>{fieldValue(profile?.phone)}</span>
+        <span><strong>User Role</strong>{fieldValue(profile?.role)}</span>
+        <span><strong>Account Status</strong>{fieldValue(profile?.status)}</span>
+        <span><strong>Account Creation Date</strong>{profile?.createdAt ? formatDate(profile.createdAt) : "Not Provided"}</span>
+      </div>
+      <form className="form-card inline profile-edit-form" onSubmit={saveProfile}>
+        <h3>Edit profile</h3>
+        <label>Full Name<input name="name" defaultValue={profile?.name || ""} required /></label>
+        <label>Username<input name="username" defaultValue={profile?.username || ""} placeholder="username" /></label>
+        <label>Company Name<input name="company" defaultValue={profile?.company || ""} placeholder="Company name" /></label>
+        <label>Phone Number<input name="phone" defaultValue={profile?.phone || ""} placeholder="+1 555 000 0000" /></label>
+        <label>Profile Picture<input name="profilePicture" type="file" accept="image/*" onChange={updatePreview} /></label>
+        <div className="read-only-grid">
+          <label>Email Address<input value={fieldValue(profile?.email)} readOnly /></label>
+          <label>User Role<input value={fieldValue(profile?.role)} readOnly /></label>
+          <label>Account Status<input value={fieldValue(profile?.status)} readOnly /></label>
+          <label>Created<input value={profile?.createdAt ? formatDate(profile.createdAt) : "Not Provided"} readOnly /></label>
+        </div>
+        <Button type="submit">{saving ? "Saving..." : "Save profile"}</Button>
+      </form>
+    </div>
+  );
+}
+
+export function Dashboard({ section = "Dashboard", serviceId = "" }) {
+  const { user, logout } = useAuth();
 
   return (
     <DashboardShell section={section} user={user} onLogout={logout}>
-      {section === "Profile" ? (
-        <form className="form-card inline" onSubmit={saveProfile}>
-          <label>Profile Picture<input type="file" /></label>
-          <label>Personal Info<input name="name" defaultValue={user?.name || ""} /></label>
-          <label>Company Info<input name="company" defaultValue={user?.company || ""} /></label>
-          <label>Change Password<input type="password" /></label>
-          <label className="checkbox"><input type="checkbox" /> Notification Settings</label>
-          <Button type="submit">Save profile</Button>
-          {saved && <div className="success">Profile saved locally for backend update.</div>}
-          <button type="button" className="danger">Delete Account</button>
-        </form>
-      ) : <DashboardCards section={section} serviceId={serviceId} />}
+      {section === "Profile" ? <ProfilePanel /> : <DashboardCards section={section} serviceId={serviceId} />}
     </DashboardShell>
   );
 }
