@@ -119,7 +119,7 @@ export function Home() {
           <div className="accordion">{faqs.slice(0, 5).map(([question, answer]) => <details key={question}><summary>{question}</summary><p>{answer}</p></details>)}</div>
         </div>
         <motion.form className="contact-panel" {...fadeUp} onSubmit={submitHomeContact}>
-          <span className="eyebrow">Contact</span><h3>Ready to build your remote operations department?</h3><input name="email" placeholder="Work email" type="email" required /><textarea name="message" placeholder="Tell us about your operations bottleneck" required />{contactError && <div className="form-error">{contactError}</div>}<Button type="submit" icon="arrow">{contactLoading ? "Sending..." : "Start Conversation"}</Button>
+          <span className="eyebrow">Contact</span><h3>Ready to build your remote operations department?</h3><input name="email" placeholder="Work email" type="email" required /><textarea name="message" placeholder="Tell us about your operations bottleneck" required />{contactError && <div className="form-error">{contactError}</div>}<Button type="submit" icon="arrow">{contactLoading ? "Sending Inquiry..." : "Send Inquiry"}</Button>
         </motion.form>
       </section>
     </>

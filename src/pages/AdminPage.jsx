@@ -499,25 +499,36 @@ export function AdminPage() {
 
   useEffect(() => {
     let active = true;
-    Promise.all([
-      adminApi.users(),
-      adminApi.bookings(),
-      adminApi.bills(),
-      adminApi.payments(),
-      adminApi.supportTickets(),
-      adminApi.archivedSupportTickets(),
-    ]).then(([userData, bookingData, billData, paymentData, ticketData, archivedTicketData]) => {
-      if (!active) return;
-      setUsers(userData.users || []);
-      setBookings(bookingData.bookings || []);
-      setBills(billData.bills || []);
-      setPayments(paymentData.payments || []);
-      setTickets(ticketData.tickets || []);
-      setArchivedTickets(archivedTicketData.tickets || []);
-    }).catch((err) => {
-      if (active) setError(err.message || "Could not load admin data.");
-    });
-    return () => { active = false; };
+    async function loadAdminData() {
+      try {
+        const [userData, bookingData, billData, paymentData, ticketData, archivedTicketData] = await Promise.all([
+          adminApi.users(),
+          adminApi.bookings(),
+          adminApi.bills(),
+          adminApi.payments(),
+          adminApi.supportTickets(),
+          adminApi.archivedSupportTickets(),
+        ]);
+        if (!active) return;
+        setUsers(userData.users || []);
+        setBookings(bookingData.bookings || []);
+        setBills(billData.bills || []);
+        setPayments(paymentData.payments || []);
+        setTickets(ticketData.tickets || []);
+        setArchivedTickets(archivedTicketData.tickets || []);
+        setError("");
+      } catch (err) {
+        if (active) setError(err.message || "Could not load admin data.");
+      }
+    }
+    loadAdminData();
+    const refreshTimer = window.setInterval(() => {
+      if (document.visibilityState === "visible") loadAdminData();
+    }, 15000);
+    return () => {
+      active = false;
+      window.clearInterval(refreshTimer);
+    };
   }, []);
 
   const pendingUsers = useMemo(() => users.filter((user) => user.status === "pending"), [users]);

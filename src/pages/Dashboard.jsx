@@ -324,9 +324,8 @@ function DashboardCards({ section, serviceId }) {
 
   useEffect(() => {
     let active = true;
-    async function loadDashboard() {
-      setLoading(true);
-      setError("");
+    async function loadDashboard(showLoading = false) {
+      if (showLoading) setLoading(true);
       try {
         const [profileData, bookingData, invoiceData, serviceData, notificationData, ticketData] = await Promise.all([
           dashboardApi.profile(),
@@ -343,14 +342,21 @@ function DashboardCards({ section, serviceId }) {
         setServices(serviceData.services || []);
         setNotifications(notificationData.notifications || []);
         setTickets(ticketData.tickets || []);
+        setError("");
       } catch (err) {
         if (active) setError(err.message || "Could not load dashboard data.");
       } finally {
-        if (active) setLoading(false);
+        if (active && showLoading) setLoading(false);
       }
     }
-    loadDashboard();
-    return () => { active = false; };
+    loadDashboard(true);
+    const refreshTimer = window.setInterval(() => {
+      if (document.visibilityState === "visible") loadDashboard(false);
+    }, 15000);
+    return () => {
+      active = false;
+      window.clearInterval(refreshTimer);
+    };
   }, []);
 
   const categorized = useMemo(() => {
