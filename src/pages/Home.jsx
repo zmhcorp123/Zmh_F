@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { services, testimonials, faqs } from "../data/siteData";
 import { Button } from "../components/Button";
 import { Icon } from "../components/icons";
 import { SEO } from "../components/SEO";
+import { contactApi } from "../services/api";
 import { navigate } from "../utils/router";
 
 const fadeUp = {
@@ -48,6 +50,35 @@ function HeroWaveTransition() {
 }
 
 export function Home() {
+  const [contactLoading, setContactLoading] = useState(false);
+  const [contactError, setContactError] = useState("");
+
+  const submitHomeContact = async (event) => {
+    event.preventDefault();
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
+    const email = String(form.get("email") || "").trim();
+    const message = String(form.get("message") || "").trim();
+    setContactLoading(true);
+    setContactError("");
+    try {
+      await contactApi.send({
+        name: "Home page visitor",
+        email,
+        message,
+        company: "",
+        phone: "",
+      });
+      formElement.reset();
+      window.alert("An admin will contact you soon.");
+      navigate("/");
+    } catch (error) {
+      setContactError(error.message || "Could not send your message. Please try again.");
+    } finally {
+      setContactLoading(false);
+    }
+  };
+
   return (
     <>
       <SEO title="Home" description="Remote operations support for home service companies." />
@@ -87,8 +118,8 @@ export function Home() {
           <SectionTitle eyebrow="FAQ" title="Common questions before your audit" />
           <div className="accordion">{faqs.slice(0, 5).map(([question, answer]) => <details key={question}><summary>{question}</summary><p>{answer}</p></details>)}</div>
         </div>
-        <motion.form className="contact-panel" {...fadeUp} onSubmit={(event) => { event.preventDefault(); navigate("/contact"); }}>
-          <span className="eyebrow">Contact</span><h3>Ready to build your remote operations department?</h3><input placeholder="Work email" type="email" required /><textarea placeholder="Tell us about your operations bottleneck" /><Button type="submit" icon="arrow">Start Conversation</Button>
+        <motion.form className="contact-panel" {...fadeUp} onSubmit={submitHomeContact}>
+          <span className="eyebrow">Contact</span><h3>Ready to build your remote operations department?</h3><input name="email" placeholder="Work email" type="email" required /><textarea name="message" placeholder="Tell us about your operations bottleneck" required />{contactError && <div className="form-error">{contactError}</div>}<Button type="submit" icon="arrow">{contactLoading ? "Sending..." : "Start Conversation"}</Button>
         </motion.form>
       </section>
     </>
