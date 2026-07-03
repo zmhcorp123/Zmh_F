@@ -594,7 +594,7 @@ main section { max-width: 1400px; }
 .saas-hero .btn.secondary { color: white; background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.2); }
 .trust-strip { display: grid; grid-template-columns: repeat(4, minmax(0, auto)); gap: 18px; margin-top: 30px; align-items: center; }
 .trust-strip div { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; align-items: center; padding-right: 18px; border-right: 1px solid rgba(255,255,255,.18); }
-.trust-strip div::before { content: ""; grid-row: span 2; width: 42px; height: 42px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff, #2f6bff 38%, #141b56); box-shadow: 0 0 28px rgba(47,107,255,.38); }
+.trust-icon { grid-row: span 2; display: grid; place-items: center; width: 46px; height: 46px; border: 1px solid rgba(34,244,255,.28); border-radius: 14px; color: #7dd3fc; background: linear-gradient(135deg, rgba(34,244,255,.14), rgba(47,107,255,.18)); box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 14px 30px rgba(0,0,0,.18); }
 .trust-strip strong { color: white; font-size: 18px; }
 .trust-strip span { color: rgba(255,255,255,.78); font-size: 12px; font-weight: 850; }
 
@@ -1636,12 +1636,6 @@ button[type="submit"],
 
 .trust-strip div {
   border-right-color: rgba(226, 238, 255, .16);
-}
-
-.trust-strip div::before {
-  background:
-    radial-gradient(circle at 34% 30%, rgba(255,255,255,.95), rgba(125, 211, 252, .72) 26%, rgba(37, 99, 235, .96) 56%, #17306e 100%);
-  box-shadow: 0 16px 34px rgba(37, 99, 235, .24);
 }
 
 .trust-strip span {

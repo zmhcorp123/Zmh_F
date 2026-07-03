@@ -58,7 +58,7 @@ export function Home() {
           <h1>Your Remote Operations Department for <span>Home Service</span> Companies</h1>
           <p>Helping HVAC, plumbing, roofing, electrical and home service businesses grow with professional call handling, dispatch, CRM, support, and billing operations.</p>
           <div className="hero-actions"><Button to="/book-meeting" icon="calendar">Book Free Operations Audit</Button><Button to="/services" variant="secondary">Explore Services</Button></div>
-          <div className="trust-strip">{[["100+", "Clients"], ["98%+", "Satisfaction"], ["24/7", "Operations"], ["Trusted", "Remote Team"]].map(([value, label]) => <div key={label}><strong>{value}</strong><span>{label}</span></div>)}</div>
+          <div className="trust-strip">{[["100+", "Clients", "users"], ["98%+", "Satisfaction", "check"], ["24/7", "Operations", "headset"], ["Trusted", "Remote Team", "shield"]].map(([value, label, icon]) => <div key={label}><b className="trust-icon"><Icon name={icon} size={22} /></b><strong>{value}</strong><span>{label}</span></div>)}</div>
         </motion.div>
         <OperationsDashboard />
       </section>
