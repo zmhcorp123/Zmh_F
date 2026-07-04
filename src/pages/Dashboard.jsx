@@ -248,45 +248,59 @@ function ProfilePanel() {
     <div className="profile-workspace">
       {error && <div className="form-error">{error}</div>}
       {notice && <div className="success">{notice}</div>}
-      <div className="profile-overview-card">
-        <div className="profile-avatar"><span>{fieldValue(profile?.name).slice(0, 2).toUpperCase()}</span></div>
-        <div>
-          <span className="eyebrow">Account profile</span>
-          <h3>{fieldValue(profile?.name)}</h3>
-          <p>{fieldValue(profile?.company)}</p>
+      <div className="profile-settings-hero">
+        <div className="profile-overview-card">
+          <div className="profile-avatar"><span>{fieldValue(profile?.name).slice(0, 2).toUpperCase()}</span></div>
+          <div>
+            <span className="eyebrow">Account profile</span>
+            <h3>{fieldValue(profile?.name)}</h3>
+            <p>{fieldValue(profile?.company)}</p>
+          </div>
+        </div>
+        <div className="profile-status-panel">
+          <span className="status-pill">{fieldValue(profile?.status)}</span>
+          <strong>{fieldValue(profile?.role)}</strong>
+          <small>Created {profile?.createdAt ? formatDate(profile.createdAt) : "Not Provided"}</small>
         </div>
       </div>
-      <div className="profile-facts user-profile-facts">
-        <span><strong>Full Name</strong>{fieldValue(profile?.name)}</span>
-        <span><strong>Company Name</strong>{fieldValue(profile?.company)}</span>
-        <span><strong>Username</strong>{fieldValue(profile?.username)}</span>
-        <span><strong>Email Address</strong>{fieldValue(profile?.email)}</span>
-        <span><strong>Phone Number</strong>{fieldValue(profile?.phone)}</span>
-        <span><strong>User Role</strong>{fieldValue(profile?.role)}</span>
-        <span><strong>Account Status</strong>{fieldValue(profile?.status)}</span>
-        <span><strong>Account Creation Date</strong>{profile?.createdAt ? formatDate(profile.createdAt) : "Not Provided"}</span>
-      </div>
-      <form className="form-card inline profile-edit-form" onSubmit={saveProfile}>
-        <h3>Edit profile</h3>
-        <label>Full Name<input name="name" defaultValue={profile?.name || ""} required /></label>
-        <label>Username<input name="username" defaultValue={profile?.username || ""} placeholder="username" /></label>
-        <label>Company Name<input name="company" defaultValue={profile?.company || ""} placeholder="Company name" /></label>
-        <label>Phone Number<input name="phone" defaultValue={profile?.phone || ""} placeholder="+1 555 000 0000" /></label>
-        <label>Email Address<input name="email" type="email" defaultValue={profile?.email || ""} placeholder="name@example.com" /></label>
-        <div className="read-only-grid">
-          <label>User Role<input value={fieldValue(profile?.role)} readOnly /></label>
-          <label>Account Status<input value={fieldValue(profile?.status)} readOnly /></label>
-          <label>Created<input value={profile?.createdAt ? formatDate(profile.createdAt) : "Not Provided"} readOnly /></label>
+      <div className="profile-settings-layout">
+        <aside className="profile-settings-summary" aria-label="Account summary">
+          <h3>Account Details</h3>
+          <div className="profile-facts user-profile-facts">
+            <span><strong>Full Name</strong>{fieldValue(profile?.name)}</span>
+            <span><strong>Company Name</strong>{fieldValue(profile?.company)}</span>
+            <span><strong>Username</strong>{fieldValue(profile?.username)}</span>
+            <span><strong>Email Address</strong>{fieldValue(profile?.email)}</span>
+            <span><strong>Phone Number</strong>{fieldValue(profile?.phone)}</span>
+            <span><strong>User Role</strong>{fieldValue(profile?.role)}</span>
+            <span><strong>Account Status</strong>{fieldValue(profile?.status)}</span>
+            <span><strong>Account Creation Date</strong>{profile?.createdAt ? formatDate(profile.createdAt) : "Not Provided"}</span>
+          </div>
+        </aside>
+        <div className="profile-settings-forms">
+          <form className="form-card inline profile-edit-form" onSubmit={saveProfile}>
+            <h3>Edit profile</h3>
+            <label>Full Name<input name="name" defaultValue={profile?.name || ""} required /></label>
+            <label>Username<input name="username" defaultValue={profile?.username || ""} placeholder="username" /></label>
+            <label>Company Name<input name="company" defaultValue={profile?.company || ""} placeholder="Company name" /></label>
+            <label>Phone Number<input name="phone" defaultValue={profile?.phone || ""} placeholder="+1 555 000 0000" /></label>
+            <label>Email Address<input name="email" type="email" defaultValue={profile?.email || ""} placeholder="name@example.com" /></label>
+            <div className="read-only-grid">
+              <label>User Role<input value={fieldValue(profile?.role)} readOnly /></label>
+              <label>Account Status<input value={fieldValue(profile?.status)} readOnly /></label>
+              <label>Created<input value={profile?.createdAt ? formatDate(profile.createdAt) : "Not Provided"} readOnly /></label>
+            </div>
+            <Button type="submit">{saving ? "Saving..." : "Save profile"}</Button>
+          </form>
+          <form className="form-card inline profile-edit-form profile-security-form" onSubmit={changePassword}>
+            <h3>Security</h3>
+            <label>Current Password<input name="currentPassword" type="password" required /></label>
+            <label>New Password<input name="newPassword" type="password" minLength="8" required /></label>
+            <label>Confirm New Password<input name="confirmPassword" type="password" minLength="8" required /></label>
+            <Button type="submit">{savingPassword ? "Updating..." : "Update password"}</Button>
+          </form>
         </div>
-        <Button type="submit">{saving ? "Saving..." : "Save profile"}</Button>
-      </form>
-      <form className="form-card inline profile-edit-form" onSubmit={changePassword}>
-        <h3>Change password</h3>
-        <label>Current Password<input name="currentPassword" type="password" required /></label>
-        <label>New Password<input name="newPassword" type="password" minLength="8" required /></label>
-        <label>Confirm New Password<input name="confirmPassword" type="password" minLength="8" required /></label>
-        <Button type="submit">{savingPassword ? "Updating..." : "Update password"}</Button>
-      </form>
+      </div>
     </div>
   );
 }

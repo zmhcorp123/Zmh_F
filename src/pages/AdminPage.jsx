@@ -478,27 +478,6 @@ function SettingsPanel() {
               </div>
               <CompanyDetailsForm companyDetails={companyDetails} onChange={updateCompany} onSave={saveCompanyDetails} onReset={() => setCompanyDetails(defaultCompanyDetails)} saving={savingCompany} />
             </SettingsCard>
-            <SettingsCard eyebrow="Team" title="Founder & Stakeholder Profiles" description="These profiles appear on the public Team page and individual profile pages.">
-              <form className="team-profile-admin-form" onSubmit={saveTeamProfiles}>
-                {teamRows.map((profile, index) => (
-                  <div className="team-profile-admin-card" key={profile.slug || index}>
-                    <div className="settings-form-grid">
-                      <FormField label="Name" icon="user"><input value={profile.name || ""} onChange={(event) => updateTeamRow(index, "name", event.target.value)} required /></FormField>
-                      <FormField label="Role" icon="briefcase"><input value={profile.role || ""} onChange={(event) => updateTeamRow(index, "role", event.target.value)} required /></FormField>
-                      <FormField label="Location" icon="map"><input value={profile.location || ""} onChange={(event) => updateTeamRow(index, "location", event.target.value)} /></FormField>
-                      <FormField label="LinkedIn" icon="linkedin"><input value={profile.linkedin || ""} onChange={(event) => updateTeamRow(index, "linkedin", event.target.value)} placeholder="https://www.linkedin.com/" /></FormField>
-                    </div>
-                    <FormField label="Summary" icon="mail"><textarea value={profile.summary || ""} onChange={(event) => updateTeamRow(index, "summary", event.target.value)} /></FormField>
-                    <FormField label="Bio" icon="database"><textarea value={profile.bio || ""} onChange={(event) => updateTeamRow(index, "bio", event.target.value)} /></FormField>
-                    <FormField label="Focus Areas" helper="Use one per line or comma separated." icon="target"><textarea value={featureList(profile.focus).join("\n")} onChange={(event) => updateTeamRow(index, "focus", event.target.value)} /></FormField>
-                  </div>
-                ))}
-                <div className="settings-footer-actions">
-                  <button type="submit" className="settings-primary-action" disabled={savingTeam}>{savingTeam ? "Saving..." : "Save Team Profiles"}</button>
-                  <button type="button" className="settings-secondary-action" onClick={() => setTeamRows(defaultTeamRows)}>Reset Defaults</button>
-                </div>
-              </form>
-            </SettingsCard>
             <BankDetailsForm accountDetails={accountDetails} onChange={updateAccount} onSave={saveAccountDetails} onReset={() => setAccountDetails(defaultAccountDetails)} onTest={testTransferDetails} saving={savingBank} />
           </div>
           <div className="settings-right-column">
@@ -519,6 +498,38 @@ function SettingsPanel() {
                 <Icon name="shield" size={22} />
                 <div><strong>Single source of truth</strong><p>Pricing cards on the website load from these database-backed package records.</p></div>
               </div>
+            </SettingsCard>
+          </div>
+          <div className="settings-full-row">
+            <SettingsCard eyebrow="Team" title="Founder & Stakeholder Profiles" description="These profiles appear on the public Team page and individual profile pages.">
+              <form className="team-profile-admin-form" onSubmit={saveTeamProfiles}>
+                {teamRows.map((profile, index) => (
+                  <div className="team-profile-admin-card" key={`team-profile-${index}`}>
+                    <div className="team-profile-card-head">
+                      <div className="team-profile-mini-avatar">{String(profile.name || "TP").split(" ").map((word) => word[0]).join("").slice(0, 2).toUpperCase()}</div>
+                      <div>
+                        <h4>{profile.name || "Team profile"}</h4>
+                        <p>{profile.role || "Role not set"}</p>
+                      </div>
+                    </div>
+                    <div className="settings-form-grid team-profile-core-grid">
+                      <FormField label="Name" icon="user"><input value={profile.name || ""} onChange={(event) => updateTeamRow(index, "name", event.target.value)} required /></FormField>
+                      <FormField label="Role" icon="briefcase"><input value={profile.role || ""} onChange={(event) => updateTeamRow(index, "role", event.target.value)} required /></FormField>
+                      <FormField label="Location" icon="map"><input value={profile.location || ""} onChange={(event) => updateTeamRow(index, "location", event.target.value)} /></FormField>
+                      <FormField label="LinkedIn" icon="linkedin"><input value={profile.linkedin || ""} onChange={(event) => updateTeamRow(index, "linkedin", event.target.value)} placeholder="https://www.linkedin.com/" /></FormField>
+                    </div>
+                    <div className="team-profile-text-grid">
+                      <FormField label="Summary" icon="mail"><textarea value={profile.summary || ""} onChange={(event) => updateTeamRow(index, "summary", event.target.value)} /></FormField>
+                      <FormField label="Bio" icon="database"><textarea value={profile.bio || ""} onChange={(event) => updateTeamRow(index, "bio", event.target.value)} /></FormField>
+                      <FormField label="Focus Areas" helper="Use one per line or comma separated." icon="target"><textarea value={featureList(profile.focus).join("\n")} onChange={(event) => updateTeamRow(index, "focus", event.target.value)} /></FormField>
+                    </div>
+                  </div>
+                ))}
+                <div className="settings-footer-actions team-profile-actions">
+                  <button type="submit" className="settings-primary-action" disabled={savingTeam}>{savingTeam ? "Saving..." : "Save Team Profiles"}</button>
+                  <button type="button" className="settings-secondary-action" onClick={() => setTeamRows(defaultTeamRows)}>Reset Defaults</button>
+                </div>
+              </form>
             </SettingsCard>
           </div>
         </div>
