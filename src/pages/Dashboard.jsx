@@ -58,7 +58,6 @@ function DashboardShell({ section, user, children, onLogout }) {
           <h1>{section}</h1>
           <p>Signed in as {user?.name || "Guest"} from {user?.company || "Company"}.</p>
           {children}
-          <button className="ghost-small" onClick={onLogout}>Logout</button>
         </div>
       </section>
     </>

@@ -104,7 +104,6 @@ p { color: var(--muted); line-height: 1.75; }
 .timeline.large { grid-template-columns: repeat(7, minmax(0,1fr)); }
 .timeline.large li { padding: 18px; min-height: 120px; }
 .timeline.large li::before { position: static; margin-bottom: 14px; }
-.timeline.large span { display: block; color: var(--secondary); margin-top: 14px; font-size: 24px; }
 
 .quote { padding: 26px; }
 .quote p { color: var(--text); font-size: 18px; }
@@ -1806,6 +1805,18 @@ button[type="submit"],
   gap: 18px;
 }
 
+.cta .eyebrow {
+  border-color: rgba(34, 244, 255, .58);
+  background: rgba(34, 244, 255, .16);
+  color: #bffcff;
+  box-shadow: 0 0 28px rgba(34, 244, 255, .24);
+}
+
+.cta .eyebrow::before {
+  background: #22f4ff;
+  box-shadow: 0 0 16px rgba(34, 244, 255, .74);
+}
+
 .cta .btn.primary {
   color: #fff;
   background: linear-gradient(135deg, #2563eb, #3b82f6 56%, #14b8a6);
@@ -1822,6 +1833,42 @@ button[type="submit"],
 .cta .btn span {
   color: inherit;
   white-space: normal;
+}
+
+.profile-workspace {
+  max-width: 1120px;
+}
+
+.profile-edit-form {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 18px;
+}
+
+.profile-edit-form h3,
+.profile-edit-form .read-only-grid,
+.profile-edit-form .btn {
+  grid-column: 1 / -1;
+}
+
+.profile-edit-form label {
+  gap: 6px;
+}
+
+.profile-edit-form input,
+.profile-edit-form select {
+  min-height: 42px;
+  padding: 10px 12px;
+  border-radius: 13px;
+}
+
+.profile-edit-form .read-only-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.profile-edit-form .btn {
+  width: fit-content;
+  min-width: 180px;
 }
 
 .admin-table-wrap {
@@ -2229,6 +2276,15 @@ button[type="submit"],
   .bank-details-form .settings-footer-actions {
     display: grid;
     grid-template-columns: 1fr;
+  }
+
+  .profile-edit-form,
+  .profile-edit-form .read-only-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-edit-form .btn {
+    width: 100%;
   }
 }
 
