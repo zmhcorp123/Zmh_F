@@ -86,7 +86,7 @@ export function Chatbot() {
           <form onSubmit={send}><input value={input} onChange={(event) => setInput(event.target.value)} placeholder="Ask a question..." aria-label="Ask a question" /><button type="submit">Send</button></form>
         </section>
       )}
-      <button className="chat-toggle" type="button" onClick={() => setOpen((value) => !value)}>{open ? "Close" : "Chat"}</button>
+      {!open && <button className="chat-toggle" type="button" onClick={() => setOpen(true)}>Chat</button>}
     </div>
   );
 }
