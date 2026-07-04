@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { company, services, industries, faqs } from "../data/siteData";
 import { navigate } from "../utils/router";
 
@@ -6,6 +6,9 @@ export function Chatbot() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([{ from: "bot", text: "Hi, I am the ZMH assistant. Ask about services, pricing, industries, support, or booking." }]);
+  const [typing, setTyping] = useState(false);
+  const replyTimer = useRef(null);
+  const chatScrollRef = useRef(null);
 
   const knowledge = useMemo(() => ({
     services: "ZMH supports " + services.map((item) => item.name).join(", ") + ".",
@@ -30,8 +33,36 @@ export function Chatbot() {
     return "Would you like to speak with one of our specialists? I can take you to booking or contact.";
   };
 
+  useEffect(() => () => clearTimeout(replyTimer.current), []);
+
+  useEffect(() => {
+    if (!open || !chatScrollRef.current) return;
+    chatScrollRef.current.scrollTo({ top: chatScrollRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages, typing, open]);
+
+  const replyWithTyping = (question, response = answer(question)) => {
+    clearTimeout(replyTimer.current);
+    setMessages((items) => [...items, { from: "user", text: question }]);
+    setTyping(true);
+    replyTimer.current = setTimeout(() => {
+      setMessages((items) => [...items, { from: "bot", text: response }]);
+      setTyping(false);
+    }, 550);
+  };
+
   const addQuestion = (question) => {
-    setMessages((items) => [...items, { from: "user", text: question }, { from: "bot", text: answer(question) }]);
+    replyWithTyping(question);
+  };
+
+  const openRouteAndClose = (path) => {
+    clearTimeout(replyTimer.current);
+    setTyping(false);
+    setOpen(false);
+    navigate(path);
+  };
+
+  const showSupportEmail = () => {
+    replyWithTyping("Email Us", "You can email our support team at " + company.emails.support + ".");
   };
 
   const send = (event) => {
@@ -47,11 +78,11 @@ export function Chatbot() {
       {open && (
         <section className="chat-panel" aria-label="ZMH assistant chat">
           <header><strong>ZMH Assistant</strong><button type="button" className="chat-close" aria-label="Close chat" title="Close chat" onClick={() => setOpen(false)}>Close</button></header>
-          <div className="chat-scroll"><div className="chat-messages">{messages.map((message, index) => <p key={index} className={message.from}>{message.text}</p>)}</div>
+          <div className="chat-scroll" ref={chatScrollRef}><div className="chat-messages">{messages.map((message, index) => <p key={index} className={message.from}>{message.text}</p>)}{typing && <p className="bot typing" aria-live="polite"><span></span><span></span><span></span></p>}</div>
           <div className="chat-faqs">
             {faqs.slice(0, 4).map(([question]) => <button type="button" key={question} onClick={() => addQuestion(question)}>{question}</button>)}
           </div>
-          <div className="chat-actions"><button type="button" onClick={() => navigate("/book-meeting")}>Book Meeting</button><button type="button" onClick={() => navigate("/contact")}>Contact Support</button><a href={"mailto:" + company.emails.support}>Email Us</a></div></div>
+          <div className="chat-actions"><button type="button" onClick={() => openRouteAndClose("/book-meeting")}>Book Meeting</button><button type="button" onClick={() => openRouteAndClose("/contact")}>Contact Support</button><button type="button" onClick={showSupportEmail}>Email Us</button></div></div>
           <form onSubmit={send}><input value={input} onChange={(event) => setInput(event.target.value)} placeholder="Ask a question..." aria-label="Ask a question" /><button type="submit">Send</button></form>
         </section>
       )}
