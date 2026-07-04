@@ -102,6 +102,7 @@ export const bookingApi = {
 export const settingsApi = {
   packages: () => request("/settings/packages"),
   company: () => request("/settings/company"),
+  teamProfiles: () => request("/settings/team-profiles"),
 };
 
 export const contactApi = {

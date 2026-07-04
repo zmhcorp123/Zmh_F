@@ -75,7 +75,7 @@ function PackageRoute() {
 function TeamProfileRoute() {
   const { slug } = useParams();
   const profile = teamProfiles.find((item) => item.slug === slug);
-  return profile ? <TeamProfile profile={profile} /> : <NotFound />;
+  return profile ? <TeamProfile profile={profile} slug={slug} /> : <NotFound />;
 }
 
 function UserDashboardRoute({ section = "Dashboard", serviceId = "" }) {

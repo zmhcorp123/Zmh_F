@@ -3,7 +3,7 @@ import { Button } from "../components/Button";
 import { Icon } from "../components/icons";
 import { SEO } from "../components/SEO";
 import { adminApi } from "../services/api";
-import { packages as defaultPackages } from "../data/siteData";
+import { packages as defaultPackages, teamProfiles as defaultTeamProfiles } from "../data/siteData";
 import { navigate } from "../utils/router";
 import { useAuth } from "../context/useAuth";
 
@@ -56,6 +56,8 @@ const defaultPackageRows = defaultPackages.map((item, index) => ({
   status: "active",
   recommended: item.slug === "professional",
 }));
+
+const defaultTeamRows = defaultTeamProfiles.map((item) => ({ ...item, focus: Array.isArray(item.focus) ? item.focus : [] }));
 
 function featureList(features) {
   if (Array.isArray(features)) return features;
@@ -222,11 +224,13 @@ function SettingsPanel() {
   const [accountDetails, setAccountDetails] = useState(defaultAccountDetails);
   const [companyDetails, setCompanyDetails] = useState(defaultCompanyDetails);
   const [packageRows, setPackageRows] = useState(defaultPackageRows);
+  const [teamRows, setTeamRows] = useState(defaultTeamRows);
   const [editingIndex, setEditingIndex] = useState(null);
   const [packageDraft, setPackageDraft] = useState(null);
   const [savingBank, setSavingBank] = useState(false);
   const [savingCompany, setSavingCompany] = useState(false);
   const [savingPackage, setSavingPackage] = useState(false);
+  const [savingTeam, setSavingTeam] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -236,8 +240,10 @@ function SettingsPanel() {
       if (Array.isArray(pricingData.packages) && pricingData.packages.length) setPackageRows(pricingData.packages);
       const accountSetting = (settingsData.settings || []).find((item) => item.key === "accountDetails");
       const companySetting = (settingsData.settings || []).find((item) => item.key === "companyDetails");
+      const teamSetting = (settingsData.settings || []).find((item) => item.key === "teamProfiles");
       if (accountSetting?.value) setAccountDetails((current) => ({ ...current, ...accountSetting.value }));
       if (companySetting?.value) setCompanyDetails((current) => ({ ...current, ...companySetting.value }));
+      if (Array.isArray(teamSetting?.value) && teamSetting.value.length) setTeamRows(teamSetting.value);
     }).catch((err) => {
       if (active) setError(err.message || "Could not load settings.");
     }).finally(() => {
@@ -252,6 +258,41 @@ function SettingsPanel() {
 
   const updateCompany = (field, value) => {
     setCompanyDetails((current) => ({ ...current, [field]: value }));
+  };
+
+  const updateTeamRow = (index, field, value) => {
+    setTeamRows((current) => current.map((item, itemIndex) => itemIndex === index ? {
+      ...item,
+      [field]: field === "focus" ? String(value).split(/\r?\n|,/).map((entry) => entry.trim()).filter(Boolean) : value,
+      slug: field === "name" ? slugify(value) : item.slug,
+    } : item));
+  };
+
+  const saveTeamProfiles = async (event) => {
+    event.preventDefault();
+    setSaved("");
+    setError("");
+    setSavingTeam(true);
+    try {
+      const payload = teamRows.map((item) => ({
+        name: String(item.name || "").trim(),
+        slug: slugify(item.slug || item.name),
+        role: String(item.role || "").trim(),
+        location: String(item.location || "").trim(),
+        linkedin: String(item.linkedin || "").trim(),
+        summary: String(item.summary || "").trim(),
+        bio: String(item.bio || "").trim(),
+        focus: featureList(item.focus),
+      })).filter((item) => item.name && item.role);
+      if (!payload.length) throw new Error("At least one team profile is required.");
+      await adminApi.settings({ teamProfiles: payload });
+      setTeamRows(payload);
+      setSaved("Team profiles saved.");
+    } catch (err) {
+      setError(err.message || "Could not save team profiles.");
+    } finally {
+      setSavingTeam(false);
+    }
   };
 
   const saveCompanyDetails = async (event) => {
@@ -436,6 +477,27 @@ function SettingsPanel() {
                 <div><strong>ZMH USA Corp.</strong><span>Remote operations support for home service companies.</span></div>
               </div>
               <CompanyDetailsForm companyDetails={companyDetails} onChange={updateCompany} onSave={saveCompanyDetails} onReset={() => setCompanyDetails(defaultCompanyDetails)} saving={savingCompany} />
+            </SettingsCard>
+            <SettingsCard eyebrow="Team" title="Founder & Stakeholder Profiles" description="These profiles appear on the public Team page and individual profile pages.">
+              <form className="team-profile-admin-form" onSubmit={saveTeamProfiles}>
+                {teamRows.map((profile, index) => (
+                  <div className="team-profile-admin-card" key={profile.slug || index}>
+                    <div className="settings-form-grid">
+                      <FormField label="Name" icon="user"><input value={profile.name || ""} onChange={(event) => updateTeamRow(index, "name", event.target.value)} required /></FormField>
+                      <FormField label="Role" icon="briefcase"><input value={profile.role || ""} onChange={(event) => updateTeamRow(index, "role", event.target.value)} required /></FormField>
+                      <FormField label="Location" icon="map"><input value={profile.location || ""} onChange={(event) => updateTeamRow(index, "location", event.target.value)} /></FormField>
+                      <FormField label="LinkedIn" icon="linkedin"><input value={profile.linkedin || ""} onChange={(event) => updateTeamRow(index, "linkedin", event.target.value)} placeholder="https://www.linkedin.com/" /></FormField>
+                    </div>
+                    <FormField label="Summary" icon="mail"><textarea value={profile.summary || ""} onChange={(event) => updateTeamRow(index, "summary", event.target.value)} /></FormField>
+                    <FormField label="Bio" icon="database"><textarea value={profile.bio || ""} onChange={(event) => updateTeamRow(index, "bio", event.target.value)} /></FormField>
+                    <FormField label="Focus Areas" helper="Use one per line or comma separated." icon="target"><textarea value={featureList(profile.focus).join("\n")} onChange={(event) => updateTeamRow(index, "focus", event.target.value)} /></FormField>
+                  </div>
+                ))}
+                <div className="settings-footer-actions">
+                  <button type="submit" className="settings-primary-action" disabled={savingTeam}>{savingTeam ? "Saving..." : "Save Team Profiles"}</button>
+                  <button type="button" className="settings-secondary-action" onClick={() => setTeamRows(defaultTeamRows)}>Reset Defaults</button>
+                </div>
+              </form>
             </SettingsCard>
             <BankDetailsForm accountDetails={accountDetails} onChange={updateAccount} onSave={saveAccountDetails} onReset={() => setAccountDetails(defaultAccountDetails)} onTest={testTransferDetails} saving={savingBank} />
           </div>

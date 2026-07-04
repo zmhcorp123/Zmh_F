@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { company, services, industries } from "../data/siteData";
 import { navigate } from "../utils/router";
 import { Button } from "./Button";
@@ -45,7 +46,7 @@ export function Layout({ children }) {
   const [dark, setDark] = useState(false);
   const [newsletterSaved, setNewsletterSaved] = useState(false);
   const { isAuthenticated, user, logout } = useAuth();
-  const currentPath = window.location.pathname;
+  const { pathname: currentPath } = useLocation();
 
   const closeMenu = () => setOpen(false);
   const handleLogout = () => {
