@@ -1,6 +1,32 @@
 import { useEffect, useMemo, useState } from "react";
+import {
+  Bell,
+  BriefcaseBusiness,
+  CalendarDays,
+  CalendarCheck,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  CircleUserRound,
+  ClipboardCheck,
+  CreditCard,
+  FileText,
+  Headphones,
+  Home,
+  LayoutDashboard,
+  LifeBuoy,
+  ListChecks,
+  LogOut,
+  Menu,
+  PlayCircle,
+  ReceiptText,
+  Settings,
+  ShieldCheck,
+  Sparkles,
+  UserRound,
+  XCircle,
+} from "lucide-react";
 import { Button } from "../components/Button";
-import { Card } from "../components/Sections";
 import { SEO } from "../components/SEO";
 import { useAuth } from "../context/useAuth";
 import { company } from "../data/siteData";
@@ -46,17 +72,120 @@ function fieldValue(value) {
   return value ? String(value) : "Not Provided";
 }
 
+function relativeTime(value) {
+  if (!value) return "Just now";
+  const date = new Date(value);
+  const seconds = Math.max(1, Math.floor((Date.now() - date.getTime()) / 1000));
+  const units = [
+    ["year", 31536000],
+    ["month", 2592000],
+    ["day", 86400],
+    ["hour", 3600],
+    ["minute", 60],
+  ];
+  const match = units.find(([, size]) => seconds >= size);
+  if (!match) return "Just now";
+  const [label, size] = match;
+  const count = Math.floor(seconds / size);
+  return `${count} ${label}${count > 1 ? "s" : ""} ago`;
+}
+
+function activityMeta(type = "", title = "") {
+  const text = `${type} ${title}`.toLowerCase();
+  if (text.includes("invoice") || text.includes("billing") || text.includes("payment")) return { icon: ReceiptText, tone: "amber", route: "/invoices" };
+  if (text.includes("booking")) return { icon: CalendarCheck, tone: "blue", route: "/bookings" };
+  if (text.includes("support") || text.includes("ticket")) return { icon: Headphones, tone: "purple", route: "/support-tickets" };
+  if (text.includes("service") || text.includes("progress") || text.includes("order")) return { icon: PlayCircle, tone: "green", route: "/my-services" };
+  return { icon: UserRound, tone: "purple", route: "/notifications" };
+}
+
+const navIcons = {
+  Dashboard: LayoutDashboard,
+  Bookings: CalendarCheck,
+  "My Services": BriefcaseBusiness,
+  "Ongoing Services": PlayCircle,
+  "Cancelled Services": XCircle,
+  Invoices: ReceiptText,
+  "Payment Confirmation": CreditCard,
+  Notifications: Bell,
+  Profile: UserRound,
+  Settings,
+  "Support Tickets": LifeBuoy,
+  "Book Service": FileText,
+  Calendar: CalendarDays,
+};
+
+function routeForNav(item) {
+  if (item === "Dashboard") return "/user-dashboard";
+  if (item === "Ongoing Services") return "/my-services";
+  return "/" + item.toLowerCase().replaceAll(" ", "-");
+}
+
+function getInitials(name = "") {
+  const parts = String(name || "ZHM Client").trim().split(/\s+/).slice(0, 2);
+  return parts.map((part) => part[0]).join("").toUpperCase() || "ZC";
+}
+
 function DashboardShell({ section, user, children, onLogout }) {
-  const items = ["Dashboard", "Bookings", "My Services", "Cancelled Services", "Invoices", "Payment Confirmation", "Notifications", "Profile", "Settings", "Support Tickets", "Book Service", "Calendar"];
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [notificationsSeen, setNotificationsSeen] = useState(() => localStorage.getItem("zhm_notifications_seen") === "true");
+  const items = ["Dashboard", "Bookings", "My Services", "Ongoing Services", "Cancelled Services", "Invoices", "Payment Confirmation", "Notifications", "Profile", "Settings", "Support Tickets", "Book Service", "Calendar"];
+  const activeSection = section === "Service Details" ? "My Services" : section;
+  const displayName = user?.name || "Client";
+  const showNotificationBadge = !notificationsSeen && activeSection !== "Notifications";
+
+  useEffect(() => {
+    if (activeSection !== "Notifications") return;
+    localStorage.setItem("zhm_notifications_seen", "true");
+    setNotificationsSeen(true);
+  }, [activeSection]);
+
+  const go = (path) => {
+    setSidebarOpen(false);
+    navigate(path);
+  };
   return (
     <>
       <SEO title={section} />
-      <section className="dashboard">
-        <aside>{items.map((item) => <button key={item} className={item === section ? "active" : ""} onClick={() => navigate(item === "Dashboard" ? "/user-dashboard" : "/" + item.toLowerCase().replaceAll(" ", "-"))}>{item}</button>)}</aside>
-        <div className="dash-main">
-          <span className="eyebrow">Client portal</span>
-          <h1>{section}</h1>
-          <p>Signed in as {user?.name || "Guest"} from {user?.company || "Company"}.</p>
+      <section className={sidebarOpen ? "dashboard client-dashboard-shell sidebar-open" : "dashboard client-dashboard-shell"}>
+        <aside className="client-sidebar">
+          <div className="client-sidebar-brand">
+            <span className="client-logo-mark"><Sparkles size={24} /></span>
+            <strong>ZHM</strong>
+          </div>
+          <nav className="client-sidebar-nav" aria-label="Client dashboard navigation">
+            {items.map((item) => {
+              const Icon = navIcons[item] || Home;
+              return (
+                <button key={item} className={item === activeSection ? "active" : ""} onClick={() => go(routeForNav(item))}>
+                  <Icon size={20} />
+                  <span>{item}</span>
+                  {item === "Notifications" && showNotificationBadge && <b>8</b>}
+                </button>
+              );
+            })}
+          </nav>
+          <div className="client-sidebar-profile">
+            <div className="client-avatar">{getInitials(displayName)}<span /></div>
+            <div>
+              <strong>{displayName}</strong>
+              <small>Client ID: ZHM-1256</small>
+            </div>
+            <button type="button" onClick={() => { onLogout?.(); navigate("/login"); }} aria-label="Sign out"><LogOut size={16} /></button>
+          </div>
+        </aside>
+        <div className="dash-main client-dashboard-main">
+          <header className="client-dashboard-header">
+            <button className="client-mobile-menu" type="button" aria-label="Open menu" onClick={() => setSidebarOpen((value) => !value)}><Menu size={20} /></button>
+            <div>
+              <h1>{section === "Dashboard" ? `Welcome back, ${displayName}` : section}<span aria-hidden="true"> 👋</span></h1>
+              <p>{section === "Dashboard" ? "Here's what's happening with your services today." : `Manage your ${section.toLowerCase()} from one clean client portal.`}</p>
+            </div>
+            <div className="client-header-actions">
+              <button type="button" className="client-icon-button" aria-label="Notifications" onClick={() => go("/notifications")}><Bell size={20} />{showNotificationBadge && <span>8</span>}</button>
+              <button type="button" className="client-profile-button" aria-label="Open profile" onClick={() => go("/profile")}><CircleUserRound size={20} /><ChevronDown size={16} /></button>
+            </div>
+          </header>
           {children}
         </div>
       </section>
@@ -175,7 +304,6 @@ function ProfilePanel() {
       username: String(form.get("username") || "").trim(),
       company: String(form.get("company") || "").trim(),
       phone: String(form.get("phone") || "").trim(),
-      email: String(form.get("email") || "").trim(),
     };
 
     if (!payload.name) {
@@ -193,12 +321,6 @@ function ProfilePanel() {
       setSaving(false);
       return;
     }
-    if (payload.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) {
-      setError("Enter a valid email address.");
-      setSaving(false);
-      return;
-    }
-
     try {
       const data = await dashboardApi.updateProfile(payload);
       setProfile(data.user);
@@ -284,8 +406,8 @@ function ProfilePanel() {
             <label>Username<input name="username" defaultValue={profile?.username || ""} placeholder="username" /></label>
             <label>Company Name<input name="company" defaultValue={profile?.company || ""} placeholder="Company name" /></label>
             <label>Phone Number<input name="phone" defaultValue={profile?.phone || ""} placeholder="+1 555 000 0000" /></label>
-            <label>Email Address<input name="email" type="email" defaultValue={profile?.email || ""} placeholder="name@example.com" /></label>
             <div className="read-only-grid">
+              <label>Email Address<input value={fieldValue(profile?.email)} readOnly /></label>
               <label>User Role<input value={fieldValue(profile?.role)} readOnly /></label>
               <label>Account Status<input value={fieldValue(profile?.status)} readOnly /></label>
               <label>Created<input value={profile?.createdAt ? formatDate(profile.createdAt) : "Not Provided"} readOnly /></label>
@@ -338,24 +460,56 @@ function DashboardCards({ section, serviceId }) {
   useEffect(() => {
     let active = true;
     async function loadDashboard(showLoading = false) {
-      if (showLoading) setLoading(true);
+      if (showLoading && !profile) setLoading(true);
+      if (section === "Dashboard") {
+        try {
+          const data = await dashboardApi.summary();
+          if (!active) return;
+          setProfile({ user: data.user, stats: data.stats });
+          setBookings(data.bookings || []);
+          setInvoices(data.invoices || []);
+          setServices(data.services || []);
+          setNotifications(data.notifications || []);
+          setError("");
+        } catch (err) {
+          if (active) setError(err.message || "Could not load dashboard data.");
+        } finally {
+          if (active && showLoading) setLoading(false);
+        }
+        return;
+      }
+      const needsBookings = ["Dashboard", "Bookings", "Calendar", "Cancelled Services"].includes(section);
+      const needsServices = ["Dashboard", "My Services", "Ongoing Services", "Cancelled Services", "Service Details"].includes(section);
+  const needsInvoices = ["Dashboard", "Invoices", "Payment Confirmation"].includes(section);
+      const needsNotifications = ["Dashboard", "Notifications", "Payment Confirmation"].includes(section);
+      const needsTickets = section === "Support Tickets";
+      const requests = [
+        ["profile", dashboardApi.profile()],
+        ...(needsBookings ? [["bookings", bookingApi.list()]] : []),
+        ...(needsServices ? [["services", dashboardApi.services()]] : []),
+        ...(needsInvoices ? [["invoices", dashboardApi.invoices()]] : []),
+        ...(needsNotifications ? [["notifications", dashboardApi.notifications()]] : []),
+        ...(needsTickets ? [["tickets", dashboardApi.supportTickets()]] : []),
+      ];
       try {
-        const [profileData, bookingData, invoiceData, serviceData, notificationData, ticketData] = await Promise.all([
-          dashboardApi.profile(),
-          bookingApi.list(),
-          dashboardApi.invoices(),
-          dashboardApi.services(),
-          dashboardApi.notifications(),
-          dashboardApi.supportTickets(),
-        ]);
+        const settled = await Promise.allSettled(requests.map(([, request]) => request));
         if (!active) return;
-        setProfile(profileData);
-        setBookings(bookingData.bookings || []);
-        setInvoices(invoiceData.invoices || []);
-        setServices(serviceData.services || []);
-        setNotifications(notificationData.notifications || []);
-        setTickets(ticketData.tickets || []);
-        setError("");
+        let nextError = "";
+        settled.forEach((result, index) => {
+          const key = requests[index][0];
+          if (result.status !== "fulfilled") {
+            nextError = result.reason?.message || "Some dashboard data could not load.";
+            return;
+          }
+          const data = result.value || {};
+          if (key === "profile") setProfile(data);
+          if (key === "bookings") setBookings(data.bookings || []);
+          if (key === "invoices") setInvoices(data.invoices || []);
+          if (key === "services") setServices(data.services || []);
+          if (key === "notifications") setNotifications(data.notifications || []);
+          if (key === "tickets") setTickets(data.tickets || []);
+        });
+        setError(nextError);
       } catch (err) {
         if (active) setError(err.message || "Could not load dashboard data.");
       } finally {
@@ -370,7 +524,7 @@ function DashboardCards({ section, serviceId }) {
       active = false;
       window.clearInterval(refreshTimer);
     };
-  }, []);
+  }, [section]);
 
   const categorized = useMemo(() => {
     const pending = bookings.filter((booking) => !["ongoing", "cancelled"].includes(booking.status));
@@ -542,13 +696,149 @@ function DashboardCards({ section, serviceId }) {
     return <div className="portal-list">{error && <div className="form-error">{error}</div>}{notice && <div className="success">{notice}</div>}<form className="form-card inline" onSubmit={createTicket}><h3>Create support ticket</h3><label>Subject<input name="subject" required placeholder="What do you need help with?" /></label><label>Message<textarea name="message" required placeholder="Describe the issue or request" /></label><Button type="submit">{ticketSubmitting ? "Creating..." : "Create ticket"}</Button></form>{tickets.length ? tickets.map((ticket) => <article className="portal-row" key={ticket._id}><div><strong>{ticket.subject}</strong><span>{formatDate(ticket.createdAt)}</span><p>{ticket.message}</p>{ticket.adminResponse && <p><strong>Latest admin reply:</strong> {ticket.adminResponse}</p>}{ticket.resolvedAt && <p>Resolved {formatDate(ticket.resolvedAt)}</p>}</div><StatusBadge value={ticket.status} /></article>) : <div className="empty-state">No support tickets yet.</div>}</div>;
   }
 
-  const stats = profile?.stats || {};
-  return <div className="grid three dash-cards">{[
-    ["Bookings", categorized.pending.length],
-    ["Ongoing services", categorized.ongoing.length],
-    ["Cancelled services", categorized.cancelled.length],
-    ["Invoices", stats.invoices || invoices.length || 0],
-    ["Notifications", stats.notifications || notifications.length || 0],
-    ["Avg progress", categorized.ongoing.length ? `${Math.round(categorized.ongoing.reduce((sum, service) => sum + Number(service.progressPercent || 0), 0) / categorized.ongoing.length)}%` : "0%"],
-  ].map(([item, value]) => <Card key={item} title={item} text={error || "Live account data from the backend."}><strong className="price">{value}</strong></Card>)}</div>;
+  const completionRate = categorized.ongoing.length ? Math.round(categorized.ongoing.reduce((sum, service) => sum + Number(service.progressPercent || 0), 0) / categorized.ongoing.length) : 100;
+  const statCards = [
+    { title: "Total Bookings", value: bookings.length, text: "All time bookings", icon: CalendarCheck, tone: "blue", route: "/bookings", spark: "M3 36 C10 28 16 34 23 27 S35 20 42 28 S53 36 60 18 S72 29 78 25" },
+    { title: "Ongoing Services", value: categorized.ongoing.length, text: "Currently active", icon: BriefcaseBusiness, tone: "green", route: "/my-services", spark: "M3 32 C11 24 17 31 24 25 S36 14 43 30 S55 33 61 17 S70 25 78 9" },
+    { title: "Cancelled Services", value: categorized.cancelled.length, text: "Total cancelled", icon: XCircle, tone: "purple", route: "/cancelled-services", spark: "M3 31 C12 28 18 35 25 29 S35 26 42 30 S51 34 57 15 S67 34 78 24" },
+    { title: "Avg Progress", value: `${completionRate}%`, text: "Service completion rate", icon: CheckCircle2, tone: "amber", route: "/my-services", spark: "M3 34 C12 28 19 33 27 31 S38 29 45 18 S55 36 64 24 S70 12 78 16" },
+  ];
+  const overview = [
+    { label: "Ongoing Services", value: categorized.ongoing.length, percent: categorized.ongoing.length ? 100 : 0, color: "#22c55e" },
+    { label: "Completed Services", value: Math.max(0, bookings.length - categorized.pending.length - categorized.cancelled.length), percent: bookings.length ? Math.round(((bookings.length - categorized.pending.length - categorized.cancelled.length) / bookings.length) * 100) : 0, color: "#3b82f6" },
+    { label: "Cancelled Services", value: categorized.cancelled.length, percent: bookings.length ? Math.round((categorized.cancelled.length / bookings.length) * 100) : 0, color: "#7c3aed" },
+  ];
+  const upcoming = categorized.ongoing[0] || bookings[0] || {};
+  const recentItems = [
+    ...notifications.map((item) => {
+      const meta = activityMeta(item.type, item.title);
+      return { title: item.title, body: item.body || "Notification update", time: relativeTime(item.createdAt), sortAt: item.createdAt, ...meta };
+    }),
+    ...services.map((service) => ({
+      title: service.latestProgress?.title || `${service.packageName || "Service"} updated`,
+      body: service.latestProgress?.description || `${service.companyName || "Your service"} is ${service.progressPercent || 0}% complete`,
+      time: relativeTime(service.latestProgress?.happenedAt || service.updatedAt),
+      icon: PlayCircle,
+      tone: "green",
+      route: "/my-services",
+      sortAt: service.latestProgress?.happenedAt || service.updatedAt,
+    })),
+    ...invoices.map((invoice) => ({
+      title: `${invoice.invoice} generated`,
+      body: `${currency(invoice)} due ${formatDate(invoice.dueDate)}`,
+      time: relativeTime(invoice.createdAt),
+      icon: ReceiptText,
+      tone: "amber",
+      route: "/invoices",
+      sortAt: invoice.createdAt,
+    })),
+    ...bookings.map((booking) => ({
+      title: booking.status === "ongoing" ? "Service Started" : "Booking Confirmed",
+      body: booking.packageName || booking.companyName || "Your booking has been updated",
+      time: relativeTime(booking.updatedAt || booking.createdAt),
+      icon: CalendarCheck,
+      tone: "blue",
+      route: "/bookings",
+      sortAt: booking.updatedAt || booking.createdAt,
+    })),
+  ]
+    .sort((a, b) => new Date(b.sortAt || 0) - new Date(a.sortAt || 0))
+    .slice(0, 4);
+
+  return (
+    <div className="client-dashboard-overview">
+      {error && <div className="form-error">{error}</div>}
+      <div className="client-stat-grid">
+        {statCards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <button type="button" className={`client-stat-card ${card.tone}`} key={card.title} onClick={() => navigate(card.route)}>
+              <div className="client-stat-icon"><Icon size={28} /></div>
+              <div className="client-stat-copy">
+                <span>{card.title}</span>
+                <strong>{card.value}</strong>
+                <small>{card.text}</small>
+              </div>
+              <svg className="client-sparkline" viewBox="0 0 82 42" aria-hidden="true"><path d={card.spark} /></svg>
+            </button>
+          );
+        })}
+      </div>
+      <div className="client-dashboard-middle">
+        <article className="client-premium-card client-service-overview">
+          <div className="client-card-title"><ListChecks size={20} /><h3>Service Overview</h3></div>
+          <div className="client-overview-body">
+            <div className="client-donut" style={{ "--ongoing": `${overview[0].percent * 3.6}deg`, "--completed": `${(overview[0].percent + overview[1].percent) * 3.6}deg` }}>
+              <span>{completionRate}%</span>
+            </div>
+            <div className="client-legend">
+              {overview.map((item) => (
+                <div key={item.label}>
+                  <span style={{ "--dot": item.color }} />
+                  <strong>{item.label}</strong>
+                  <b>{item.value}</b>
+                  <small>{item.percent}%</small>
+                </div>
+              ))}
+            </div>
+          </div>
+        </article>
+        <article className="client-premium-card client-activity-card">
+          <div className="client-card-title with-action"><div><ClipboardCheck size={20} /><h3>Recent Activity</h3></div><button type="button" onClick={() => navigate("/notifications")}>View All</button></div>
+          <div className="client-activity-list">
+            {recentItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button type="button" key={item.title} className={`client-activity-item ${item.tone}`} onClick={() => navigate(item.route)}>
+                  <span><Icon size={22} /></span>
+                  <div><strong>{item.title}</strong><small>{item.body}</small></div>
+                  <time>{item.time}</time>
+                  <ChevronRight size={18} />
+                </button>
+              );
+            })}
+          </div>
+        </article>
+      </div>
+      <div className="client-dashboard-bottom">
+        <article className="client-premium-card client-appointment-card">
+          <div className="client-card-title with-action"><div><CalendarDays size={20} /><h3>Upcoming Appointment</h3></div><button type="button" onClick={() => navigate("/calendar")}>View Calendar</button></div>
+          <div className="client-appointment-details">
+            <span className="client-appointment-icon"><CalendarCheck size={24} /></span>
+            <div>
+              <strong>{upcoming.packageName || "General Service"}</strong>
+              <small>Technician: {upcoming.assignedStaff || "ZHM HVAC Specialist"}</small>
+              <small>{formatDate(upcoming.serviceStartDate || upcoming.requestedDate || upcoming.createdAt)} • 10:00 AM</small>
+              <small>{upcoming.address || "Service address on file"}</small>
+            </div>
+            <b>Confirmed</b>
+          </div>
+        </article>
+        <article className="client-premium-card client-quick-actions">
+          <div className="client-card-title"><Sparkles size={20} /><h3>Quick Actions</h3></div>
+          <div className="client-action-grid">
+            {[
+              ["Book Service", FileText, "/book-service", "blue"],
+              ["My Services", BriefcaseBusiness, "/my-services", "green"],
+              ["Invoices", ReceiptText, "/invoices", "purple"],
+              ["Support", Headphones, "/support-tickets", "amber"],
+            ].map(([label, Icon, path, tone]) => (
+              <button type="button" className={tone} key={label} onClick={() => navigate(path)}>
+                <Icon size={30} />
+                <span>{label}</span>
+              </button>
+            ))}
+          </div>
+        </article>
+      </div>
+      <article className="client-support-banner">
+        <span><ShieldCheck size={30} /></span>
+        <div>
+          <h3>Need Help?</h3>
+          <p>Our support team is here to help you with any questions or service issues.</p>
+        </div>
+        <button type="button" onClick={() => navigate("/support-tickets")}><Headphones size={18} />Create Support Ticket</button>
+      </article>
+    </div>
+  );
 }

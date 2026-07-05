@@ -1,6 +1,7 @@
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, "");
 const AUTH_TOKEN_KEY = "zmh_auth_token";
 const AUTH_STORAGE_PREFIX = "zmh_";
+const REQUEST_TIMEOUT_MS = 12000;
 let unauthorizedHandler = null;
 
 const safeApiPath = (path) => {
@@ -48,6 +49,8 @@ const request = async (path, options = {}) => {
   const hasBody = Object.prototype.hasOwnProperty.call(options, "body");
   const isFormData = hasBody && options.body instanceof FormData;
   const token = tokenStore.get();
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), options.timeoutMs || REQUEST_TIMEOUT_MS);
 
   if (hasBody && !isFormData) headers.set("Content-Type", "application/json");
   if (token) headers.set("Authorization", `Bearer ${token}`);
@@ -59,13 +62,16 @@ const request = async (path, options = {}) => {
       credentials: "include",
       cache: "no-store",
       ...options,
+      signal: options.signal || controller.signal,
       headers,
       body: hasBody && !isFormData ? JSON.stringify(options.body) : options.body,
     });
   } catch (error) {
-    const networkError = new Error("Network unavailable. Please check your connection and try again.");
+    const networkError = new Error(error?.name === "AbortError" ? "Server is taking too long. Please try again." : "Network unavailable. Please check your connection and try again.");
     networkError.cause = error;
     throw networkError;
+  } finally {
+    window.clearTimeout(timeout);
   }
 
   const contentType = response.headers.get("content-type") || "";
@@ -110,6 +116,7 @@ export const contactApi = {
 };
 
 export const dashboardApi = {
+  summary: () => request("/dashboard/summary"),
   profile: () => request("/dashboard/profile"),
   updateProfile: (payload) => request("/dashboard/profile", { method: "PATCH", body: payload }),
   changePassword: (payload) => request("/dashboard/password", { method: "PATCH", body: payload }),
@@ -125,6 +132,7 @@ export const dashboardApi = {
 };
 
 export const adminApi = {
+  summary: () => request("/admin/summary"),
   users: () => request("/admin/users?db=mongodb"),
   approvals: () => request("/admin/approvals"),
   approveUser: (id) => request("/admin/users/" + id + "/approve", { method: "POST" }),

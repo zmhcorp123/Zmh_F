@@ -43,10 +43,24 @@ function LinkButton({ to, children, onClick }) {
 
 export function Layout({ children }) {
   const [open, setOpen] = useState(false);
-  const [dark, setDark] = useState(false);
   const [newsletterSaved, setNewsletterSaved] = useState(false);
   const { isAuthenticated, user, logout } = useAuth();
   const { pathname: currentPath } = useLocation();
+  const appOnlyPaths = [
+    "/dashboard",
+    "/user-dashboard",
+    "/profile",
+    "/bookings",
+    "/settings",
+    "/invoices",
+    "/payment-confirmation",
+    "/notifications",
+    "/support-tickets",
+    "/my-services",
+    "/cancelled-services",
+    "/calendar",
+  ];
+  const isAppOnly = appOnlyPaths.some((path) => currentPath === path || currentPath.startsWith(path + "/"));
 
   const closeMenu = () => setOpen(false);
   const handleLogout = () => {
@@ -56,7 +70,7 @@ export function Layout({ children }) {
   };
 
   return (
-    <div className={dark ? "app dark" : "app"}>
+    <div className={isAppOnly && user?.role !== "admin" ? "app dashboard-app" : "app"}>
       <header className="navbar">
         <button className="brand" onClick={() => navigate("/")} aria-label="ZMH USA Corp home">
           <span className="brand-mark"><img src={logoMark} alt="" /></span>
@@ -71,9 +85,6 @@ export function Layout({ children }) {
           <button className="text-link mobile-auth-link primary" onClick={() => { navigate("/book-meeting"); closeMenu(); }}>Book Audit</button>
         </nav>
         <div className="nav-actions">
-          <button className="icon-btn theme-toggle" title={dark ? "Switch to day mode" : "Switch to night mode"} aria-label={dark ? "Switch to day mode" : "Switch to night mode"} onClick={() => setDark((value) => !value)}>
-            <Icon name={dark ? "sun" : "moon"} />
-          </button>
           {isAuthenticated ? (
             <><button className="ghost-small" onClick={() => navigate(user?.role === "admin" ? "/admin-dashboard" : "/user-dashboard")}>{user?.role === "admin" ? "Admin" : "Dashboard"}</button><button className="ghost-small logout-button" type="button" onClick={handleLogout} aria-label="Log out of your account">Logout</button></>
           ) : (
@@ -84,7 +95,7 @@ export function Layout({ children }) {
         </div>
       </header>
       <main>{children}</main>
-      <footer className="footer">
+      {!isAppOnly && <footer className="footer">
         <div className="footer-top">
           <div>
             <div className="brand footer-brand"><span className="footer-logo"><img src={logoFull} alt="ZMH USA Corp. Remote Operations" /></span><span><strong>{company.name}</strong><small>{company.tagline}</small></span></div>
@@ -109,8 +120,8 @@ export function Layout({ children }) {
           </div>
         </div>
         <div className="footer-bottom"><span>Copyright 2026 ZMH USA Corp. All rights reserved.</span><span>{company.emails.sales} | {company.phone}</span></div>
-      </footer>
-      <Chatbot />
+      </footer>}
+      {!isAppOnly && <Chatbot />}
     </div>
   );
 }

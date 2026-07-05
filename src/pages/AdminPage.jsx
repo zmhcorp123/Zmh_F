@@ -574,21 +574,14 @@ export function AdminPage() {
     let active = true;
     async function loadAdminData() {
       try {
-        const [userData, bookingData, billData, paymentData, ticketData, archivedTicketData] = await Promise.all([
-          adminApi.users(),
-          adminApi.bookings(),
-          adminApi.bills(),
-          adminApi.payments(),
-          adminApi.supportTickets(),
-          adminApi.archivedSupportTickets(),
-        ]);
+        const data = await adminApi.summary();
         if (!active) return;
-        setUsers(userData.users || []);
-        setBookings(bookingData.bookings || []);
-        setBills(billData.bills || []);
-        setPayments(paymentData.payments || []);
-        setTickets(ticketData.tickets || []);
-        setArchivedTickets(archivedTicketData.tickets || []);
+        setUsers(data.users || []);
+        setBookings(data.bookings || []);
+        setBills(data.bills || []);
+        setPayments(data.payments || []);
+        setTickets(data.tickets || []);
+        setArchivedTickets(data.archivedTickets || []);
         setError("");
       } catch (err) {
         if (active) setError(err.message || "Could not load admin data.");
