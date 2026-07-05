@@ -714,33 +714,6 @@ function DashboardCards({ section, serviceId }) {
       const meta = activityMeta(item.type, item.title);
       return { title: item.title, body: item.body || "Notification update", time: relativeTime(item.createdAt), sortAt: item.createdAt, ...meta };
     }),
-    ...services.map((service) => ({
-      title: service.latestProgress?.title || `${service.packageName || "Service"} updated`,
-      body: service.latestProgress?.description || `${service.companyName || "Your service"} is ${service.progressPercent || 0}% complete`,
-      time: relativeTime(service.latestProgress?.happenedAt || service.updatedAt),
-      icon: PlayCircle,
-      tone: "green",
-      route: "/my-services",
-      sortAt: service.latestProgress?.happenedAt || service.updatedAt,
-    })),
-    ...invoices.map((invoice) => ({
-      title: `${invoice.invoice} generated`,
-      body: `${currency(invoice)} due ${formatDate(invoice.dueDate)}`,
-      time: relativeTime(invoice.createdAt),
-      icon: ReceiptText,
-      tone: "amber",
-      route: "/invoices",
-      sortAt: invoice.createdAt,
-    })),
-    ...bookings.map((booking) => ({
-      title: booking.status === "ongoing" ? "Service Started" : "Booking Confirmed",
-      body: booking.packageName || booking.companyName || "Your booking has been updated",
-      time: relativeTime(booking.updatedAt || booking.createdAt),
-      icon: CalendarCheck,
-      tone: "blue",
-      route: "/bookings",
-      sortAt: booking.updatedAt || booking.createdAt,
-    })),
   ]
     .sort((a, b) => new Date(b.sortAt || 0) - new Date(a.sortAt || 0))
     .slice(0, 4);
@@ -786,7 +759,7 @@ function DashboardCards({ section, serviceId }) {
         <article className="client-premium-card client-activity-card">
           <div className="client-card-title with-action"><div><ClipboardCheck size={20} /><h3>Recent Activity</h3></div><button type="button" onClick={() => navigate("/notifications")}>View All</button></div>
           <div className="client-activity-list">
-            {recentItems.map((item) => {
+            {recentItems.length ? recentItems.map((item) => {
               const Icon = item.icon;
               return (
                 <button type="button" key={item.title} className={`client-activity-item ${item.tone}`} onClick={() => navigate(item.route)}>
@@ -796,23 +769,25 @@ function DashboardCards({ section, serviceId }) {
                   <ChevronRight size={18} />
                 </button>
               );
-            })}
+            }) : <div className="empty-state">No recent activity yet.</div>}
           </div>
         </article>
       </div>
       <div className="client-dashboard-bottom">
         <article className="client-premium-card client-appointment-card">
           <div className="client-card-title with-action"><div><CalendarDays size={20} /><h3>Upcoming Appointment</h3></div><button type="button" onClick={() => navigate("/calendar")}>View Calendar</button></div>
-          <div className="client-appointment-details">
-            <span className="client-appointment-icon"><CalendarCheck size={24} /></span>
-            <div>
-              <strong>{upcoming.packageName || "General Service"}</strong>
-              <small>Technician: {upcoming.assignedStaff || "ZHM HVAC Specialist"}</small>
-              <small>{formatDate(upcoming.serviceStartDate || upcoming.requestedDate || upcoming.createdAt)} • 10:00 AM</small>
-              <small>{upcoming.address || "Service address on file"}</small>
+          {upcoming._id ? (
+            <div className="client-appointment-details">
+              <span className="client-appointment-icon"><CalendarCheck size={24} /></span>
+              <div>
+                <strong>{upcoming.packageName || upcoming.companyName}</strong>
+                {upcoming.assignedStaff && <small>Technician: {upcoming.assignedStaff}</small>}
+                <small>{formatDate(upcoming.serviceStartDate || upcoming.requestedDate || upcoming.createdAt)}</small>
+                {upcoming.address && <small>{upcoming.address}</small>}
+              </div>
+              <b>Confirmed</b>
             </div>
-            <b>Confirmed</b>
-          </div>
+          ) : <div className="empty-state">No upcoming appointment yet.</div>}
         </article>
         <article className="client-premium-card client-quick-actions">
           <div className="client-card-title"><Sparkles size={20} /><h3>Quick Actions</h3></div>
