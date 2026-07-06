@@ -3177,6 +3177,18 @@ main:has(.client-dashboard-shell) {
 
 .client-mobile-menu {
   display: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  padding: 0;
+  border: 1px solid rgba(207, 217, 232, .92);
+  border-radius: 12px;
+  color: #0f172a;
+  background: rgba(255,255,255,.9);
+  box-shadow: 0 12px 26px rgba(15, 23, 42, .08);
+  backdrop-filter: blur(16px);
 }
 
 .client-header-actions {
@@ -4170,14 +4182,14 @@ main:has(.client-dashboard-shell) {
 
   .dashboard-app .client-sidebar {
     position: fixed;
-    top: 84px;
+    top: 76px;
     left: 12px;
     bottom: 12px;
     z-index: 80;
     display: grid;
     width: min(312px, calc(100vw - 24px));
     min-height: 0;
-    max-height: calc(100vh - 96px);
+    max-height: calc(100vh - 88px);
     margin: 0;
     border-radius: 22px;
     transform: translateX(calc(-100% - 18px));
@@ -4210,7 +4222,7 @@ main:has(.client-dashboard-shell) {
   }
 
   .dashboard-app .client-dashboard-header {
-    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
   }
 
@@ -4221,12 +4233,14 @@ main:has(.client-dashboard-shell) {
   }
 
   .dashboard-app .client-header-actions {
-    grid-column: 1 / -1;
-    justify-content: flex-start;
+    grid-column: auto;
+    justify-content: flex-end;
+    min-width: max-content;
   }
 
   .dashboard-app .client-dashboard-header h1 {
     font-size: clamp(1.6rem, 7vw, 2.2rem);
+    overflow-wrap: anywhere;
   }
 }
 
@@ -4244,7 +4258,8 @@ main:has(.client-dashboard-shell) {
   }
 
   .dashboard-app .client-dashboard-header {
-    gap: 10px;
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    gap: 8px;
     margin-bottom: 12px;
   }
 
@@ -4252,12 +4267,29 @@ main:has(.client-dashboard-shell) {
     gap: 8px;
   }
 
+  .dashboard-app .client-icon-button,
+  .dashboard-app .client-profile-button {
+    width: 42px;
+    min-width: 42px;
+    height: 42px;
+    padding: 0;
+    border-radius: 12px;
+  }
+
+  .dashboard-app .client-profile-button svg:last-child {
+    display: none;
+  }
+
+  .dashboard-app .client-dashboard-header p {
+    display: none;
+  }
+
   .dashboard-app .client-sidebar {
-    top: 78px;
+    top: 74px;
     left: 10px;
     bottom: 10px;
     width: min(288px, calc(100vw - 20px));
-    max-height: calc(100vh - 88px);
+    max-height: calc(100vh - 84px);
     padding: 14px 10px;
   }
 
@@ -4313,6 +4345,39 @@ main:has(.client-dashboard-shell) {
 }
 
 @media (max-width: 420px) {
+  .dashboard-app .client-dashboard-main {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .dashboard-app .client-dashboard-header {
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    gap: 7px;
+  }
+
+  .dashboard-app .client-mobile-menu,
+  .dashboard-app .client-icon-button,
+  .dashboard-app .client-profile-button {
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+  }
+
+  .dashboard-app .client-header-actions {
+    gap: 6px;
+  }
+
+  .dashboard-app .client-dashboard-header h1 {
+    font-size: clamp(1.28rem, 6vw, 1.55rem);
+    line-height: 1.12;
+  }
+
+  .dashboard-app .client-sidebar {
+    top: 70px;
+    width: min(282px, calc(100vw - 16px));
+    max-height: calc(100vh - 80px);
+  }
+
   .dashboard-app .client-stat-card {
     grid-template-columns: 1fr;
   }

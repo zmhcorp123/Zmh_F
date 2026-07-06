@@ -24,6 +24,7 @@ import {
   ShieldCheck,
   Sparkles,
   UserRound,
+  X,
   XCircle,
 } from "lucide-react";
 import { Button } from "../components/Button";
@@ -137,7 +138,8 @@ function DashboardShell({ section, user, children, onLogout }) {
   useEffect(() => {
     if (activeSection !== "Notifications") return;
     localStorage.setItem("zhm_notifications_seen", "true");
-    setNotificationsSeen(true);
+    const frame = window.requestAnimationFrame(() => setNotificationsSeen(true));
+    return () => window.cancelAnimationFrame(frame);
   }, [activeSection]);
 
   const go = (path) => {
@@ -154,7 +156,7 @@ function DashboardShell({ section, user, children, onLogout }) {
           aria-label="Close menu"
           onClick={() => setSidebarOpen(false)}
         />
-        <aside className="client-sidebar">
+        <aside className="client-sidebar" id="client-dashboard-menu">
           <div className="client-sidebar-brand">
             <span className="client-logo-mark"><Sparkles size={24} /></span>
             <strong>ZHM</strong>
@@ -182,7 +184,16 @@ function DashboardShell({ section, user, children, onLogout }) {
         </aside>
         <div className="dash-main client-dashboard-main">
           <header className="client-dashboard-header">
-            <button className="client-mobile-menu" type="button" aria-label="Open menu" onClick={() => setSidebarOpen((value) => !value)}><Menu size={20} /></button>
+            <button
+              className="client-mobile-menu"
+              type="button"
+              aria-label={sidebarOpen ? "Close menu" : "Open menu"}
+              aria-controls="client-dashboard-menu"
+              aria-expanded={sidebarOpen}
+              onClick={() => setSidebarOpen((value) => !value)}
+            >
+              {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
             <div>
               <h1>{section === "Dashboard" ? `Welcome back, ${displayName}` : section}<span aria-hidden="true"> 👋</span></h1>
               <p>{section === "Dashboard" ? "Here's what's happening with your services today." : `Manage your ${section.toLowerCase()} from one clean client portal.`}</p>
