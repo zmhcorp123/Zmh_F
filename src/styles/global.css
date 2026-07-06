@@ -4611,3 +4611,71 @@ main:has(.client-dashboard-shell) {
     grid-column: 2 / 3;
   }
 }
+
+/* User dashboard should scroll with the browser, not with nested panels. */
+.dashboard-app,
+.dashboard-app main,
+.dashboard-app .client-dashboard-shell,
+.dashboard-app .client-dashboard-main {
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+.dashboard-app {
+  min-height: 100vh !important;
+  overflow-x: hidden !important;
+}
+
+.dashboard-app .client-dashboard-shell {
+  min-height: calc(100vh - 112px) !important;
+}
+
+.dashboard-app .client-dashboard-main {
+  min-height: 0 !important;
+}
+
+.dashboard-app .client-sidebar,
+.dashboard-app .client-sidebar-nav,
+.dashboard-app .portal-list,
+.dashboard-app .client-bill-list,
+.dashboard-app .client-service-list,
+.dashboard-app .payment-confirmation-card {
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+.dashboard-app .payment-confirmation-card {
+  width: min(720px, 100%);
+}
+
+.dashboard-app .payment-confirmation-card input,
+.dashboard-app .payment-confirmation-card select {
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .dashboard-app .client-dashboard-shell {
+    position: relative;
+  }
+
+  .dashboard-app .client-dashboard-shell.sidebar-open {
+    min-height: 860px !important;
+  }
+
+  .dashboard-app .client-sidebar {
+    position: absolute !important;
+    top: 0 !important;
+    left: 12px !important;
+    bottom: auto !important;
+    z-index: 80;
+    width: min(312px, calc(100vw - 24px));
+    margin: 0;
+    border-radius: 22px;
+    transform: translateX(calc(-100% - 18px));
+  }
+
+  .dashboard-app .client-dashboard-shell.sidebar-open .client-sidebar {
+    transform: translateX(0);
+  }
+}

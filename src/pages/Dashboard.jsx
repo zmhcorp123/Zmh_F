@@ -638,8 +638,10 @@ function DashboardCards({ section, serviceId }) {
     setError("");
     setNotice("");
     const form = new FormData(event.currentTarget);
+    const invoiceId = String(form.get("invoiceId") || "").trim();
+    const invoiceNumber = String(form.get("invoiceNumber") || "").trim();
     try {
-      const data = await dashboardApi.confirmPayment({ invoiceId: form.get("invoiceId") });
+      const data = await dashboardApi.confirmPayment({ invoiceId, invoiceNumber });
       const [invoiceData, notificationData] = await Promise.all([dashboardApi.invoices(), dashboardApi.notifications()]);
       setInvoices(invoiceData.invoices || []);
       setNotifications(notificationData.notifications || []);
@@ -699,7 +701,42 @@ function DashboardCards({ section, serviceId }) {
 
   if (section === "Payment Confirmation") {
     const payableInvoices = invoices.filter((invoice) => invoice.status !== "paid" && !["submitted", "approved"].includes(invoice.paymentSubmission?.status));
-    return <div className="portal-list client-bill-list">{error && <div className="form-error">{error}</div>}{notice && <div className="success">{notice}</div>}<form className="form-card inline payment-confirmation-card" onSubmit={submitPaymentConfirmation}><h3>Payment Confirmation</h3>{payableInvoices.length ? <><label>Select Invoice<select name="invoiceId" required defaultValue=""><option value="" disabled>Choose an unpaid invoice</option>{payableInvoices.map((invoice) => <option key={invoice._id} value={invoice._id}>{invoice.invoice} - {currency(invoice)} - {invoice.status}</option>)}</select></label><div className="payment-confirmation-list">{payableInvoices.map((invoice) => <article key={invoice._id}><strong>{invoice.invoice}</strong><span>{invoice.company} | {currency(invoice)} due {formatDate(invoice.dueDate)}</span><StatusBadge value={invoice.status} /></article>)}</div><Button type="submit">{savingConfirmation ? "Submitting..." : "Submit Confirmation"}</Button></> : <div className="empty-state">No unpaid invoices are available for confirmation. Paid invoices or invoices already waiting for admin approval do not need another confirmation.</div>}</form></div>;
+    return (
+      <div className="portal-list client-bill-list">
+        {error && <div className="form-error">{error}</div>}
+        {notice && <div className="success">{notice}</div>}
+        <form className="form-card inline payment-confirmation-card" onSubmit={submitPaymentConfirmation}>
+          <h3>Payment Confirmation</h3>
+          {payableInvoices.length ? (
+            <>
+              <label>
+                Select Invoice
+                <select name="invoiceId" defaultValue="">
+                  <option value="">Use invoice number instead</option>
+                  {payableInvoices.map((invoice) => <option key={invoice._id} value={invoice._id}>{invoice.invoice} - {currency(invoice)} - {invoice.status}</option>)}
+                </select>
+              </label>
+              <div className="payment-confirmation-list">
+                {payableInvoices.map((invoice) => (
+                  <article key={invoice._id}>
+                    <strong>{invoice.invoice}</strong>
+                    <span>{invoice.company} | {currency(invoice)} due {formatDate(invoice.dueDate)}</span>
+                    <StatusBadge value={invoice.status} />
+                  </article>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="empty-state">If your invoice is not listed, enter the invoice number from your bill and submit it for admin approval.</div>
+          )}
+          <label>
+            Invoice Number
+            <input name="invoiceNumber" placeholder="Example: INV-2026-001" />
+          </label>
+          <Button type="submit">{savingConfirmation ? "Submitting..." : "Submit Confirmation"}</Button>
+        </form>
+      </div>
+    );
   }
 
   if (section === "Invoices") {
