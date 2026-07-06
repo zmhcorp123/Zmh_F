@@ -148,6 +148,12 @@ function DashboardShell({ section, user, children, onLogout }) {
     <>
       <SEO title={section} />
       <section className={sidebarOpen ? "dashboard client-dashboard-shell sidebar-open" : "dashboard client-dashboard-shell"}>
+        <button
+          type="button"
+          className="client-sidebar-backdrop"
+          aria-label="Close menu"
+          onClick={() => setSidebarOpen(false)}
+        />
         <aside className="client-sidebar">
           <div className="client-sidebar-brand">
             <span className="client-logo-mark"><Sparkles size={24} /></span>
