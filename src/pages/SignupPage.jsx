@@ -3,13 +3,20 @@ import { Button } from "../components/Button";
 import { SEO } from "../components/SEO";
 import { authApi } from "../services/api";
 import { navigate } from "../utils/router";
+import { countries, countryByCode } from "../data/countries";
 import { PasswordStrength } from "./auth/PasswordStrength";
 import { savePendingEmail } from "./auth/authStorage";
+
+function escapeRegex(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
 export function SignupPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState("");
+  const [countryCode, setCountryCode] = useState("US");
+  const selectedCountry = countryByCode(countryCode);
 
   const submit = async (event) => {
     event.preventDefault();
@@ -17,12 +24,18 @@ export function SignupPage() {
     setLoading(true);
     const form = new FormData(event.currentTarget);
     const email = form.get("email");
+    const phoneLocal = String(form.get("phone") || "").trim().replace(new RegExp("^\\s*" + escapeRegex(selectedCountry.dialCode) + "\\s*"), "");
+    const phone = `${selectedCountry.dialCode} ${phoneLocal}`.trim();
 
     try {
       await authApi.signup({
         name: form.get("name"),
         company: form.get("company"),
         email,
+        country: selectedCountry.name,
+        countryCode: selectedCountry.code,
+        phoneCode: selectedCountry.dialCode,
+        phone,
         password: form.get("password"),
       });
       savePendingEmail(email);
@@ -44,6 +57,10 @@ export function SignupPage() {
           <label>Name<input name="name" placeholder="Full name" required /></label>
           <label>Company<input name="company" placeholder="Company name" /></label>
           <label>Email<input name="email" type="email" placeholder="you@company.com" required /></label>
+          <label>Country<select name="countryCode" value={countryCode} onChange={(event) => setCountryCode(event.target.value)} required>
+            {countries.map((country) => <option key={country.code} value={country.code}>{country.name} ({country.dialCode})</option>)}
+          </select></label>
+          <label>Phone Number<div className="phone-field"><span>{selectedCountry.dialCode}</span><input name="phone" type="tel" inputMode="tel" placeholder="Phone number" required /></div></label>
           <label>Password<input name="password" type="password" placeholder="Password" required value={password} onChange={(event) => setPassword(event.target.value)} /></label>
           <PasswordStrength password={password} />
           <Button type="submit" icon="lock">{loading ? "Creating..." : "Create account"}</Button>

@@ -21,7 +21,7 @@ export function LoginPage() {
     try {
       const data = await login({ email: form.get("email"), password: form.get("password") });
       const from = typeof location.state?.from === "string" && location.state.from.startsWith("/") ? location.state.from : "";
-      routerNavigate(from || (data.user?.role === "admin" ? "/admin-dashboard" : "/user-dashboard"), { replace: true });
+      routerNavigate(from || (["admin", "employee"].includes(data.user?.role) ? "/admin-dashboard" : "/user-dashboard"), { replace: true });
     } catch (err) {
       setError(err.message || "Login failed");
     } finally {

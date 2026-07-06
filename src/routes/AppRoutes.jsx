@@ -85,6 +85,7 @@ function UserDashboardRoute({ section = "Dashboard", serviceId = "" }) {
 function UserDashboardContent({ section, serviceId }) {
   const { user } = useAuth();
   if (user?.role === "admin") return <Navigate to="/admin-dashboard" replace />;
+  if (user?.role === "employee") return <Navigate to="/admin-dashboard" replace />;
   return <Dashboard section={section} serviceId={serviceId} />;
 }
 
@@ -99,7 +100,7 @@ function DashboardRoute() {
 
 function DashboardRedirect() {
   const { user } = useAuth();
-  return <Navigate to={user?.role === "admin" ? "/admin-dashboard" : "/user-dashboard"} replace />;
+  return <Navigate to={["admin", "employee"].includes(user?.role) ? "/admin-dashboard" : "/user-dashboard"} replace />;
 }
 
 export function AppRoutes() {
@@ -124,9 +125,9 @@ export function AppRoutes() {
         <Route path="/case-studies" element={<CaseStudies />} />
         <Route path="/faq" element={<FAQ />} />
         <Route path="/contact" element={<Contact />} />
-        <Route path="/admin" element={<ProtectedRoute role="admin"><AdminPage /></ProtectedRoute>} />
-        <Route path="/admin/orders/:orderId" element={<ProtectedRoute role="admin"><AdminOrderDetails /></ProtectedRoute>} />
-        <Route path="/admin-dashboard" element={<ProtectedRoute role="admin"><AdminPage /></ProtectedRoute>} />
+        <Route path="/admin" element={<ProtectedRoute role={["admin", "employee"]}><AdminPage /></ProtectedRoute>} />
+        <Route path="/admin/orders/:orderId" element={<ProtectedRoute role={["admin", "employee"]}><AdminOrderDetails /></ProtectedRoute>} />
+        <Route path="/admin-dashboard" element={<ProtectedRoute role={["admin", "employee"]}><AdminPage /></ProtectedRoute>} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/careers" element={<Careers />} />
         <Route path="/privacy" element={<Privacy />} />

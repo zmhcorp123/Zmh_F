@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Button } from "../components/Button";
 import { Icon } from "../components/icons";
 import { SEO } from "../components/SEO";
-import { adminApi } from "../services/api";
+import { adminApi, authApi } from "../services/api";
 import { packages as defaultPackages, teamProfiles as defaultTeamProfiles } from "../data/siteData";
 import { navigate } from "../utils/router";
 import { useAuth } from "../context/useAuth";
@@ -92,6 +92,50 @@ function FormField({ label, helper, icon = "settings", children }) {
       {children}
       {helper && <small>{helper}</small>}
     </label>
+  );
+}
+
+function EmployeeSetupPanel({ onComplete }) {
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+
+  const submit = async (event) => {
+    event.preventDefault();
+    setSaving(true);
+    setError("");
+    setNotice("");
+    const form = new FormData(event.currentTarget);
+    const password = form.get("password");
+    if (password !== form.get("confirmPassword")) {
+      setError("New password and confirmation do not match.");
+      setSaving(false);
+      return;
+    }
+    try {
+      const data = await authApi.completeEmployeeSetup({ otp: form.get("otp"), password });
+      setNotice(data.message || "Employee setup completed.");
+      onComplete?.(data.user);
+      event.currentTarget.reset();
+    } catch (err) {
+      setError(err.message || "Could not complete employee setup.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <form className="form-card employee-setup-card" onSubmit={submit}>
+      <span className="eyebrow">Employee Setup</span>
+      <h3>Verify email and set your password</h3>
+      <p>Use the OTP sent to your email, then replace the temporary password with your own password.</p>
+      <label>OTP Code<input name="otp" inputMode="numeric" placeholder="6-digit code" required /></label>
+      <label>New Password<input name="password" type="password" minLength="8" required /></label>
+      <label>Confirm New Password<input name="confirmPassword" type="password" minLength="8" required /></label>
+      {error && <div className="form-error">{error}</div>}
+      {notice && <div className="success">{notice}</div>}
+      <button type="submit" className="settings-primary-action" disabled={saving}>{saving ? "Saving..." : "Complete Setup"}</button>
+    </form>
   );
 }
 
@@ -550,8 +594,11 @@ function SettingsPanel() {
 }
 
 export function AdminPage() {
-  const { logout } = useAuth();
-  const [tab, setTab] = useState("Overview");
+  const { logout, user, updateUser: updateAuthUser } = useAuth();
+  const isEmployee = user?.role === "employee";
+  const employeeNeedsSetup = isEmployee && (user?.mustChangePassword || !user?.isEmailVerified);
+  const visibleTabs = isEmployee ? [{ name: "Ongoing", icon: "route" }] : adminTabs;
+  const [tab, setTab] = useState(isEmployee ? "Ongoing" : "Overview");
   const [users, setUsers] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [bills, setBills] = useState([]);
@@ -573,6 +620,7 @@ export function AdminPage() {
   useEffect(() => {
     let active = true;
     async function loadAdminData() {
+      if (employeeNeedsSetup) return;
       try {
         const data = await adminApi.summary();
         if (!active) return;
@@ -595,7 +643,7 @@ export function AdminPage() {
       active = false;
       window.clearInterval(refreshTimer);
     };
-  }, []);
+  }, [employeeNeedsSetup]);
 
   const pendingUsers = useMemo(() => users.filter((user) => user.status === "pending"), [users]);
   const verifiedPendingUsers = useMemo(() => pendingUsers.filter((user) => user.isEmailVerified), [pendingUsers]);
@@ -642,7 +690,7 @@ export function AdminPage() {
     }
   };
 
-  const updateUser = async (id, payload) => {
+  const updateUserAccount = async (id, payload) => {
     setSavingId(id);
     setError("");
     setNotice("");
@@ -651,6 +699,28 @@ export function AdminPage() {
       setUsers((current) => current.map((user) => user._id === id ? data.user : user));
     } catch (err) {
       setError(err.message || "Could not update user.");
+    } finally {
+      setSavingId("");
+    }
+  };
+
+  const createEmployee = async (event) => {
+    event.preventDefault();
+    setSavingId("create-employee");
+    setError("");
+    setNotice("");
+    const form = new FormData(event.currentTarget);
+    try {
+      const data = await adminApi.createEmployee({
+        name: form.get("name"),
+        email: form.get("email"),
+        temporaryPassword: form.get("temporaryPassword"),
+      });
+      setUsers((current) => [data.user, ...current]);
+      setNotice(data.message || "Employee created.");
+      event.currentTarget.reset();
+    } catch (err) {
+      setError(err.message || "Could not create employee.");
     } finally {
       setSavingId("");
     }
@@ -800,23 +870,26 @@ export function AdminPage() {
         <label>Filter<select value={orderFilter} onChange={(event) => setOrderFilter(event.target.value)}><option value="all">All ongoing</option><option value="pending">Payment pending</option><option value="sent">Invoice sent</option><option value="paid">Paid</option><option value="overdue">Overdue</option></select></label>
         <label>Sort<select value={orderSort} onChange={(event) => setOrderSort(event.target.value)}><option value="newest">Newest</option><option value="company">Company</option><option value="progress">Progress</option></select></label>
       </div>
-      <div className="admin-table-wrap">
-        <table className="admin-table order-table">
-          <thead><tr><th>Order</th><th>Contact</th><th>Package</th><th>Progress</th><th>Billing</th><th>Assigned</th><th>Action</th></tr></thead>
-          <tbody>
-            {items.length ? items.map((booking) => (
-              <tr key={booking._id}>
-                <td data-label="Order"><strong>{booking.companyName}</strong><span>Ordered {formatDate(booking.createdAt)}</span></td>
-                <td data-label="Contact">{booking.contactPerson || booking.user?.name || "Public booking"}<span>{booking.email || booking.user?.email || "No email"}<br />{booking.phone || "No phone"}</span></td>
-                <td data-label="Package">{booking.packageName || "Custom support"}<span>{booking.packagePrice || "Custom"}</span></td>
-                <td data-label="Progress"><div className="progress-meter"><span style={{ width: `${Number(booking.progressPercent || 0)}%` }} /></div><small>{Number(booking.progressPercent || 0)}%</small></td>
-                <td data-label="Billing"><span className="status-pill">{booking.paymentStatus || "pending"}</span><small>Next {formatDate(booking.nextBillingDate)}</small></td>
-                <td data-label="Assigned">{booking.assignedStaff || "Unassigned"}</td>
-                <td data-label="Action"><button type="button" className="table-action" onClick={() => navigate(`/admin/orders/${booking._id}`)}>Open details</button></td>
-              </tr>
-            )) : <tr><td colSpan="7">No ongoing orders match this view.</td></tr>}
-          </tbody>
-        </table>
+      <div className="ongoing-order-grid">
+        {items.length ? items.map((booking) => (
+          <article className="ongoing-order-card" key={booking._id}>
+            <div>
+              <span className="eyebrow">Ordered {formatDate(booking.createdAt)}</span>
+              <h3>{booking.companyName}</h3>
+              <p>{booking.contactPerson || booking.user?.name || "Public booking"} | {booking.email || booking.user?.email || "No email"} | {booking.phone || "No phone"}</p>
+            </div>
+            <div className="ongoing-order-facts">
+              <span><strong>Package</strong>{booking.packageName || "Custom support"}<small>{booking.packagePrice || "Custom"}</small></span>
+              <span><strong>Billing</strong><b className="status-pill">{booking.paymentStatus || "pending"}</b><small>Next {formatDate(booking.nextBillingDate)}</small></span>
+              <span><strong>Assigned</strong>{booking.assignedStaff || "Unassigned"}</span>
+            </div>
+            <div className="ongoing-order-progress">
+              <div><strong>{Number(booking.progressPercent || 0)}%</strong><span>Progress</span></div>
+              <div className="progress-meter"><span style={{ width: `${Number(booking.progressPercent || 0)}%` }} /></div>
+            </div>
+            <button type="button" className="table-action" onClick={() => navigate(`/admin/orders/${booking._id}`)}>Open details</button>
+          </article>
+        )) : <div className="empty-state">No ongoing orders match this view.</div>}
       </div>
     </div>
   );
@@ -826,9 +899,9 @@ export function AdminPage() {
       <SEO title="Admin Panel" description="Manage real MongoDB users, bookings, bills, and admin responses." />
       <section className="admin-page">
         <aside className="admin-sidebar">
-          <span className="eyebrow">Admin</span>
-          <h1>Control Center</h1>
-          {adminTabs.map((item) => (
+          <span className="eyebrow">{isEmployee ? "Employee" : "Admin"}</span>
+          <h1>{isEmployee ? "Work Center" : "Control Center"}</h1>
+          {visibleTabs.map((item) => (
             <button key={item.name} className={tab === item.name ? "active" : ""} onClick={() => setTab(item.name)}>
               <Icon name={item.icon} size={18} /> {item.name}
             </button>
@@ -838,18 +911,19 @@ export function AdminPage() {
           <div className="admin-hero">
             <div>
               <h2>{tab === "Overview" ? "Manage users, orders, bills, and support" : tab}</h2>
-              <p>Review bookings, manage ongoing order profiles, resolve support tickets, and send client bills.</p>
+              <p>{isEmployee ? "Open ongoing orders and update order progress." : "Review bookings, manage ongoing order profiles, resolve support tickets, and send client bills."}</p>
             </div>
             <div className="admin-hero-actions">
-              <Button to="/user-dashboard" variant="secondary" icon="user">User Dashboard</Button>
+              {!isEmployee && <Button to="/user-dashboard" variant="secondary" icon="user">User Dashboard</Button>}
               <button type="button" className="ghost-small admin-logout-button" onClick={handleLogout}>Logout</button>
             </div>
           </div>
 
           {error && <div className="form-error">{error}</div>}
           {notice && <div className="success">{notice}</div>}
+          {employeeNeedsSetup && <EmployeeSetupPanel onComplete={updateAuthUser} />}
 
-          {tab === "Overview" && (
+          {!isEmployee && tab === "Overview" && (
             <>
               <div className="grid four admin-metrics">
                 {metrics.map(([label, value, icon]) => (
@@ -859,7 +933,7 @@ export function AdminPage() {
             </>
           )}
 
-          {tab === "Approvals" && (
+          {!isEmployee && tab === "Approvals" && (
             <div className="admin-table-wrap">
               <div className="approval-summary">
                 <strong>{pendingUsers.length} pending accounts</strong>
@@ -883,39 +957,51 @@ export function AdminPage() {
             </div>
           )}
 
-          {tab === "Users" && (
-            <div className="admin-table-wrap">
-              <table className="admin-table">
-                <thead><tr><th>Name</th><th>Company</th><th>Email</th><th>Role</th><th>Status</th><th>Action</th></tr></thead>
-                <tbody>
-                  {users.length ? users.map((user) => (
-                    <tr key={user._id}>
-                      <td data-label="Name">{user.name}</td>
-                      <td data-label="Company">{user.company || "-"}</td>
-                      <td data-label="Email">{user.email}</td>
-                      <td data-label="Role">{user.role}</td>
-                      <td data-label="Status"><select defaultValue={user.status} onChange={(event) => updateUser(user._id, { status: event.target.value })}>{userStatuses.map((status) => <option key={status} value={status}>{status}</option>)}</select></td>
-                      <td data-label="Action"><button type="button" className="table-action" disabled={savingId === user._id || user.status === "active"} onClick={() => approveUser(user._id)}>{savingId === user._id ? "Saving" : user.status === "active" ? "Approved" : "Approve & email"}</button></td>
-                    </tr>
-                  )) : <tr><td colSpan="6">No users found.</td></tr>}
-                </tbody>
-              </table>
+          {!isEmployee && tab === "Users" && (
+            <div className="users-admin-workspace">
+              <form className="form-card employee-create-form" onSubmit={createEmployee}>
+                <span className="eyebrow">Employee</span>
+                <h3>Create employee account</h3>
+                <div className="settings-form-grid">
+                  <label>Name<input name="name" required placeholder="Employee name" /></label>
+                  <label>Email<input name="email" type="email" required placeholder="employee@company.com" /></label>
+                  <label>Temporary Password<input name="temporaryPassword" type="text" minLength="8" required placeholder="Minimum 8 characters" /></label>
+                </div>
+                <button type="submit" className="settings-primary-action" disabled={savingId === "create-employee"}>{savingId === "create-employee" ? "Creating..." : "Create Employee"}</button>
+              </form>
+              <div className="admin-table-wrap">
+                <table className="admin-table">
+                  <thead><tr><th>Name</th><th>Company</th><th>Email</th><th>Role</th><th>Status</th><th>Action</th></tr></thead>
+                  <tbody>
+                    {users.length ? users.map((user) => (
+                      <tr key={user._id}>
+                        <td data-label="Name">{user.name}</td>
+                        <td data-label="Company">{user.company || "-"}</td>
+                        <td data-label="Email">{user.email}</td>
+                        <td data-label="Role">{user.role}</td>
+                        <td data-label="Status"><select defaultValue={user.status} onChange={(event) => updateUserAccount(user._id, { status: event.target.value })}>{userStatuses.map((status) => <option key={status} value={status}>{status}</option>)}</select></td>
+                        <td data-label="Action"><button type="button" className="table-action" disabled={savingId === user._id || user.status === "active"} onClick={() => approveUser(user._id)}>{savingId === user._id ? "Saving" : user.status === "active" ? "Approved" : "Approve & email"}</button></td>
+                      </tr>
+                    )) : <tr><td colSpan="6">No users found.</td></tr>}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 
-          {tab === "Bookings" && (
+          {!isEmployee && tab === "Bookings" && (
             renderBookingCards(newBookings, "No new booking requests found.")
           )}
 
-          {tab === "Ongoing" && (
+          {!employeeNeedsSetup && tab === "Ongoing" && (
             renderOrderTable(visibleOngoingBookings)
           )}
 
-          {tab === "Cancelled Orders" && (
+          {!isEmployee && tab === "Cancelled Orders" && (
             renderBookingCards(cancelledBookings, "No cancelled orders yet.", true)
           )}
 
-          {tab === "Bills" && (
+          {!isEmployee && tab === "Bills" && (
             <div className="admin-table-wrap">
               <table className="admin-table">
                 <thead><tr><th>Invoice</th><th>Company</th><th>Amount</th><th>Status</th><th>Due Date</th></tr></thead>
@@ -928,7 +1014,7 @@ export function AdminPage() {
             </div>
           )}
 
-          {tab === "Send Bills" && (
+          {!isEmployee && tab === "Send Bills" && (
             <form className="form-card send-bills-form" onSubmit={sendBills}>
               <div className="send-bill-header">
                 <div>
@@ -967,7 +1053,7 @@ export function AdminPage() {
             </form>
           )}
 
-          {tab === "Payment Approval" && (
+          {!isEmployee && tab === "Payment Approval" && (
             <div className="booking-admin-list payment-review-list">
               {payments.length ? payments.map((payment) => (
                 <article className="support-ticket-card payment-review-card" key={payment._id}>
@@ -1013,7 +1099,7 @@ export function AdminPage() {
             </div>
           )}
 
-          {tab === "Support Tickets" && (
+          {!isEmployee && tab === "Support Tickets" && (
             <div className="booking-admin-list">
               {tickets.length ? tickets.map((ticket) => (
                 <form className="support-ticket-card" key={ticket._id} onSubmit={(event) => resolveTicket(event, ticket)}>
@@ -1036,7 +1122,7 @@ export function AdminPage() {
             </div>
           )}
 
-          {tab === "Archived Tickets" && (
+          {!isEmployee && tab === "Archived Tickets" && (
             <div className="booking-admin-list">
               {archivedTickets.length ? archivedTickets.map((ticket) => (
                 <article className="support-ticket-card" key={ticket._id}>
@@ -1057,7 +1143,7 @@ export function AdminPage() {
             </div>
           )}
 
-          {tab === "Settings" && <SettingsPanel />}
+          {!isEmployee && tab === "Settings" && <SettingsPanel />}
         </div>
       </section>
     </>

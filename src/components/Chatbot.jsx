@@ -9,6 +9,7 @@ export function Chatbot() {
   const [typing, setTyping] = useState(false);
   const replyTimer = useRef(null);
   const chatScrollRef = useRef(null);
+  const latestUserQuestion = [...messages].reverse().find((message) => message.from === "user")?.text || "";
 
   const knowledge = useMemo(() => ({
     services: "ZMH supports " + services.map((item) => item.name).join(", ") + ".",
@@ -73,14 +74,19 @@ export function Chatbot() {
     setInput("");
   };
 
+  const suggestedQuestions = faqs
+    .filter(([question]) => question !== latestUserQuestion)
+    .slice(0, 4);
+
   return (
     <div className="chatbot">
       {open && (
         <section className="chat-panel" aria-label="ZMH assistant chat">
           <header><strong>ZMH Assistant</strong><button type="button" className="chat-close" aria-label="Close chat" title="Close chat" onClick={() => setOpen(false)}>Close</button></header>
           <div className="chat-scroll" ref={chatScrollRef}><div className="chat-messages">{messages.map((message, index) => <p key={index} className={message.from}>{message.text}</p>)}{typing && <p className="bot typing" aria-live="polite"><span></span><span></span><span></span></p>}</div>
-          <div className="chat-faqs">
-            {faqs.slice(0, 4).map(([question]) => <button type="button" key={question} onClick={() => addQuestion(question)}>{question}</button>)}
+          <div className="chat-faqs" aria-label="Suggested questions">
+            <span>Suggested questions</span>
+            {suggestedQuestions.map(([question]) => <button type="button" key={question} onClick={() => addQuestion(question)}>{question}</button>)}
           </div>
           <div className="chat-actions"><button type="button" onClick={() => openRouteAndClose("/book-meeting")}>Book Meeting</button><button type="button" onClick={() => openRouteAndClose("/contact")}>Contact Support</button><button type="button" onClick={showSupportEmail}>Email Us</button></div></div>
           <form onSubmit={send}><input value={input} onChange={(event) => setInput(event.target.value)} placeholder="Ask a question..." aria-label="Ask a question" /><button type="submit">Send</button></form>

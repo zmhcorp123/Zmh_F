@@ -97,6 +97,7 @@ export const authApi = {
   verifyOtp: (payload) => request("/auth/otp/verify", { method: "POST", body: payload }),
   forgotPassword: (payload) => request("/auth/forgot-password", { method: "POST", body: payload }),
   resetPassword: (payload) => request("/auth/reset-password", { method: "POST", body: payload }),
+  completeEmployeeSetup: (payload) => request("/auth/employee/complete-setup", { method: "POST", body: payload }),
   logout: () => clearAuthStorage(),
 };
 
@@ -134,6 +135,7 @@ export const dashboardApi = {
 export const adminApi = {
   summary: () => request("/admin/summary"),
   users: () => request("/admin/users?db=mongodb"),
+  createEmployee: (payload) => request("/admin/users/employee", { method: "POST", body: payload }),
   approvals: () => request("/admin/approvals"),
   approveUser: (id) => request("/admin/users/" + id + "/approve", { method: "POST" }),
   updateUser: (id, payload) => request("/admin/users/" + id, { method: "PATCH", body: payload }),

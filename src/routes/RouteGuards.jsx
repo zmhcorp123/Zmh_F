@@ -2,6 +2,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 
 function dashboardPath(user) {
+  if (user?.role === "employee") return "/admin-dashboard";
   return user?.role === "admin" ? "/admin-dashboard" : "/user-dashboard";
 }
 
@@ -20,7 +21,8 @@ export function ProtectedRoute({ children, role, redirectTo = "/login" }) {
     return <Navigate to={redirectTo} replace state={{ from: destination }} />;
   }
 
-  if (role && user?.role !== role) {
+  const allowedRoles = Array.isArray(role) ? role : role ? [role] : [];
+  if (allowedRoles.length && !allowedRoles.includes(user?.role)) {
     return <Navigate to={dashboardPath(user)} replace />;
   }
 

@@ -4,6 +4,7 @@ import { Button } from "../components/Button";
 import { SEO } from "../components/SEO";
 import { adminApi } from "../services/api";
 import { navigate } from "../utils/router";
+import { useAuth } from "../context/useAuth";
 
 function formatDate(value) {
   return value ? new Date(value).toLocaleDateString() : "Not selected";
@@ -51,6 +52,8 @@ function CollapsiblePanel({ title, eyebrow, children, defaultOpen = true, action
 
 export function AdminOrderDetails() {
   const { orderId } = useParams();
+  const { user } = useAuth();
+  const isEmployee = user?.role === "employee";
   const [order, setOrder] = useState(null);
   const [progress, setProgress] = useState([]);
   const [invoices, setInvoices] = useState([]);
@@ -119,6 +122,10 @@ export function AdminOrderDetails() {
     try {
       const data = await adminApi.addOrderProgress(orderId, {
         title: form.get("title"),
+        customerName: form.get("customerName"),
+        customerEmail: form.get("customerEmail"),
+        customerPhone: form.get("customerPhone"),
+        customerAddress: form.get("customerAddress"),
         description: form.get("description"),
         happenedAt: form.get("happenedAt"),
         progressPercent: form.get("progressPercent"),
@@ -189,12 +196,12 @@ export function AdminOrderDetails() {
           </div>
           <div className="order-actions">
             <Button variant="secondary" icon="arrow" onClick={() => navigate("/admin-dashboard")}>Back</Button>
-            <Button variant="secondary" icon="bill" onClick={generatePdf}>{saving === "pdf" ? "Generating..." : "Generate PDF"}</Button>
-            <Button icon="mail" onClick={sendSummary}>{saving === "email" ? "Sending..." : "Send Invoice Summary"}</Button>
+            {!isEmployee && <Button variant="secondary" icon="bill" onClick={generatePdf}>{saving === "pdf" ? "Generating..." : "Generate PDF"}</Button>}
+            {!isEmployee && <Button icon="mail" onClick={sendSummary}>{saving === "email" ? "Sending..." : "Send Invoice Summary"}</Button>}
           </div>
         </div>
 
-        <div className="sticky-order-actions">
+        {!isEmployee && <div className="sticky-order-actions">
           <span>{order.companyName}</span>
           <div>
             <button type="button" className="settings-secondary-action" onClick={generatePdf}>Export PDF</button>
@@ -202,7 +209,7 @@ export function AdminOrderDetails() {
             <button type="button" className="settings-secondary-action" onClick={() => window.print()}>Print</button>
             <button type="button" className="settings-primary-action" onClick={sendSummary}>Email Summary</button>
           </div>
-        </div>
+        </div>}
 
         {error && <div className="form-error">{error}</div>}
         {notice && <div className="success">{notice}</div>}
@@ -216,7 +223,7 @@ export function AdminOrderDetails() {
 
         <div className="enterprise-order-grid">
           <div className="enterprise-order-main">
-            <CollapsiblePanel title="Executive Order Profile" eyebrow="Client & package" actions={<StatusBadge value={order.status} />}>
+            {!isEmployee && <CollapsiblePanel title="Executive Order Profile" eyebrow="Client & package" actions={<StatusBadge value={order.status} />}>
               <form className="enterprise-form" onSubmit={saveOrder}>
                 <div className="enterprise-facts">
                   <span><strong>Company</strong>{order.companyName}</span>
@@ -238,7 +245,18 @@ export function AdminOrderDetails() {
                 <label className="settings-field"><span>Admin Notes</span><textarea name="notes" defaultValue={order.notes || ""} /></label>
                 <div className="settings-footer-actions"><button type="submit" className="settings-primary-action">{saving === "order" ? "Saving..." : "Save Order"}</button></div>
               </form>
-            </CollapsiblePanel>
+            </CollapsiblePanel>}
+
+            {isEmployee && <CollapsiblePanel title="Order Profile" eyebrow="Ongoing order" actions={<StatusBadge value={order.status} />}>
+              <div className="enterprise-facts">
+                <span><strong>Company</strong>{order.companyName}</span>
+                <span><strong>Contact</strong>{order.contactPerson || order.user?.name || "Client"}</span>
+                <span><strong>Email</strong>{order.email || order.user?.email || "No email"}</span>
+                <span><strong>Phone</strong>{order.phone || order.user?.phone || "No phone"}</span>
+                <span><strong>Package</strong>{order.packageName || "Custom support"}</span>
+                <span><strong>Assigned</strong>{order.assignedStaff || "Unassigned"}</span>
+              </div>
+            </CollapsiblePanel>}
 
             <CollapsiblePanel title="Modern Timeline" eyebrow="Service progress">
               <div className="enterprise-timeline">
@@ -246,6 +264,12 @@ export function AdminOrderDetails() {
                   <article key={item._id}>
                     <div><StatusBadge value={item.status} /><span>{formatDate(item.happenedAt)} | {item.adminName || item.admin?.name || "Admin"}</span></div>
                     <strong>{item.title}</strong>
+                    {(item.customerName || item.customerEmail || item.customerPhone || item.customerAddress) && <div className="progress-customer-facts">
+                      {item.customerName && <span><strong>Customer</strong>{item.customerName}</span>}
+                      {item.customerEmail && <span><strong>Email</strong>{item.customerEmail}</span>}
+                      {item.customerPhone && <span><strong>Phone</strong>{item.customerPhone}</span>}
+                      {item.customerAddress && <span><strong>Address</strong>{item.customerAddress}</span>}
+                    </div>}
                     <p>{item.description || "No description provided."}</p>
                     <div className="progress-meter"><span style={{ width: `${Number(item.progressPercent || 0)}%` }} /></div>
                   </article>
@@ -253,7 +277,7 @@ export function AdminOrderDetails() {
               </div>
             </CollapsiblePanel>
 
-            <CollapsiblePanel title="Invoice History" eyebrow="Billing">
+            {!isEmployee && <CollapsiblePanel title="Invoice History" eyebrow="Billing">
               <div className="enterprise-table-wrap">
                 <table className="admin-table enterprise-table">
                   <thead><tr><th>Invoice</th><th>Amount</th><th>Status</th><th>Due Date</th></tr></thead>
@@ -264,33 +288,39 @@ export function AdminOrderDetails() {
                   </tbody>
                 </table>
               </div>
-            </CollapsiblePanel>
+            </CollapsiblePanel>}
           </div>
 
           <aside className="enterprise-order-side">
-            <CollapsiblePanel title="Update Progress" eyebrow="Admin action">
+            <CollapsiblePanel title="Update Progress" eyebrow={isEmployee ? "Employee action" : "Admin action"}>
               <form className="enterprise-form" onSubmit={addProgress}>
                 <label className="settings-field"><span>Title</span><input name="title" required placeholder="Onboarding completed" /></label>
-                <label className="settings-field"><span>Description</span><textarea name="description" placeholder="Describe what was completed and what changed for the client." /></label>
-                <label className="settings-field"><span>Date & Time</span><input name="happenedAt" type="datetime-local" /></label>
+                <div className="settings-form-grid progress-customer-grid">
+                  <label className="settings-field"><span>Customer Name</span><input name="customerName" required placeholder="Customer name" /></label>
+                  <label className="settings-field"><span>Customer Email</span><input name="customerEmail" type="email" placeholder="customer@example.com" /></label>
+                  <label className="settings-field"><span>Customer Phone</span><input name="customerPhone" type="tel" placeholder="+1 555 000 0000" /></label>
+                  <label className="settings-field"><span>Date & Time</span><input name="happenedAt" type="datetime-local" /></label>
+                </div>
+                <label className="settings-field"><span>Address</span><input name="customerAddress" placeholder="Service address" /></label>
+                <label className="settings-field"><span>Description</span><textarea name="description" required placeholder="Describe what was completed and what changed for the client." /></label>
                 <label className="settings-field"><span>Progress %</span><input name="progressPercent" type="number" min="0" max="100" defaultValue={order.progressPercent || 0} /></label>
                 <label className="settings-field"><span>Status</span><select name="status" defaultValue="completed"><option value="planned">Planned</option><option value="in progress">In progress</option><option value="completed">Completed</option><option value="blocked">Blocked</option></select></label>
                 <button type="submit" className="settings-primary-action">{saving === "progress" ? "Adding..." : "Add Progress"}</button>
               </form>
             </CollapsiblePanel>
 
-            <CollapsiblePanel title="Service Analytics" eyebrow="Dashboard">
+            {!isEmployee && <CollapsiblePanel title="Service Analytics" eyebrow="Dashboard">
               <div className="analytics-donut" style={{ "--progress": `${progressValue}%` }}><strong>{progressValue}%</strong><span>complete</span></div>
               <div className="summary-columns compact">
                 <div><strong>Completed</strong>{summary?.servicesCompleted?.length ? summary.servicesCompleted.map((item) => <span key={item}>{item}</span>) : <p>No completed services yet.</p>}</div>
                 <div><strong>Remaining</strong>{summary?.servicesRemaining?.length ? summary.servicesRemaining.map((item) => <span key={item}>{item}</span>) : <p>No remaining services listed.</p>}</div>
               </div>
-            </CollapsiblePanel>
+            </CollapsiblePanel>}
 
-            <CollapsiblePanel title="Files & Activity" eyebrow="Workspace" defaultOpen={false}>
+            {!isEmployee && <CollapsiblePanel title="Files & Activity" eyebrow="Workspace" defaultOpen={false}>
               {(order.filesUploaded || []).length ? order.filesUploaded.map((file) => <p key={file.url || file.name}>{file.name || "File"}<br /><small>{file.url}</small></p>) : <p>No files uploaded yet.</p>}
               <div className="client-activity-list"><span>Order created {formatDate(order.createdAt)}</span><span>Last updated {formatDate(order.updatedAt)}</span><span>{invoices.length} invoice records</span><span>{progress.length} progress updates</span></div>
-            </CollapsiblePanel>
+            </CollapsiblePanel>}
           </aside>
         </div>
       </section>

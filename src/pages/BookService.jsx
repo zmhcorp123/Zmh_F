@@ -5,6 +5,10 @@ import { SEO } from "../components/SEO";
 import { bookingApi } from "../services/api";
 import { navigate } from "../utils/router";
 
+const operatingDayOptions = ["Monday-Friday", "Monday-Saturday", "Weekends only", "Every day"];
+const hourOptions = ["8 AM-5 PM", "9 AM-6 PM", "10 AM-7 PM", "24/7 coverage"];
+const afterHoursOptions = ["No after-hours", "Evening calls", "Weekend coverage", "Emergency calls", "Overflow support"];
+
 export function BookService() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -14,12 +18,18 @@ export function BookService() {
 
   const updateField = (field, value) => setBooking((current) => ({ ...current, [field]: value }));
   const toggleService = (name) => setBooking((current) => ({ ...current, services: current.services.includes(name) ? current.services.filter((item) => item !== name) : [...current.services, name] }));
+  const selectOption = (field, value) => setBooking((current) => ({ ...current, [field]: value }));
 
   const submitBooking = async (event) => {
     event.preventDefault();
     const form = event.currentTarget;
     setLoading(true);
     setError("");
+    if (!booking.operatingDays || !booking.hours || !booking.afterHours) {
+      setError("Select operating days, opening hours, and after-hours needs.");
+      setLoading(false);
+      return;
+    }
     try {
       const data = await bookingApi.create(booking);
       setCreatedBooking(data.booking);
@@ -46,7 +56,7 @@ export function BookService() {
           <div className="booking-form-section">
             <h3>Company Information</h3>
             <div className="form-grid compact">
-              {["Company Name", "Email", "Business Type", "Employees", "Website", "Phone", "Address"].map((item) => (
+              {["Company Name", "Email", "Business Type", "Website", "Phone", "Address"].map((item) => (
                 <label key={item}>{item}<input type={item === "Email" ? "email" : "text"} value={booking[item] || ""} onChange={(event) => updateField(item, event.target.value)} placeholder={item} required={!["Website"].includes(item)} /></label>
               ))}
             </div>
@@ -62,12 +72,24 @@ export function BookService() {
           <div className="booking-form-section">
             <h3>Operations Details</h3>
             <div className="form-grid compact">
-              <label>Opening Hours<input value={booking.hours || ""} onChange={(event) => updateField("hours", event.target.value)} placeholder="Mon-Fri 8am-5pm" /></label>
               <label>Current CRM<input value={booking.crm || ""} onChange={(event) => updateField("crm", event.target.value)} placeholder="ServiceTitan, Housecall Pro, Jobber..." /></label>
               <label>Preferred Booking Date<input type="date" value={booking.requestedDate || ""} min={new Date().toISOString().slice(0, 10)} onChange={(event) => updateField("requestedDate", event.target.value)} required /></label>
             </div>
+            <div className="tap-field-grid">
+              <div className="tap-field">
+                <span>Operating Days</span>
+                <div className="tap-options">{operatingDayOptions.map((option) => <button type="button" key={option} className={booking.operatingDays === option ? "selected" : ""} onClick={() => selectOption("operatingDays", option)}>{option}</button>)}</div>
+              </div>
+              <div className="tap-field">
+                <span>Opening Hours</span>
+                <div className="tap-options">{hourOptions.map((option) => <button type="button" key={option} className={booking.hours === option ? "selected" : ""} onClick={() => selectOption("hours", option)}>{option}</button>)}</div>
+              </div>
+              <div className="tap-field">
+                <span>After Hours Needs</span>
+                <div className="tap-options">{afterHoursOptions.map((option) => <button type="button" key={option} className={booking.afterHours === option ? "selected" : ""} onClick={() => selectOption("afterHours", option)}>{option}</button>)}</div>
+              </div>
+            </div>
             <div className="form-grid compact two-column">
-              <label>After Hours Needs<textarea value={booking.afterHours || ""} onChange={(event) => updateField("afterHours", event.target.value)} placeholder="Tell us about evening, weekend, or emergency coverage needs." /></label>
               <label>Integration Notes<textarea value={booking.integrationNotes || ""} onChange={(event) => updateField("integrationNotes", event.target.value)} placeholder="Share CRM, phone, calendar, dispatch, or workflow notes." /></label>
             </div>
           </div>
