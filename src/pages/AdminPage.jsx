@@ -12,6 +12,7 @@ const adminTabs = [
   { name: "Approvals", icon: "users" },
   { name: "Users", icon: "users" },
   { name: "Bookings", icon: "calendar" },
+  { name: "Calendar", icon: "calendar" },
   { name: "Ongoing", icon: "route" },
   { name: "Cancelled Orders", icon: "bill" },
   { name: "Bills", icon: "bill" },
@@ -26,6 +27,83 @@ const userStatuses = ["pending", "active", "suspended"];
 
 function formatDate(value) {
   return value ? new Date(value).toLocaleDateString() : "Not selected";
+}
+
+function eventDate(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function calendarKey(value) {
+  const date = eventDate(value);
+  return date ? date.toISOString().slice(0, 10) : "";
+}
+
+function AdminCalendarBoard({ bookings = [] }) {
+  const events = bookings
+    .map((item) => ({ ...item, calendarDate: eventDate(item.serviceStartDate || item.requestedDate || item.createdAt) }))
+    .filter((item) => item.calendarDate)
+    .sort((a, b) => a.calendarDate - b.calendarDate);
+  const baseDate = events[0]?.calendarDate || new Date();
+  const monthStart = new Date(baseDate.getFullYear(), baseDate.getMonth(), 1);
+  const monthEnd = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 0);
+  const days = [];
+  for (let day = 1; day <= monthEnd.getDate(); day += 1) days.push(new Date(baseDate.getFullYear(), baseDate.getMonth(), day));
+  const leadingDays = Array.from({ length: monthStart.getDay() }, (_, index) => `blank-${index}`);
+  const eventsByDay = events.reduce((map, item) => {
+    const key = calendarKey(item.calendarDate);
+    if (!map[key]) map[key] = [];
+    map[key].push(item);
+    return map;
+  }, {});
+
+  return (
+    <div className="admin-calendar-workspace">
+      <section className="admin-calendar-panel">
+        <div className="admin-calendar-head">
+          <div>
+            <span className="eyebrow">Client Works Calendar</span>
+            <h3>{baseDate.toLocaleDateString(undefined, { month: "long", year: "numeric" })}</h3>
+          </div>
+          <strong>{events.length}</strong>
+        </div>
+        <div className="admin-calendar-weekdays">
+          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => <span key={day}>{day}</span>)}
+        </div>
+        <div className="admin-calendar-grid">
+          {leadingDays.map((key) => <span className="admin-calendar-day blank" key={key} />)}
+          {days.map((day) => {
+            const key = calendarKey(day);
+            const dayEvents = eventsByDay[key] || [];
+            return (
+              <article className={dayEvents.length ? "admin-calendar-day has-event" : "admin-calendar-day"} key={key}>
+                <strong>{day.getDate()}</strong>
+                {dayEvents.slice(0, 2).map((item) => <small key={item._id}>{item.companyName}</small>)}
+                {dayEvents.length > 2 && <b>+{dayEvents.length - 2}</b>}
+              </article>
+            );
+          })}
+        </div>
+      </section>
+      <section className="admin-calendar-list">
+        {events.length ? events.map((item) => (
+          <article className="admin-calendar-event" key={item._id}>
+            <div>
+              <span>{formatDate(item.calendarDate)}</span>
+              <strong>{item.companyName}</strong>
+              <p>{item.email || item.user?.email || "No email"} | {item.phone || "No phone"}</p>
+            </div>
+            <div className="admin-calendar-meta">
+              <span>{item.operatingDays || "Days not selected"}</span>
+              <span>{item.hours || "Hours not selected"}</span>
+              <b className="status-pill">{item.status || "new"}</b>
+            </div>
+          </article>
+        )) : <div className="empty-state">No booking dates have been selected yet.</div>}
+      </section>
+    </div>
+  );
 }
 
 const defaultAccountDetails = {
@@ -991,6 +1069,10 @@ export function AdminPage() {
 
           {!isEmployee && tab === "Bookings" && (
             renderBookingCards(newBookings, "No new booking requests found.")
+          )}
+
+          {!isEmployee && tab === "Calendar" && (
+            <AdminCalendarBoard bookings={bookings} />
           )}
 
           {!employeeNeedsSetup && tab === "Ongoing" && (

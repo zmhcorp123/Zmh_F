@@ -100,6 +100,83 @@ function activityMeta(type = "", title = "") {
   return { icon: UserRound, tone: "purple", route: "/notifications" };
 }
 
+function eventDate(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function calendarKey(value) {
+  const date = eventDate(value);
+  return date ? date.toISOString().slice(0, 10) : "";
+}
+
+function CalendarBoard({ items = [], emptyText = "No calendar items yet." }) {
+  const events = items
+    .map((item) => ({ ...item, calendarDate: eventDate(item.serviceStartDate || item.requestedDate || item.createdAt) }))
+    .filter((item) => item.calendarDate)
+    .sort((a, b) => a.calendarDate - b.calendarDate);
+  const baseDate = events[0]?.calendarDate || new Date();
+  const monthStart = new Date(baseDate.getFullYear(), baseDate.getMonth(), 1);
+  const monthEnd = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 0);
+  const days = [];
+  for (let day = 1; day <= monthEnd.getDate(); day += 1) days.push(new Date(baseDate.getFullYear(), baseDate.getMonth(), day));
+  const leadingDays = Array.from({ length: monthStart.getDay() }, (_, index) => `blank-${index}`);
+  const eventsByDay = events.reduce((map, item) => {
+    const key = calendarKey(item.calendarDate);
+    if (!map[key]) map[key] = [];
+    map[key].push(item);
+    return map;
+  }, {});
+
+  return (
+    <div className="client-calendar-workspace">
+      <section className="client-calendar-panel">
+        <div className="client-calendar-head">
+          <div>
+            <span className="eyebrow">Works Calendar</span>
+            <h3>{baseDate.toLocaleDateString(undefined, { month: "long", year: "numeric" })}</h3>
+          </div>
+          <strong>{events.length}</strong>
+        </div>
+        <div className="client-calendar-weekdays">
+          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => <span key={day}>{day}</span>)}
+        </div>
+        <div className="client-calendar-grid">
+          {leadingDays.map((key) => <span className="client-calendar-day blank" key={key} />)}
+          {days.map((day) => {
+            const key = calendarKey(day);
+            const dayEvents = eventsByDay[key] || [];
+            return (
+              <article className={dayEvents.length ? "client-calendar-day has-event" : "client-calendar-day"} key={key}>
+                <strong>{day.getDate()}</strong>
+                {dayEvents.slice(0, 2).map((item) => <small key={item._id}>{item.companyName}</small>)}
+                {dayEvents.length > 2 && <b>+{dayEvents.length - 2}</b>}
+              </article>
+            );
+          })}
+        </div>
+      </section>
+      <section className="client-calendar-list">
+        {events.length ? events.map((item) => (
+          <article className="client-calendar-event" key={item._id}>
+            <div>
+              <span>{formatDate(item.calendarDate)}</span>
+              <strong>{item.companyName}</strong>
+              <p>{item.services?.join(", ") || item.packageName || "Operations support"}</p>
+            </div>
+            <div className="client-calendar-meta">
+              <span>{item.operatingDays || "Days not selected"}</span>
+              <span>{item.hours || "Hours not selected"}</span>
+              <StatusBadge value={item.status === "new" ? "Waiting for Admin Approval" : item.status} />
+            </div>
+          </article>
+        )) : <div className="empty-state">{emptyText}</div>}
+      </section>
+    </div>
+  );
+}
+
 const navIcons = {
   Dashboard: LayoutDashboard,
   Bookings: CalendarCheck,
@@ -678,7 +755,11 @@ function DashboardCards({ section, serviceId }) {
     );
   }
 
-  if (section === "Bookings" || section === "Calendar") {
+  if (section === "Calendar") {
+    return <CalendarBoard items={[...bookings, ...services.filter((service) => !bookings.some((booking) => booking._id === service._id))]} emptyText="Select a booking date from Book Service and it will appear here." />;
+  }
+
+  if (section === "Bookings") {
     return <div className="portal-list">{error && <div className="form-error">{error}</div>}{categorized.pending.length ? categorized.pending.map((booking) => <article className="portal-row client-booking-card" key={booking._id}><div><strong>{booking.companyName}</strong><span>{booking.packageName || "Package pending"} | {booking.packagePrice || "Price pending"}</span><p>{booking.adminResponse || "Waiting for admin approval or service start."}</p><div className="client-service-grid"><span><strong>Booking Date</strong>{formatDate(booking.createdAt)}</span><span><strong>Estimated Start</strong>{formatDate(booking.serviceStartDate || booking.requestedDate)}</span></div></div><div className="client-bill-actions"><StatusBadge value={booking.status === "new" ? "Waiting for Admin Approval" : booking.status} /><button type="button" className="table-action">View Details</button></div></article>) : <div className="empty-state">No pending bookings. Ongoing and cancelled services are shown in their own sections.</div>}</div>;
   }
 
