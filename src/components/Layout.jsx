@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { company, services, industries } from "../data/siteData";
 import { navigate } from "../utils/router";
 import { Button } from "./Button";
 import { Icon } from "./icons";
-import { Chatbot } from "./Chatbot";
 import { useAuth } from "../context/useAuth";
+
+const Chatbot = lazy(() => import("./Chatbot").then((module) => ({ default: module.Chatbot })));
 
 const nav = [
   ["Home", "/"],
@@ -34,8 +35,7 @@ const companyLinks = [
   ["Cookie Policy", "/cookie-policy"],
 ];
 
-const logoMark = "/brand/zmh-usa-corp-mark.png";
-const logoFull = "/brand/zmh-usa-corp-logo.png";
+const logoMark = "/brand/zmh-usa-corp-mark-96.png";
 
 function LinkButton({ to, children, onClick }) {
   return <button className="text-link" onClick={() => { navigate(to); onClick?.(); }}>{children}</button>;
@@ -44,6 +44,7 @@ function LinkButton({ to, children, onClick }) {
 export function Layout({ children }) {
   const [open, setOpen] = useState(false);
   const [newsletterSaved, setNewsletterSaved] = useState(false);
+  const [chatReady, setChatReady] = useState(false);
   const { isAuthenticated, user, logout } = useAuth();
   const { pathname: currentPath } = useLocation();
   const appOnlyPaths = [
@@ -63,6 +64,16 @@ export function Layout({ children }) {
   const isAppOnly = appOnlyPaths.some((path) => currentPath === path || currentPath.startsWith(path + "/"));
 
   const closeMenu = () => setOpen(false);
+  useEffect(() => {
+    const loadChat = () => setChatReady(true);
+    if ("requestIdleCallback" in window) {
+      const id = window.requestIdleCallback(loadChat, { timeout: 2200 });
+      return () => window.cancelIdleCallback?.(id);
+    }
+    const id = window.setTimeout(loadChat, 1400);
+    return () => window.clearTimeout(id);
+  }, []);
+
   const handleLogout = () => {
     logout();
     closeMenu();
@@ -73,7 +84,7 @@ export function Layout({ children }) {
     <div className={isAppOnly && user?.role !== "admin" ? "app dashboard-app" : "app"}>
       <header className="navbar">
         <button className="brand" onClick={() => navigate("/")} aria-label="ZMH USA Corp home">
-          <span className="brand-mark"><img src={logoMark} alt="" /></span>
+          <span className="brand-mark"><picture><source srcSet="/brand/zmh-usa-corp-mark-96.webp" type="image/webp" /><img src={logoMark} width="96" height="96" alt="" decoding="async" fetchPriority="high" /></picture></span>
           <span><strong>{company.name}</strong><small>Remote Operations</small></span>
         </button>
         <nav className={open ? "nav open" : "nav"} aria-label="Primary navigation">
@@ -98,7 +109,7 @@ export function Layout({ children }) {
       {!isAppOnly && <footer className="footer">
         <div className="footer-top">
           <div>
-            <div className="brand footer-brand"><span className="footer-logo"><img src={logoFull} alt="ZMH USA Corp. Remote Operations" /></span><span><strong>{company.name}</strong><small>{company.tagline}</small></span></div>
+            <div className="brand footer-brand"><span className="footer-logo"><picture><source srcSet="/brand/zmh-usa-corp-logo-small.webp" type="image/webp" /><img src="/brand/zmh-usa-corp-logo-small.png" width="156" height="108" loading="lazy" decoding="async" alt="ZMH USA Corp. Remote Operations" /></picture></span><span><strong>{company.name}</strong><small>{company.tagline}</small></span></div>
             <p>Premium remote operations support for home service companies that need disciplined call, scheduling, dispatch, CRM, and admin workflows.</p>
             <div className="socials">{socials.map(([label, icon, href]) => <a key={label} href={href} target="_blank" rel="noreferrer" aria-label={label} title={label}><Icon name={icon} size={18} /></a>)}</div>
           </div>
@@ -121,7 +132,7 @@ export function Layout({ children }) {
         </div>
         <div className="footer-bottom"><span>Copyright 2026 ZMH USA Corp. All rights reserved.</span><span>{company.emails.sales} | {company.phone}</span></div>
       </footer>}
-      {!isAppOnly && <Chatbot />}
+      {!isAppOnly && chatReady && <Suspense fallback={<div className="chatbot chat-placeholder" aria-hidden="true" />}><Chatbot /></Suspense>}
     </div>
   );
 }

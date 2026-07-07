@@ -1,9 +1,5 @@
 import { lazy, Suspense, useEffect } from "react";
 import { Navigate, Route, Routes, useNavigate, useParams } from "react-router-dom";
-import { AdminPage } from "../pages/AdminPage";
-import { AdminOrderDetails } from "../pages/AdminOrderDetails";
-import { ServiceDetail } from "../pages/ServiceDetail";
-import { Services } from "../pages/Services";
 import { industries, packages, services, teamProfiles } from "../data/siteData";
 import { useAuth } from "../context/useAuth";
 import { ProtectedRoute, GuestRoute } from "./RouteGuards";
@@ -12,6 +8,8 @@ import { setRouterNavigate } from "../utils/router";
 const lazyNamed = (loader, exportName) => lazy(() => loader().then((module) => ({ default: module[exportName] })));
 
 const Home = lazyNamed(() => import("../pages/Home"), "Home");
+const Services = lazyNamed(() => import("../pages/Services"), "Services");
+const ServiceDetail = lazyNamed(() => import("../pages/ServiceDetail"), "ServiceDetail");
 const Industries = lazyNamed(() => import("../pages/Industries"), "Industries");
 const IndustryDetail = lazyNamed(() => import("../pages/IndustryDetail"), "IndustryDetail");
 const Pricing = lazyNamed(() => import("../pages/Pricing"), "Pricing");
@@ -41,6 +39,17 @@ const BookService = lazyNamed(() => import("../pages/BookService"), "BookService
 const BookMeeting = lazyNamed(() => import("../pages/BookMeeting"), "BookMeeting");
 const RequestSuccess = lazyNamed(() => import("../pages/RequestSuccess"), "RequestSuccess");
 const NotFound = lazyNamed(() => import("../pages/NotFound"), "NotFound");
+const AdminPage = lazyNamed(() => import("../pages/AdminPage"), "AdminPage");
+const AdminOrderDetails = lazyNamed(() => import("../pages/AdminOrderDetails"), "AdminOrderDetails");
+
+function RouteFallback() {
+  return (
+    <section className="route-skeleton" aria-label="Loading page">
+      <div className="route-skeleton-copy" />
+      <div className="route-skeleton-panel" />
+    </section>
+  );
+}
 
 function RouterNavigateBinder() {
   const routerNavigate = useNavigate();
@@ -105,7 +114,7 @@ function DashboardRedirect() {
 
 export function AppRoutes() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<RouteFallback />}>
       <RouterNavigateBinder />
       <Routes>
         <Route path="/" element={<Home />} />
