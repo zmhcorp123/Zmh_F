@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Bell,
   BriefcaseBusiness,
@@ -353,7 +353,7 @@ function ServiceCard({ service, onDownload, onPayment }) {
         <button type="button" className="table-action" onClick={() => navigate(`/my-services/${service._id}`)}>View Details</button>
         <button type="button" className="table-action" onClick={() => onDownload(latestInvoice)} disabled={!latestInvoice}>Download Latest Invoice</button>
         <button type="button" className="table-action" onClick={() => navigate(`/my-services/${service._id}`)}>View Timeline</button>
-        <button type="button" className="table-action" onClick={() => onPayment(service)} disabled={!latestInvoice || service.paymentStatus === "paid" || paymentLocked}>{paymentLocked ? "Payment Submitted" : "Mark Payment as Sent"}</button>
+        <button type="button" className="table-action" onClick={() => onPayment(service)} disabled={!latestInvoice || service.paymentStatus === "Paid" || paymentLocked}>{paymentLocked ? "Payment Submitted" : "Mark Payment as Sent"}</button>
       </div>
     </article>
   );
@@ -532,7 +532,7 @@ export function Dashboard({ section = "Dashboard", serviceId = "" }) {
 }
 
 function DashboardCards({ section, serviceId }) {
-  const [profile, setProfile] = useState(null);
+  const [, setProfile] = useState(null);
   const [bookings, setBookings] = useState([]);
   const [services, setServices] = useState([]);
   const [invoices, setInvoices] = useState([]);
@@ -549,17 +549,19 @@ function DashboardCards({ section, serviceId }) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [page, setPage] = useState(1);
+  const profileLoadedRef = useRef(false);
   const pageSize = 6;
 
   useEffect(() => {
     let active = true;
     async function loadDashboard(showLoading = false) {
-      if (showLoading && !profile) setLoading(true);
+      if (showLoading && !profileLoadedRef.current) setLoading(true);
       if (section === "Dashboard") {
         try {
           const data = await dashboardApi.summary();
           if (!active) return;
           setProfile({ user: data.user, stats: data.stats });
+          profileLoadedRef.current = true;
           setBookings(data.bookings || []);
           setInvoices(data.invoices || []);
           setServices(data.services || []);
@@ -596,7 +598,10 @@ function DashboardCards({ section, serviceId }) {
             return;
           }
           const data = result.value || {};
-          if (key === "profile") setProfile(data);
+          if (key === "profile") {
+            setProfile(data);
+            profileLoadedRef.current = true;
+          }
           if (key === "bookings") setBookings(data.bookings || []);
           if (key === "invoices") setInvoices(data.invoices || []);
           if (key === "services") setServices(data.services || []);

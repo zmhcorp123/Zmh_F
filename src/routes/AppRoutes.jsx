@@ -1,6 +1,5 @@
 import { lazy, Suspense, useEffect } from "react";
 import { Navigate, Route, Routes, useNavigate, useParams } from "react-router-dom";
-import { industries, packages, services, teamProfiles } from "../data/siteData";
 import { useAuth } from "../context/useAuth";
 import { ProtectedRoute, GuestRoute } from "./RouteGuards";
 import { setRouterNavigate } from "../utils/router";
@@ -9,17 +8,13 @@ const lazyNamed = (loader, exportName) => lazy(() => loader().then((module) => (
 
 const Home = lazyNamed(() => import("../pages/Home"), "Home");
 const Services = lazyNamed(() => import("../pages/Services"), "Services");
-const ServiceDetail = lazyNamed(() => import("../pages/ServiceDetail"), "ServiceDetail");
 const Industries = lazyNamed(() => import("../pages/Industries"), "Industries");
-const IndustryDetail = lazyNamed(() => import("../pages/IndustryDetail"), "IndustryDetail");
 const Pricing = lazyNamed(() => import("../pages/Pricing"), "Pricing");
-const PackageDetail = lazyNamed(() => import("../pages/PackageDetail"), "PackageDetail");
 const Starter = lazyNamed(() => import("../pages/pricing/Starter"), "Starter");
 const Pro = lazyNamed(() => import("../pages/pricing/Pro"), "Pro");
 const Enterprise = lazyNamed(() => import("../pages/pricing/Enterprise"), "Enterprise");
 const About = lazyNamed(() => import("../pages/About"), "About");
 const Team = lazyNamed(() => import("../pages/Team"), "Team");
-const TeamProfile = lazyNamed(() => import("../pages/TeamProfile"), "TeamProfile");
 const HowItWorks = lazyNamed(() => import("../pages/HowItWorks"), "HowItWorks");
 const CaseStudies = lazyNamed(() => import("../pages/CaseStudies"), "CaseStudies");
 const FAQ = lazyNamed(() => import("../pages/FAQ"), "FAQ");
@@ -41,6 +36,10 @@ const RequestSuccess = lazyNamed(() => import("../pages/RequestSuccess"), "Reque
 const NotFound = lazyNamed(() => import("../pages/NotFound"), "NotFound");
 const AdminPage = lazyNamed(() => import("../pages/AdminPage"), "AdminPage");
 const AdminOrderDetails = lazyNamed(() => import("../pages/AdminOrderDetails"), "AdminOrderDetails");
+const ServiceRoute = lazyNamed(() => import("./DynamicRoutes"), "ServiceRoute");
+const IndustryRoute = lazyNamed(() => import("./DynamicRoutes"), "IndustryRoute");
+const PackageRoute = lazyNamed(() => import("./DynamicRoutes"), "PackageRoute");
+const TeamProfileRoute = lazyNamed(() => import("./DynamicRoutes"), "TeamProfileRoute");
 
 function RouteFallback() {
   return (
@@ -59,32 +58,6 @@ function RouterNavigateBinder() {
   }, [routerNavigate]);
 
   return null;
-}
-
-function ServiceRoute() {
-  const { slug } = useParams();
-  const service = services.find((item) => item.slug === slug);
-  return service ? <ServiceDetail service={service} /> : <NotFound />;
-}
-
-function IndustryRoute() {
-  const { slug } = useParams();
-  const industry = industries.find((item) => item.slug === slug);
-  return industry ? <IndustryDetail industry={industry} /> : <NotFound />;
-}
-
-function PackageRoute() {
-  const { slug } = useParams();
-  const routeAliases = { pro: "professional" };
-  const planSlug = routeAliases[slug] || slug;
-  const plan = packages.find((item) => item.slug === planSlug);
-  return plan ? <PackageDetail plan={plan} /> : <NotFound />;
-}
-
-function TeamProfileRoute() {
-  const { slug } = useParams();
-  const profile = teamProfiles.find((item) => item.slug === slug);
-  return profile ? <TeamProfile profile={profile} slug={slug} /> : <NotFound />;
 }
 
 function UserDashboardRoute({ section = "Dashboard", serviceId = "" }) {

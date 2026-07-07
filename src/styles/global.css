@@ -5155,6 +5155,21 @@ main {
   pointer-events: none;
 }
 
+.reveal-lite {
+  opacity: 0;
+  transform: translateY(24px);
+  animation: reveal-lite .55s ease-out forwards;
+}
+
+.reveal-hero-copy {
+  transform: translateY(22px);
+  animation-duration: .65s;
+}
+
+.reveal-hero-panel {
+  animation-duration: .7s;
+}
+
 .home-hero,
 .saas-hero {
   min-height: clamp(620px, calc(100dvh - 72px), 780px);
@@ -5181,6 +5196,33 @@ main {
 @keyframes skeleton-pulse {
   0% { background-position: 100% 0; }
   100% { background-position: -100% 0; }
+}
+
+@keyframes reveal-lite {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@supports (animation-timeline: view()) {
+  .saas-services .reveal-lite,
+  .saas-band .reveal-lite,
+  .testimonial-grid .reveal-lite,
+  .faq-contact-grid .reveal-lite {
+    animation-timeline: view();
+    animation-range: entry 0% cover 24%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-lite,
+  .route-skeleton-copy,
+  .route-skeleton-panel {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
 }
 
 @media (max-width: 760px) {
