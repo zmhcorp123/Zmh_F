@@ -174,6 +174,25 @@ export function AdminOrderDetails() {
     }
   };
 
+  const cancelOrder = async () => {
+    if (!window.confirm("Cancel this ongoing order?")) return;
+    setSaving("cancel");
+    setNotice("");
+    setError("");
+    try {
+      const data = await adminApi.updateOrder(orderId, { status: "cancelled" });
+      setOrder(data.order);
+      setProgress(data.progress || []);
+      setInvoices(data.invoices || []);
+      setSummary(data.summary || null);
+      setNotice("Order cancelled.");
+    } catch (err) {
+      setError(err.message || "Could not cancel order.");
+    } finally {
+      setSaving("");
+    }
+  };
+
   if (loading) return <section className="admin-page"><div className="empty-state">Loading order details...</div></section>;
   if (!order) return <section className="admin-page"><div className="empty-state">{error || "Order not found."}</div></section>;
 
@@ -196,6 +215,7 @@ export function AdminOrderDetails() {
           </div>
           <div className="order-actions">
             <Button variant="secondary" icon="arrow" onClick={() => navigate("/admin-dashboard")}>Back</Button>
+            {!isEmployee && order.status === "ongoing" && <Button variant="secondary" icon="close" onClick={cancelOrder}>{saving === "cancel" ? "Cancelling..." : "Cancel Order"}</Button>}
             {!isEmployee && <Button variant="secondary" icon="bill" onClick={generatePdf}>{saving === "pdf" ? "Generating..." : "Generate PDF"}</Button>}
             {!isEmployee && <Button icon="mail" onClick={sendSummary}>{saving === "email" ? "Sending..." : "Send Invoice Summary"}</Button>}
           </div>
@@ -207,6 +227,7 @@ export function AdminOrderDetails() {
             <button type="button" className="settings-secondary-action" onClick={generatePdf}>Export PDF</button>
             <button type="button" className="settings-secondary-action" onClick={generatePdf}>Preview PDF</button>
             <button type="button" className="settings-secondary-action" onClick={() => window.print()}>Print</button>
+            {order.status === "ongoing" && <button type="button" className="settings-secondary-action" onClick={cancelOrder}>{saving === "cancel" ? "Cancelling..." : "Cancel Order"}</button>}
             <button type="button" className="settings-primary-action" onClick={sendSummary}>Email Summary</button>
           </div>
         </div>}

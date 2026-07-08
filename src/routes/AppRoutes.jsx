@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from "react";
-import { Navigate, Route, Routes, useNavigate, useParams } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import { ProtectedRoute, GuestRoute } from "./RouteGuards";
 import { setRouterNavigate } from "../utils/router";
@@ -41,13 +41,59 @@ const IndustryRoute = lazyNamed(() => import("./DynamicRoutes"), "IndustryRoute"
 const PackageRoute = lazyNamed(() => import("./DynamicRoutes"), "PackageRoute");
 const TeamProfileRoute = lazyNamed(() => import("./DynamicRoutes"), "TeamProfileRoute");
 
-function RouteFallback() {
+function SkeletonLine({ className = "" }) {
+  return <span className={"skeleton-line " + className} />;
+}
+
+function HomeRouteFallback() {
   return (
-    <section className="route-skeleton" aria-label="Loading page">
-      <div className="route-skeleton-copy" />
-      <div className="route-skeleton-panel" />
+    <section className="saas-hero home-hero route-home-skeleton" aria-label="Loading home page">
+      <div className="mesh-bg" aria-hidden="true" />
+      <div className="hero-copy route-home-copy-skeleton">
+        <SkeletonLine className="badge" />
+        <SkeletonLine className="title" />
+        <SkeletonLine className="title short" />
+        <SkeletonLine className="text" />
+        <SkeletonLine className="text mid" />
+        <div className="hero-actions route-action-skeleton"><SkeletonLine /><SkeletonLine /></div>
+        <div className="trust-strip route-trust-skeleton">
+          {Array.from({ length: 4 }).map((_, index) => <div key={index}><SkeletonLine className="icon" /><SkeletonLine /><SkeletonLine className="small" /></div>)}
+        </div>
+      </div>
+      <div className="saas-dashboard simple-dashboard route-dashboard-skeleton">
+        <div className="dash-topline"><SkeletonLine className="dot" /><div><SkeletonLine /><SkeletonLine className="small" /></div><SkeletonLine className="button" /></div>
+        <div className="ops-metrics">{Array.from({ length: 4 }).map((_, index) => <div key={index}><SkeletonLine /><SkeletonLine className="metric" /><SkeletonLine className="small" /></div>)}</div>
+        <div className="dash-bottom">
+          <div className="performance-card"><SkeletonLine /><div className="line-graph">{Array.from({ length: 12 }).map((_, index) => <span key={index} />)}</div></div>
+          <div className="activity-card">{Array.from({ length: 4 }).map((_, index) => <p key={index}><SkeletonLine className="dot" /><SkeletonLine /><SkeletonLine className="small" /></p>)}</div>
+        </div>
+      </div>
     </section>
   );
+}
+
+function PageRouteFallback() {
+  return (
+    <section className="page-hero route-page-skeleton" aria-label="Loading page">
+      <div className="hero-copy">
+        <SkeletonLine className="badge" />
+        <SkeletonLine className="title" />
+        <SkeletonLine className="title short" />
+        <SkeletonLine className="text" />
+        <SkeletonLine className="text mid" />
+        <div className="hero-actions route-action-skeleton"><SkeletonLine /><SkeletonLine /></div>
+      </div>
+      <div className="hero-visual page-hero-dashboard">
+        <SkeletonLine className="panel" />
+        <div className="route-panel-grid">{Array.from({ length: 6 }).map((_, index) => <SkeletonLine key={index} />)}</div>
+      </div>
+    </section>
+  );
+}
+
+function RouteFallback() {
+  const location = useLocation();
+  return location.pathname === "/" ? <HomeRouteFallback /> : <PageRouteFallback />;
 }
 
 function RouterNavigateBinder() {

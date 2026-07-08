@@ -5156,7 +5156,7 @@ main {
 }
 
 .reveal-lite {
-  opacity: 0;
+  opacity: 1;
   transform: translateY(24px);
   animation: reveal-lite .55s ease-out forwards;
 }
@@ -5183,35 +5183,20 @@ main {
   min-width: 0;
 }
 
-.saas-services,
-.saas-band,
-.testimonial-grid,
-.faq-contact-grid,
-.cta,
-.footer {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 760px;
-}
-
 @keyframes skeleton-pulse {
   0% { background-position: 100% 0; }
   100% { background-position: -100% 0; }
 }
 
 @keyframes reveal-lite {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-@supports (animation-timeline: view()) {
-  .saas-services .reveal-lite,
-  .saas-band .reveal-lite,
-  .testimonial-grid .reveal-lite,
-  .faq-contact-grid .reveal-lite {
-    animation-timeline: view();
-    animation-range: entry 0% cover 24%;
   }
 }
 
@@ -5226,14 +5211,6 @@ main {
 }
 
 @media (max-width: 760px) {
-  main {
-    min-height: clamp(620px, calc(100dvh - 280px), 920px);
-  }
-
-  .footer {
-    min-height: 760px;
-  }
-
   .route-skeleton {
     grid-template-columns: 1fr;
     min-height: calc(100dvh - 80px);
@@ -5251,6 +5228,269 @@ main {
   .home-hero,
   .saas-hero {
     min-height: auto;
+  }
+}
+
+/* CLS hardening: skeletons reserve the same tracks and component boxes as loaded UI. */
+.skeleton-line {
+  display: block;
+  width: 100%;
+  height: 12px;
+  min-width: 0;
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, rgba(226, 232, 240, .72), rgba(248, 251, 255, .96), rgba(226, 232, 240, .72)),
+    rgba(226, 232, 240, .86);
+  background-size: 220% 100%;
+  animation: skeleton-pulse 1.25s ease-in-out infinite;
+}
+
+.skeleton-line.badge {
+  width: min(250px, 72%);
+  height: 35px;
+}
+
+.skeleton-line.title {
+  width: 100%;
+  height: 22px;
+  border-radius: 999px;
+}
+
+.skeleton-line.title.short {
+  width: min(430px, 72%);
+}
+
+.route-home-skeleton .skeleton-line.title,
+.route-page-skeleton .skeleton-line.title {
+  height: clamp(48px, 5.8vw, 78px);
+  border-radius: 18px;
+}
+
+.skeleton-line.text {
+  width: min(650px, 100%);
+  height: 18px;
+}
+
+.skeleton-line.text.mid {
+  width: min(520px, 84%);
+}
+
+.skeleton-line.small {
+  width: 68%;
+  height: 10px;
+}
+
+.skeleton-line.button {
+  width: 118px;
+  height: 42px;
+  border-radius: 12px;
+}
+
+.route-home-skeleton .hero-copy,
+.route-page-skeleton .hero-copy {
+  display: block;
+}
+
+.route-home-copy-skeleton {
+  min-height: 430px;
+}
+
+.route-home-copy-skeleton .skeleton-line + .skeleton-line,
+.route-page-skeleton .hero-copy .skeleton-line + .skeleton-line {
+  margin-top: 14px;
+}
+
+.route-action-skeleton {
+  min-height: 58px;
+}
+
+.route-action-skeleton .skeleton-line {
+  width: min(245px, 100%);
+  height: 58px;
+  border-radius: 13px;
+}
+
+.route-trust-skeleton {
+  min-height: 74px;
+}
+
+.route-trust-skeleton .skeleton-line {
+  height: 12px;
+}
+
+.route-trust-skeleton .skeleton-line.icon {
+  grid-row: span 2;
+  width: 38px;
+  height: 38px;
+  border-radius: 13px;
+}
+
+.route-dashboard-skeleton {
+  min-height: 0;
+}
+
+.route-dashboard-skeleton .dash-topline,
+.route-dashboard-skeleton .ops-metrics,
+.route-dashboard-skeleton .dash-bottom {
+  min-width: 0;
+}
+
+.route-dashboard-skeleton .dash-topline .skeleton-line.dot,
+.route-dashboard-skeleton .activity-card .skeleton-line.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+}
+
+.route-dashboard-skeleton .ops-metrics .skeleton-line.metric {
+  height: 30px;
+  width: 62px;
+}
+
+.route-dashboard-skeleton .line-graph span {
+  min-height: 42%;
+}
+
+.route-page-skeleton .hero-visual {
+  min-height: 390px;
+}
+
+.route-page-skeleton .skeleton-line.panel {
+  width: calc(100% - 48px);
+  height: 118px;
+  margin: 24px;
+  border-radius: 20px;
+}
+
+.route-panel-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  width: calc(100% - 48px);
+  margin: 0 24px 24px;
+  align-self: end;
+}
+
+.route-panel-grid .skeleton-line {
+  height: 82px;
+  border-radius: 18px;
+}
+
+.dashboard-loading-skeleton {
+  display: grid;
+  gap: 14px;
+}
+
+.dashboard-loading-skeleton .client-stat-card,
+.dashboard-loading-skeleton .client-premium-card,
+.dashboard-loading-skeleton .client-support-banner,
+.dashboard-loading-skeleton .portal-row {
+  pointer-events: none;
+}
+
+.dashboard-loading-skeleton .client-stat-card .skeleton-line.icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 13px;
+}
+
+.dashboard-loading-skeleton .client-stat-card .skeleton-line.metric {
+  width: 74px;
+  height: 32px;
+}
+
+.dashboard-loading-skeleton .client-stat-card .skeleton-line.spark {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  width: 72px;
+  height: 36px;
+  opacity: .72;
+}
+
+.dashboard-loading-skeleton .client-premium-card {
+  min-height: 214px;
+}
+
+.dashboard-loading-skeleton .client-service-overview .client-overview-body {
+  min-height: 154px;
+}
+
+.dashboard-loading-skeleton .skeleton-line.donut {
+  width: 174px;
+  aspect-ratio: 1;
+  height: auto;
+  border-radius: 50%;
+}
+
+.dashboard-loading-skeleton .client-appointment-card,
+.dashboard-loading-skeleton .client-quick-actions {
+  min-height: 170px;
+}
+
+.dashboard-loading-skeleton .client-support-banner {
+  min-height: 78px;
+}
+
+.dashboard-loading-skeleton .portal-row {
+  min-height: 138px;
+}
+
+.profile-workspace.dashboard-loading-skeleton {
+  max-width: 1180px;
+}
+
+.profile-workspace.dashboard-loading-skeleton .profile-overview-card,
+.profile-workspace.dashboard-loading-skeleton .profile-status-panel {
+  min-height: 166px;
+}
+
+.profile-workspace.dashboard-loading-skeleton .profile-settings-summary {
+  min-height: 420px;
+}
+
+.profile-workspace.dashboard-loading-skeleton .profile-edit-form {
+  min-height: 310px;
+}
+
+.settings-grid-shell:has(.settings-skeleton) {
+  align-items: stretch;
+}
+
+.settings-skeleton {
+  min-height: 100%;
+}
+
+.settings-skeleton:not(.large) {
+  min-height: 560px;
+}
+
+.settings-skeleton.large {
+  min-height: 560px;
+}
+
+@media (max-width: 820px) {
+  .route-home-copy-skeleton {
+    min-height: auto;
+  }
+
+  .route-page-skeleton .hero-visual {
+    min-height: 320px;
+  }
+
+  .route-panel-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .route-home-skeleton .skeleton-line.title,
+  .route-page-skeleton .skeleton-line.title {
+    height: clamp(38px, 11vw, 54px);
+  }
+
+  .route-action-skeleton .skeleton-line {
+    width: 100%;
   }
 }
 

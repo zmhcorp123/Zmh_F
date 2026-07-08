@@ -287,6 +287,62 @@ function DashboardShell({ section, user, children, onLogout }) {
   );
 }
 
+function SkeletonLine({ className = "" }) {
+  return <span className={"skeleton-line " + className} />;
+}
+
+function DashboardContentSkeleton({ variant = "dashboard" }) {
+  if (variant === "profile") {
+    return (
+      <div className="profile-workspace dashboard-loading-skeleton">
+        <div className="profile-settings-hero">
+          <div className="profile-overview-card"><SkeletonLine className="avatar" /><div><SkeletonLine className="badge" /><SkeletonLine className="title short" /><SkeletonLine className="text mid" /></div></div>
+          <div className="profile-status-panel"><SkeletonLine className="button" /><SkeletonLine className="title short" /><SkeletonLine className="text" /></div>
+        </div>
+        <div className="profile-settings-layout">
+          <aside className="profile-settings-summary">{Array.from({ length: 8 }).map((_, index) => <SkeletonLine key={index} />)}</aside>
+          <div className="profile-settings-forms">
+            <div className="form-card inline profile-edit-form">{Array.from({ length: 6 }).map((_, index) => <SkeletonLine key={index} />)}</div>
+            <div className="form-card inline profile-edit-form profile-security-form">{Array.from({ length: 5 }).map((_, index) => <SkeletonLine key={index} />)}</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (variant !== "dashboard") {
+    return (
+      <div className="portal-list dashboard-loading-skeleton">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <article className="portal-row client-service-card" key={index}>
+            <div><SkeletonLine className="title short" /><SkeletonLine className="text mid" /><SkeletonLine className="text" /></div>
+            <SkeletonLine className="button" />
+          </article>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="dashboard-loading-skeleton">
+      <div className="client-dashboard-overview">
+        <div className="client-stat-grid">
+          {Array.from({ length: 4 }).map((_, index) => <article className="client-stat-card" key={index}><SkeletonLine className="icon" /><div className="client-stat-copy"><SkeletonLine /><SkeletonLine className="metric" /><SkeletonLine className="small" /></div><SkeletonLine className="spark" /></article>)}
+        </div>
+      </div>
+      <div className="client-dashboard-middle">
+        <article className="client-premium-card client-service-overview"><SkeletonLine className="title" /><div className="client-overview-body"><SkeletonLine className="donut" /><div>{Array.from({ length: 4 }).map((_, index) => <SkeletonLine key={index} />)}</div></div></article>
+        <article className="client-premium-card client-activity-card">{Array.from({ length: 5 }).map((_, index) => <SkeletonLine key={index} />)}</article>
+      </div>
+      <div className="client-dashboard-bottom">
+        <article className="client-premium-card client-appointment-card">{Array.from({ length: 4 }).map((_, index) => <SkeletonLine key={index} />)}</article>
+        <article className="client-premium-card client-quick-actions">{Array.from({ length: 6 }).map((_, index) => <SkeletonLine key={index} />)}</article>
+      </div>
+      <article className="client-support-banner"><SkeletonLine className="icon" /><div><SkeletonLine className="title short" /><SkeletonLine className="text" /></div><SkeletonLine className="button" /></article>
+    </div>
+  );
+}
+
 function PaymentModal({ service, invoice, onClose, onSubmit, saving }) {
   if (!service || !invoice) return null;
   return (
@@ -458,7 +514,7 @@ function ProfilePanel() {
     }
   };
 
-  if (loading) return <div className="form-card inline">Loading profile...</div>;
+  if (loading) return <DashboardContentSkeleton variant="profile" />;
 
   return (
     <div className="profile-workspace">
@@ -736,7 +792,7 @@ function DashboardCards({ section, serviceId }) {
     }
   };
 
-  if (loading) return <div className="form-card inline">Loading dashboard...</div>;
+  if (loading) return <DashboardContentSkeleton variant={section === "Dashboard" ? "dashboard" : "list"} />;
 
   if (section === "Service Details") {
     if (!selectedService) return <div className="empty-state">Service not found or still loading.</div>;

@@ -14,6 +14,7 @@ export function LoginPage() {
 
   const submit = async (event) => {
     event.preventDefault();
+    if (loading) return;
     setError("");
     setLoading(true);
     const form = new FormData(event.currentTarget);

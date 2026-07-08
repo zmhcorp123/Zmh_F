@@ -595,7 +595,7 @@ function SettingsPanel() {
           <div className="settings-left-column">
             <SettingsCard eyebrow="Company" title="Company Settings" description="Core company identity used throughout the admin experience.">
               <div className="company-settings-summary">
-                <div className="brand-mark"><img src="/brand/zmh-usa-corp-mark.png" alt="" /></div>
+                <div className="brand-mark"><img src="/brand/zmh-usa-corp-mark.png" width="96" height="96" loading="lazy" decoding="async" alt="" /></div>
                 <div><strong>ZMH USA Corp.</strong><span>Remote operations support for home service companies.</span></div>
               </div>
               <CompanyDetailsForm companyDetails={companyDetails} onChange={updateCompany} onSave={saveCompanyDetails} onReset={() => setCompanyDetails(defaultCompanyDetails)} saving={savingCompany} />
