@@ -21,7 +21,7 @@ function storeUser(user) {
 
 export function AuthProvider({ children }) {
   const [user, setUserState] = useState(readStoredUser);
-  const [authReady, setAuthReady] = useState(false);
+  const [authReady, setAuthReady] = useState(true);
   const [sessionMessage, setSessionMessage] = useState(() => sessionStorage.getItem(SESSION_MESSAGE_KEY) || "");
 
   const setUser = useCallback((nextUser) => {
@@ -68,9 +68,17 @@ export function AuthProvider({ children }) {
       }
     };
 
-    loadProfile();
+    let profileTask = null;
+    if ("requestIdleCallback" in window) {
+      profileTask = window.requestIdleCallback(loadProfile, { timeout: 1200 });
+    } else {
+      profileTask = window.setTimeout(loadProfile, 0);
+    }
+
     return () => {
       active = false;
+      if ("requestIdleCallback" in window && profileTask !== null) window.cancelIdleCallback?.(profileTask);
+      else if (profileTask !== null) window.clearTimeout(profileTask);
     };
   }, [clearSessionMessage, expireSession, setUser]);
 

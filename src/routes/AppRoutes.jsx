@@ -3,10 +3,10 @@ import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from "re
 import { useAuth } from "../context/useAuth";
 import { ProtectedRoute, GuestRoute } from "./RouteGuards";
 import { setRouterNavigate } from "../utils/router";
+import { Home } from "../pages/Home";
 
 const lazyNamed = (loader, exportName) => lazy(() => loader().then((module) => ({ default: module[exportName] })));
 
-const Home = lazyNamed(() => import("../pages/Home"), "Home");
 const Services = lazyNamed(() => import("../pages/Services"), "Services");
 const Industries = lazyNamed(() => import("../pages/Industries"), "Industries");
 const Pricing = lazyNamed(() => import("../pages/Pricing"), "Pricing");
@@ -40,6 +40,20 @@ const ServiceRoute = lazyNamed(() => import("./DynamicRoutes"), "ServiceRoute");
 const IndustryRoute = lazyNamed(() => import("./DynamicRoutes"), "IndustryRoute");
 const PackageRoute = lazyNamed(() => import("./DynamicRoutes"), "PackageRoute");
 const TeamProfileRoute = lazyNamed(() => import("./DynamicRoutes"), "TeamProfileRoute");
+
+const publicRoutePrefetchers = [
+  () => import("../pages/Services"),
+  () => import("../pages/Industries"),
+  () => import("../pages/Pricing"),
+  () => import("../pages/About"),
+  () => import("../pages/Contact"),
+];
+
+function prefetchPublicRoutes() {
+  publicRoutePrefetchers.forEach((prefetch) => {
+    prefetch().catch(() => {});
+  });
+}
 
 function SkeletonLine({ className = "" }) {
   return <span className={"skeleton-line " + className} />;
@@ -132,6 +146,15 @@ function DashboardRedirect() {
 }
 
 export function AppRoutes() {
+  useEffect(() => {
+    if ("requestIdleCallback" in window) {
+      const id = window.requestIdleCallback(prefetchPublicRoutes, { timeout: 1800 });
+      return () => window.cancelIdleCallback?.(id);
+    }
+    const id = window.setTimeout(prefetchPublicRoutes, 300);
+    return () => window.clearTimeout(id);
+  }, []);
+
   return (
     <Suspense fallback={<RouteFallback />}>
       <RouterNavigateBinder />

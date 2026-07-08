@@ -1,20 +1,7 @@
 import { defineConfig } from "vite";
 
-function asyncStylesheetPlugin() {
-  return {
-    name: "async-stylesheet-delivery",
-    enforce: "post",
-    transformIndexHtml(html) {
-      return html.replace(
-        /<link rel="stylesheet" crossorigin href="([^"]+\.css)">/g,
-        "<link rel=\"preload\" as=\"style\" crossorigin href=\"$1\" onload=\"this.onload=null;this.rel='stylesheet'\"><noscript><link rel=\"stylesheet\" crossorigin href=\"$1\"></noscript>"
-      );
-    },
-  };
-}
-
 export default defineConfig({
-  plugins: [asyncStylesheetPlugin()],
+  plugins: [],
   esbuild: {
     jsx: "automatic",
     legalComments: "none",

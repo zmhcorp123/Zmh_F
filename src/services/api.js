@@ -3,6 +3,7 @@ const AUTH_TOKEN_KEY = "zmh_auth_token";
 const AUTH_STORAGE_PREFIX = "zmh_";
 const REQUEST_TIMEOUT_MS = 12000;
 let unauthorizedHandler = null;
+const inFlightGetRequests = new Map();
 
 const safeApiPath = (path) => {
   if (typeof path !== "string" || !path.startsWith("/") || path.startsWith("//") || /^[a-z][a-z\d+.-]*:/i.test(path)) {
@@ -48,7 +49,16 @@ const request = async (path, options = {}) => {
   const headers = new Headers(options.headers || {});
   const hasBody = Object.prototype.hasOwnProperty.call(options, "body");
   const isFormData = hasBody && options.body instanceof FormData;
+  const method = options.method || "GET";
   const token = tokenStore.get();
+  const canDedupe = method === "GET" && !hasBody && !options.signal;
+  const dedupeKey = canDedupe ? `${token || ""}:${path}` : "";
+
+  if (canDedupe && inFlightGetRequests.has(dedupeKey)) {
+    return inFlightGetRequests.get(dedupeKey);
+  }
+
+  const requestPromise = (async () => {
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), options.timeoutMs || REQUEST_TIMEOUT_MS);
 
@@ -58,7 +68,7 @@ const request = async (path, options = {}) => {
   let response;
   try {
     response = await fetch(API_BASE_URL + safeApiPath(path), {
-      method: options.method || "GET",
+      method,
       credentials: "include",
       cache: "no-store",
       ...options,
@@ -87,6 +97,14 @@ const request = async (path, options = {}) => {
 
   if (typeof data === "object" && data?.token) tokenStore.set(data.token);
   return data;
+  })();
+
+  if (canDedupe) {
+    inFlightGetRequests.set(dedupeKey, requestPromise);
+    requestPromise.finally(() => inFlightGetRequests.delete(dedupeKey));
+  }
+
+  return requestPromise;
 };
 
 export const authApi = {
