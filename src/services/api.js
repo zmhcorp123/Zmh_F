@@ -117,7 +117,12 @@ const request = async (path, options = {}) => {
     const message = typeof data === "object" && data?.message ? data.message : "Request failed";
     const error = new Error(message);
     error.status = response.status;
-    if (response.status === 403 && /csrf/i.test(message)) csrfToken = "";
+    if (response.status === 403 && /csrf/i.test(message)) {
+      csrfToken = "";
+      if (isStateChangingMethod(method) && !options._csrfRetried) {
+        return request(path, { ...options, _csrfRetried: true });
+      }
+    }
     if (response.status === 401 && token) unauthorizedHandler?.(error);
     throw error;
   }

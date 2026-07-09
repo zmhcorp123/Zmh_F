@@ -162,28 +162,14 @@ function CalendarBoard({ items = [], emptyText = "No calendar items yet." }) {
             return (
               <article className={dayEvents.length ? "client-calendar-day has-event" : "client-calendar-day"} key={key}>
                 <strong>{day.getDate()}</strong>
-                {dayEvents.slice(0, 2).map((item) => <small key={`${item.calendarLabel}-${item._id}`}>{item.companyName}</small>)}
-                {dayEvents.length > 2 && <b>+{dayEvents.length - 2}</b>}
+                {dayEvents.slice(0, 3).map((item) => <small key={`${item.calendarLabel}-${item._id}`}>{item.companyName}</small>)}
+                {dayEvents.length > 3 && <b>+{dayEvents.length - 3}</b>}
               </article>
             );
           })}
         </div>
       </section>
-      <section className="client-calendar-list">
-        {events.length ? events.map((item) => (
-          <article className="client-calendar-event" key={`${item.calendarLabel}-${item._id}`}>
-            <div>
-              <span>{formatDate(item.calendarDate)}</span>
-              <strong>{item.companyName}</strong>
-              <p>{item.eventDetail}</p>
-            </div>
-            <div className="client-calendar-meta">
-              <span>{item.calendarLabel}</span>
-              <StatusBadge value={item.eventStatus} />
-            </div>
-          </article>
-        )) : <div className="empty-state">{emptyText}</div>}
-      </section>
+      {!events.length && <div className="empty-state">{emptyText}</div>}
     </div>
   );
 }
@@ -839,8 +825,12 @@ function DashboardCards({ section, serviceId }) {
   }
 
   if (section === "Calendar") {
-    const billEvents = invoices.map((invoice) => ({ ...invoice, calendarType: "bill" }));
-    const meetingEvents = bookings.map((booking) => ({ ...booking, calendarType: "meeting" }));
+    const billEvents = invoices
+      .filter((invoice) => invoice.dueDate && invoice.status !== "paid" && invoice.paymentSubmission?.status !== "approved")
+      .map((invoice) => ({ ...invoice, calendarType: "bill" }));
+    const meetingEvents = bookings
+      .filter((booking) => booking.requestedDate && booking.status !== "cancelled")
+      .map((booking) => ({ ...booking, calendarType: "meeting" }));
     return <CalendarBoard items={[...billEvents, ...meetingEvents]} emptyText="Bills and booked meetings will appear here when dates are available." />;
   }
 
