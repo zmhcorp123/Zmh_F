@@ -113,7 +113,19 @@ function calendarKey(value) {
 
 function CalendarBoard({ items = [], emptyText = "No calendar items yet." }) {
   const events = items
-    .map((item) => ({ ...item, calendarDate: eventDate(item.serviceStartDate || item.requestedDate || item.createdAt) }))
+    .map((item) => {
+      const isBill = item.calendarType === "bill" || item.invoice;
+      const calendarDate = eventDate(item.calendarDate || item.dueDate || item.requestedDate);
+      return {
+        ...item,
+        calendarDate,
+        calendarLabel: isBill ? "Bill due" : "Meeting booked",
+        companyName: item.companyName || item.company || "Company",
+        eventTitle: isBill ? item.invoice || "Client bill" : item.companyName || "Client meeting",
+        eventDetail: isBill ? `${currency(item)} due` : item.services?.join(", ") || item.packageName || "Booked meeting",
+        eventStatus: isBill ? item.paymentSubmission?.status || item.status || "sent" : item.status === "new" ? "Waiting for Admin Approval" : item.status,
+      };
+    })
     .filter((item) => item.calendarDate)
     .sort((a, b) => a.calendarDate - b.calendarDate);
   const baseDate = events[0]?.calendarDate || new Date();
@@ -150,7 +162,7 @@ function CalendarBoard({ items = [], emptyText = "No calendar items yet." }) {
             return (
               <article className={dayEvents.length ? "client-calendar-day has-event" : "client-calendar-day"} key={key}>
                 <strong>{day.getDate()}</strong>
-                {dayEvents.slice(0, 2).map((item) => <small key={item._id}>{item.companyName}</small>)}
+                {dayEvents.slice(0, 2).map((item) => <small key={`${item.calendarLabel}-${item._id}`}>{item.companyName}</small>)}
                 {dayEvents.length > 2 && <b>+{dayEvents.length - 2}</b>}
               </article>
             );
@@ -159,16 +171,15 @@ function CalendarBoard({ items = [], emptyText = "No calendar items yet." }) {
       </section>
       <section className="client-calendar-list">
         {events.length ? events.map((item) => (
-          <article className="client-calendar-event" key={item._id}>
+          <article className="client-calendar-event" key={`${item.calendarLabel}-${item._id}`}>
             <div>
               <span>{formatDate(item.calendarDate)}</span>
               <strong>{item.companyName}</strong>
-              <p>{item.services?.join(", ") || item.packageName || "Operations support"}</p>
+              <p>{item.eventDetail}</p>
             </div>
             <div className="client-calendar-meta">
-              <span>{item.operatingDays || "Days not selected"}</span>
-              <span>{item.hours || "Hours not selected"}</span>
-              <StatusBadge value={item.status === "new" ? "Waiting for Admin Approval" : item.status} />
+              <span>{item.calendarLabel}</span>
+              <StatusBadge value={item.eventStatus} />
             </div>
           </article>
         )) : <div className="empty-state">{emptyText}</div>}
@@ -580,6 +591,17 @@ function ProfilePanel() {
 export function Dashboard({ section = "Dashboard", serviceId = "" }) {
   const { user, logout } = useAuth();
 
+  if (section === "Calendar") {
+    return (
+      <>
+        <SEO title="Calendar" />
+        <section className="client-calendar-page">
+          <DashboardCards section={section} serviceId={serviceId} />
+        </section>
+      </>
+    );
+  }
+
   return (
     <DashboardShell section={section} user={user} onLogout={logout}>
       {section === "Profile" || section === "Settings" ? <ProfilePanel /> : <DashboardCards section={section} serviceId={serviceId} />}
@@ -632,7 +654,7 @@ function DashboardCards({ section, serviceId }) {
       }
       const needsBookings = ["Dashboard", "Bookings", "Calendar", "Cancelled Services"].includes(section);
       const needsServices = ["Dashboard", "My Services", "Ongoing Services", "Cancelled Services", "Service Details"].includes(section);
-  const needsInvoices = ["Dashboard", "Invoices", "Payment Confirmation"].includes(section);
+      const needsInvoices = ["Dashboard", "Invoices", "Payment Confirmation", "Calendar"].includes(section);
       const needsNotifications = ["Dashboard", "Notifications", "Payment Confirmation"].includes(section);
       const needsTickets = section === "Support Tickets";
       const requests = [
@@ -817,7 +839,9 @@ function DashboardCards({ section, serviceId }) {
   }
 
   if (section === "Calendar") {
-    return <CalendarBoard items={[...bookings, ...services.filter((service) => !bookings.some((booking) => booking._id === service._id))]} emptyText="Select a booking date from Book Service and it will appear here." />;
+    const billEvents = invoices.map((invoice) => ({ ...invoice, calendarType: "bill" }));
+    const meetingEvents = bookings.map((booking) => ({ ...booking, calendarType: "meeting" }));
+    return <CalendarBoard items={[...billEvents, ...meetingEvents]} emptyText="Bills and booked meetings will appear here when dates are available." />;
   }
 
   if (section === "Bookings") {

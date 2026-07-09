@@ -390,6 +390,17 @@ function SettingsPanel() {
     } : item));
   };
 
+  const addTeamProfile = () => {
+    setTeamRows((current) => [
+      ...current,
+      { name: "", slug: "", role: "", location: "", linkedin: "", summary: "", bio: "", focus: [] },
+    ]);
+  };
+
+  const removeTeamProfile = (index) => {
+    setTeamRows((current) => current.length > 1 ? current.filter((_, itemIndex) => itemIndex !== index) : current);
+  };
+
   const saveTeamProfiles = async (event) => {
     event.preventDefault();
     setSaved("");
@@ -633,6 +644,7 @@ function SettingsPanel() {
                         <h4>{profile.name || "Team profile"}</h4>
                         <p>{profile.role || "Role not set"}</p>
                       </div>
+                      <button type="button" className="table-action danger-link" onClick={() => removeTeamProfile(index)} disabled={teamRows.length <= 1}>Remove</button>
                     </div>
                     <div className="settings-form-grid team-profile-core-grid">
                       <FormField label="Name" icon="user"><input value={profile.name || ""} onChange={(event) => updateTeamRow(index, "name", event.target.value)} required /></FormField>
@@ -648,6 +660,7 @@ function SettingsPanel() {
                   </div>
                 ))}
                 <div className="settings-footer-actions team-profile-actions">
+                  <button type="button" className="settings-secondary-action" onClick={addTeamProfile}>Add Profile</button>
                   <button type="submit" className="settings-primary-action" disabled={savingTeam}>{savingTeam ? "Saving..." : "Save Team Profiles"}</button>
                   <button type="button" className="settings-secondary-action" onClick={() => setTeamRows(defaultTeamRows)}>Reset Defaults</button>
                 </div>

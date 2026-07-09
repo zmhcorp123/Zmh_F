@@ -3,6 +3,8 @@ const AUTH_TOKEN_KEY = "zmh_auth_token";
 const AUTH_STORAGE_PREFIX = "zmh_";
 const REQUEST_TIMEOUT_MS = 12000;
 let unauthorizedHandler = null;
+let csrfToken = "";
+let csrfTokenPromise = null;
 const inFlightGetRequests = new Map();
 
 const safeApiPath = (path) => {
@@ -45,11 +47,34 @@ export function setUnauthorizedHandler(handler) {
   unauthorizedHandler = handler;
 }
 
+const isStateChangingMethod = (method) => ["POST", "PUT", "PATCH", "DELETE"].includes(String(method || "GET").toUpperCase());
+
+async function fetchCsrfToken() {
+  if (csrfToken) return csrfToken;
+  if (!csrfTokenPromise) {
+    csrfTokenPromise = fetch(API_BASE_URL + "/csrf-token", {
+      method: "GET",
+      credentials: "include",
+      cache: "no-store",
+    })
+      .then(async (response) => {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data?.csrfToken) throw new Error(data?.message || "Could not prepare secure request.");
+        csrfToken = data.csrfToken;
+        return csrfToken;
+      })
+      .finally(() => {
+        csrfTokenPromise = null;
+      });
+  }
+  return csrfTokenPromise;
+}
+
 const request = async (path, options = {}) => {
   const headers = new Headers(options.headers || {});
   const hasBody = Object.prototype.hasOwnProperty.call(options, "body");
   const isFormData = hasBody && options.body instanceof FormData;
-  const method = options.method || "GET";
+  const method = (options.method || "GET").toUpperCase();
   const token = tokenStore.get();
   const canDedupe = method === "GET" && !hasBody && !options.signal;
   const dedupeKey = canDedupe ? `${token || ""}:${path}` : "";
@@ -64,6 +89,7 @@ const request = async (path, options = {}) => {
 
   if (hasBody && !isFormData) headers.set("Content-Type", "application/json");
   if (token) headers.set("Authorization", `Bearer ${token}`);
+  if (isStateChangingMethod(method)) headers.set("X-CSRF-Token", await fetchCsrfToken());
 
   let response;
   try {
@@ -91,6 +117,7 @@ const request = async (path, options = {}) => {
     const message = typeof data === "object" && data?.message ? data.message : "Request failed";
     const error = new Error(message);
     error.status = response.status;
+    if (response.status === 403 && /csrf/i.test(message)) csrfToken = "";
     if (response.status === 401 && token) unauthorizedHandler?.(error);
     throw error;
   }

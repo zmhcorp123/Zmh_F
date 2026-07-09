@@ -29,5 +29,5 @@ export function PackageRoute() {
 export function TeamProfileRoute() {
   const { slug } = useParams();
   const profile = teamProfiles.find((item) => item.slug === slug);
-  return profile ? <TeamProfile profile={profile} slug={slug} /> : <NotFound />;
+  return <TeamProfile profile={profile || null} slug={slug} />;
 }
