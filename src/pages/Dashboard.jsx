@@ -619,7 +619,7 @@ function DashboardCards({ section, serviceId }) {
   useEffect(() => {
     let active = true;
     async function loadDashboard(showLoading = false) {
-      if (showLoading && !profileLoadedRef.current) setLoading(true);
+      if (showLoading) setLoading(true);
       if (section === "Dashboard") {
         try {
           const data = await dashboardApi.summary();
@@ -632,7 +632,10 @@ function DashboardCards({ section, serviceId }) {
           setNotifications(data.notifications || []);
           setError("");
         } catch (err) {
-          if (active) setError(err.message || "Could not load dashboard data.");
+          if (active) {
+            console.error(err);
+            setError(err.message || "Could not load dashboard data.");
+          }
         } finally {
           if (active && showLoading) setLoading(false);
         }
@@ -674,7 +677,10 @@ function DashboardCards({ section, serviceId }) {
         });
         setError(nextError);
       } catch (err) {
-        if (active) setError(err.message || "Could not load dashboard data.");
+        if (active) {
+          console.error(err);
+          setError(err.message || "Could not load dashboard data.");
+        }
       } finally {
         if (active && showLoading) setLoading(false);
       }

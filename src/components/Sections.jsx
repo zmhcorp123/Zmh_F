@@ -1,7 +1,7 @@
 import { Button } from "./Button";
 import { Icon } from "./icons";
 
-export function PageHero({ eyebrow, title, text, primary = "Book a Free Operations Audit", secondary, image = true }) {
+export function PageHero({ eyebrow, title, text, primary = "Book a Free Operations Audit", secondary, image = true, visual, className = "" }) {
   const metrics = [
     ["Calls", "128", "Active"],
     ["Dispatch", "64", "Live"],
@@ -10,7 +10,7 @@ export function PageHero({ eyebrow, title, text, primary = "Book a Free Operatio
   ];
 
   return (
-    <section className="page-hero">
+    <section className={"page-hero " + className}>
       <div className="hero-copy reveal">
         <span className="eyebrow">{eyebrow}</span>
         <h1>{title}</h1>
@@ -22,6 +22,7 @@ export function PageHero({ eyebrow, title, text, primary = "Book a Free Operatio
           <span><strong>24/7</strong> Operations</span>
         </div>
       </div>
+      {visual}
       {image && (
         <div className="hero-visual page-hero-dashboard reveal delay" aria-label="Live operations dashboard preview">
           <div className="hero-dashboard-top">

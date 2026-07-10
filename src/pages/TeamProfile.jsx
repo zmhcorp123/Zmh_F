@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Quote } from "lucide-react";
 import { CTA, PageHero, SectionHeader } from "../components/Sections";
 import { Icon } from "../components/icons";
 import { SEO } from "../components/SEO";
@@ -10,25 +11,26 @@ function normalizeSlug(value = "") {
   return String(value).trim().toLowerCase();
 }
 
-function SkeletonLine({ className = "" }) {
-  return <span className={"skeleton-line " + className} />;
-}
-
-function TeamProfileSkeleton() {
+function TeamHeroPortrait({ profile }) {
+  if (!profile?.image) return null;
   return (
-    <section className="page-hero route-page-skeleton" aria-label="Loading team profile">
-      <div className="hero-copy">
-        <SkeletonLine className="badge" />
-        <SkeletonLine className="title" />
-        <SkeletonLine className="title short" />
-        <SkeletonLine className="text" />
-        <SkeletonLine className="text mid" />
+    <div
+      className="team-hero-portrait-wrap reveal delay"
+      aria-label={`${profile.name} portrait`}
+      style={{ "--portrait-position": profile.imagePosition || "50% 28%" }}
+    >
+      <div className="team-hero-noise" aria-hidden="true" />
+      <div className="team-hero-glow cyan" aria-hidden="true" />
+      <div className="team-hero-glow purple" aria-hidden="true" />
+      <div className="team-hero-glow blue" aria-hidden="true" />
+      <div className="team-hero-portrait-card">
+        <img src={profile.image} alt={profile.name} loading="eager" fetchPriority="high" />
       </div>
-      <div className="hero-visual page-hero-dashboard">
-        <SkeletonLine className="panel" />
-        <div className="route-panel-grid">{Array.from({ length: 6 }).map((_, index) => <SkeletonLine key={index} />)}</div>
+      <div className="team-hero-quote-card">
+        <span className="team-hero-quote-icon"><Quote size={24} /></span>
+        <p>Building solutions<br />that <strong>create impact</strong></p>
       </div>
-    </section>
+    </div>
   );
 }
 
@@ -40,18 +42,26 @@ export function TeamProfile({ profile, slug }) {
 
   useEffect(() => {
     let active = true;
-    settingsApi.teamProfiles().then((data) => {
-      const found = Array.isArray(data.teamProfiles) ? data.teamProfiles.find((item) => normalizeSlug(item.slug) === routeSlug) : null;
-      if (active) setLiveProfile(found || null);
-    }).catch(() => {}).finally(() => {
-      if (active) setLoadedSlug(routeSlug);
-    });
+    async function loadTeamProfile() {
+      try {
+        const data = await settingsApi.teamProfiles();
+        const found = Array.isArray(data.teamProfiles) ? data.teamProfiles.find((item) => normalizeSlug(item.slug) === routeSlug) : null;
+        if (active) setLiveProfile(found || null);
+      } catch (err) {
+        console.error(err);
+        if (active) setLiveProfile(null);
+      } finally {
+        if (active) setLoadedSlug(routeSlug);
+      }
+    }
+    loadTeamProfile();
     return () => { active = false; };
   }, [routeSlug]);
 
-  const safeProfile = loadedSlug === routeSlug ? liveProfile || staticProfile : staticProfile;
+  const mergedProfile = liveProfile || staticProfile ? { ...staticProfile, ...liveProfile, image: liveProfile?.image || staticProfile?.image, imagePosition: liveProfile?.imagePosition || staticProfile?.imagePosition } : null;
+  const safeProfile = loadedSlug === routeSlug ? mergedProfile : staticProfile;
   const loading = loadedSlug !== routeSlug && !staticProfile;
-  if (loading && !safeProfile) return <TeamProfileSkeleton />;
+  if (loading && !safeProfile) return null;
   if (!safeProfile) return <NotFound />;
-  return <><SEO title={safeProfile.name} description={safeProfile.summary} /><PageHero eyebrow={safeProfile.role} title={safeProfile.name} text={safeProfile.summary} image={false} secondary={{ label: "Back to Team", to: "/team" }} /><section className="split team-profile-detail"><div><SectionHeader eyebrow="Profile" title="Professional background" /><p className="lead">{safeProfile.bio}</p><p><strong>Location:</strong> {safeProfile.location}</p><a className="profile-linkedin" href={safeProfile.linkedin || "https://www.linkedin.com/"} target="_blank" rel="noreferrer"><Icon name="linkedin" size={20} /> LinkedIn profile</a></div><div><SectionHeader eyebrow="Focus Areas" title="Where this profile contributes" /><div className="check-list">{(safeProfile.focus || []).map((item) => <span key={item}>{item}</span>)}</div></div></section><CTA /></>;
+  return <><SEO title={safeProfile.name} description={safeProfile.summary} /><PageHero eyebrow={safeProfile.role} title={safeProfile.name} text={safeProfile.summary} image={false} visual={<TeamHeroPortrait profile={safeProfile} />} className="team-member-hero" secondary={{ label: "Back to Team", to: "/team" }} /><section className="split team-profile-detail"><div><SectionHeader eyebrow="Profile" title="Professional background" /><p className="lead">{safeProfile.bio}</p><p><strong>Location:</strong> {safeProfile.location}</p><a className="profile-linkedin" href={safeProfile.linkedin || "https://www.linkedin.com/"} target="_blank" rel="noreferrer"><Icon name="linkedin" size={20} /> LinkedIn profile</a></div><div><SectionHeader eyebrow="Focus Areas" title="Where this profile contributes" /><div className="check-list">{(safeProfile.focus || []).map((item) => <span key={item}>{item}</span>)}</div></div></section><CTA /></>;
 }

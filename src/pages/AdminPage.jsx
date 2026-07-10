@@ -357,20 +357,28 @@ function SettingsPanel() {
 
   useEffect(() => {
     let active = true;
-    Promise.all([adminApi.pricing(), adminApi.getSettings()]).then(([pricingData, settingsData]) => {
-      if (!active) return;
-      if (Array.isArray(pricingData.packages) && pricingData.packages.length) setPackageRows(pricingData.packages);
-      const accountSetting = (settingsData.settings || []).find((item) => item.key === "accountDetails");
-      const companySetting = (settingsData.settings || []).find((item) => item.key === "companyDetails");
-      const teamSetting = (settingsData.settings || []).find((item) => item.key === "teamProfiles");
-      if (accountSetting?.value) setAccountDetails((current) => ({ ...current, ...accountSetting.value }));
-      if (companySetting?.value) setCompanyDetails((current) => ({ ...current, ...companySetting.value }));
-      if (Array.isArray(teamSetting?.value) && teamSetting.value.length) setTeamRows(teamSetting.value);
-    }).catch((err) => {
-      if (active) setError(err.message || "Could not load settings.");
-    }).finally(() => {
-      if (active) setLoading(false);
-    });
+    async function loadSettings() {
+      setLoading(true);
+      try {
+        const [pricingData, settingsData] = await Promise.all([adminApi.pricing(), adminApi.getSettings()]);
+        if (!active) return;
+        if (Array.isArray(pricingData.packages) && pricingData.packages.length) setPackageRows(pricingData.packages);
+        const accountSetting = (settingsData.settings || []).find((item) => item.key === "accountDetails");
+        const companySetting = (settingsData.settings || []).find((item) => item.key === "companyDetails");
+        const teamSetting = (settingsData.settings || []).find((item) => item.key === "teamProfiles");
+        if (accountSetting?.value) setAccountDetails((current) => ({ ...current, ...accountSetting.value }));
+        if (companySetting?.value) setCompanyDetails((current) => ({ ...current, ...companySetting.value }));
+        if (Array.isArray(teamSetting?.value) && teamSetting.value.length) setTeamRows(teamSetting.value);
+      } catch (err) {
+        if (active) {
+          console.error(err);
+          setError(err.message || "Could not load settings.");
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+    loadSettings();
     return () => { active = false; };
   }, []);
 

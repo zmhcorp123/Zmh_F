@@ -1023,6 +1023,294 @@ input:focus, textarea:focus, select:focus { outline: 0; border-color: rgba(47,10
   color: #fff;
 }
 
+.team-member-hero {
+  max-width: 1440px;
+  min-height: clamp(760px, 88vh, 820px);
+  grid-template-columns: minmax(0, 1.08fr) minmax(420px, .92fr);
+  align-items: start;
+  gap: clamp(42px, 6vw, 92px);
+  padding-top: clamp(112px, 10vw, 138px);
+  padding-bottom: clamp(64px, 7vw, 88px);
+}
+
+.team-member-hero::before {
+  background:
+    radial-gradient(ellipse 48% 42% at 0% 0%, rgba(37, 99, 235, .24), transparent 66%),
+    radial-gradient(circle at 82% 22%, rgba(79, 70, 229, .42), transparent 34%),
+    radial-gradient(circle at 72% 66%, rgba(34, 244, 255, .18), transparent 32%),
+    linear-gradient(135deg, #081326 0%, #0b1732 45%, #121e4a 100%);
+}
+
+.team-member-hero::after {
+  opacity: .38;
+  background-image:
+    radial-gradient(circle, rgba(255,255,255,.22) 0 1px, transparent 1px),
+    linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px);
+  background-size: 54px 54px, 46px 46px, 46px 46px;
+  mask-image: radial-gradient(circle at 70% 30%, #000 0 24%, transparent 62%), linear-gradient(180deg, #000 0%, transparent 92%);
+}
+
+.team-member-hero .hero-copy {
+  position: relative;
+  z-index: 2;
+}
+
+.team-member-hero .hero-copy h1 {
+  max-width: 510px;
+  margin-bottom: 24px;
+  color: #fff;
+  font-size: clamp(4.5rem, 6.15vw, 5.5rem);
+  font-weight: 950;
+  letter-spacing: -.04em;
+  line-height: .95;
+  text-shadow: 0 18px 54px rgba(0,0,0,.22);
+}
+
+.team-member-hero .hero-copy p {
+  max-width: 620px;
+  color: rgba(255,255,255,.82);
+  font-size: clamp(1.08rem, 1.52vw, 1.38rem);
+  line-height: 1.55;
+}
+
+.team-member-hero .eyebrow {
+  margin-bottom: 20px;
+  border-color: rgba(34, 244, 255, .28);
+  background: rgba(8, 24, 54, .56);
+  color: #22f4ff;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 16px 44px rgba(34,244,255,.1);
+  backdrop-filter: blur(18px);
+}
+
+.team-member-hero .hero-actions {
+  gap: 16px;
+  margin: 30px 0 0;
+}
+
+.team-member-hero .btn {
+  min-height: 60px;
+  border-radius: 18px;
+  padding: 0 24px;
+  font-size: 1.03rem;
+  box-shadow: 0 18px 52px rgba(79, 70, 229, .35), inset 0 1px 0 rgba(255,255,255,.22);
+}
+
+.team-member-hero .btn:not(.secondary) {
+  background: linear-gradient(135deg, #2563eb 0%, #4f46e5 55%, #8b5cf6 100%);
+}
+
+.team-member-hero .btn.secondary {
+  color: #fff;
+  border: 1px solid rgba(255,255,255,.15);
+  background: rgba(255,255,255,.07);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.12);
+  backdrop-filter: blur(18px);
+}
+
+.team-member-hero .btn:hover {
+  transform: translateY(-3px) scale(1.01);
+}
+
+.team-member-hero .hero-trust-row {
+  gap: 14px;
+  margin-top: 30px;
+}
+
+.team-member-hero .hero-trust-row span {
+  min-height: 50px;
+  padding: 10px 18px;
+  border-color: rgba(255,255,255,.14);
+  background: rgba(8, 19, 38, .46);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 14px 36px rgba(0,0,0,.14);
+  backdrop-filter: blur(18px);
+}
+
+.team-hero-portrait-wrap {
+  position: relative;
+  justify-self: end;
+  align-self: center;
+  width: min(100%, 500px);
+  overflow: visible;
+  animation: teamPortraitIn .82s cubic-bezier(.22, 1, .36, 1) both;
+}
+
+.team-hero-noise {
+  position: absolute;
+  inset: -42px;
+  z-index: -3;
+  opacity: .08;
+  pointer-events: none;
+  background-image:
+    linear-gradient(115deg, rgba(255,255,255,.3) 0 1px, transparent 1px),
+    linear-gradient(45deg, rgba(255,255,255,.22) 0 1px, transparent 1px);
+  background-size: 18px 18px, 26px 26px;
+  mask-image: radial-gradient(circle at 55% 48%, #000, transparent 68%);
+}
+
+.team-hero-glow {
+  position: absolute;
+  z-index: -1;
+  border-radius: 999px;
+  filter: blur(34px);
+  opacity: .72;
+  pointer-events: none;
+  animation: teamGlowPulse 5.8s ease-in-out infinite;
+  transition: opacity .28s ease, transform .28s ease;
+}
+
+.team-hero-glow.cyan {
+  width: 62%;
+  height: 42%;
+  left: -13%;
+  top: -1%;
+  background: rgba(34, 244, 255, .62);
+}
+
+.team-hero-glow.purple {
+  width: 82%;
+  height: 62%;
+  right: -18%;
+  bottom: -5%;
+  background: rgba(139, 92, 246, .42);
+  animation-delay: -2.6s;
+}
+
+.team-hero-glow.blue {
+  width: 70%;
+  height: 52%;
+  left: 18%;
+  top: 18%;
+  background: rgba(37, 99, 235, .34);
+  filter: blur(48px);
+  animation-delay: -1.2s;
+}
+
+.team-hero-portrait-card {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 32px;
+  background: linear-gradient(145deg, rgba(255,255,255,.12), rgba(255,255,255,.04));
+  box-shadow:
+    0 0 0 1px rgba(34,244,255,.14),
+    0 0 54px rgba(37,99,235,.42),
+    0 34px 100px rgba(0,0,0,.34),
+    inset 0 1px 0 rgba(255,255,255,.18);
+  backdrop-filter: blur(20px);
+  transition: transform .32s ease, box-shadow .32s ease, border-color .32s ease;
+}
+
+.team-hero-portrait-card::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  z-index: 1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(34,244,255,.34), transparent 35%, rgba(139,92,246,.28));
+  opacity: .7;
+  mix-blend-mode: screen;
+}
+
+.team-hero-portrait-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(0,0,0,.04), rgba(0,0,0,.1));
+}
+
+.team-hero-portrait-card img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: var(--portrait-position, 50% 28%);
+  transition: transform .34s ease, filter .34s ease;
+}
+
+.team-hero-portrait-wrap:hover .team-hero-portrait-card {
+  transform: scale(1.02);
+  border-color: rgba(255,255,255,.38);
+  box-shadow:
+    0 0 0 1px rgba(34,244,255,.24),
+    0 0 68px rgba(47,107,255,.42),
+    0 34px 100px rgba(0,0,0,.3),
+    inset 0 1px 0 rgba(255,255,255,.2);
+}
+
+.team-hero-portrait-wrap:hover .team-hero-portrait-card img {
+  transform: scale(1.025);
+}
+
+.team-hero-portrait-wrap:hover .team-hero-glow {
+  opacity: .92;
+  transform: scale(1.04);
+}
+
+.team-hero-quote-card {
+  position: absolute;
+  right: 76px;
+  bottom: 96px;
+  z-index: 4;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 16px;
+  width: min(82%, 352px);
+  padding: 20px 22px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 24px;
+  background: rgba(12, 18, 40, .75);
+  box-shadow: 0 24px 70px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.12);
+  backdrop-filter: blur(18px);
+  animation: teamQuoteFloat 4.6s ease-in-out infinite;
+}
+
+.team-hero-quote-icon {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 999px;
+  color: white;
+  background: linear-gradient(135deg, #6d35d7, #4f46e5);
+  box-shadow: 0 14px 34px rgba(79,70,229,.34);
+}
+
+.team-hero-quote-card p {
+  margin: 0;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 850;
+  line-height: 1.36;
+}
+
+.team-hero-quote-card strong {
+  color: transparent;
+  background: linear-gradient(135deg, #18d6ff, #2f6bff 45%, #8b5cf6);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+@keyframes teamPortraitIn {
+  from { opacity: 0; transform: translateY(26px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes teamGlowPulse {
+  0%, 100% { opacity: .54; transform: scale(.96); }
+  50% { opacity: .86; transform: scale(1.06); }
+}
+
+@keyframes teamQuoteFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
 .page-hero-dashboard {
   align-self: center;
   width: min(100%, 760px);
@@ -1571,6 +1859,22 @@ button[type="submit"],
     padding-top: 104px;
   }
 
+  .team-member-hero {
+    min-height: auto;
+    grid-template-columns: 1fr;
+    gap: 42px;
+  }
+
+  .team-hero-portrait-wrap {
+    justify-self: center;
+    width: min(74vw, 500px);
+    margin-top: 8px;
+  }
+
+  .team-hero-quote-card {
+    right: -18px;
+  }
+
   .grid.three,
   .service-card-grid,
   .stats,
@@ -1586,6 +1890,36 @@ button[type="submit"],
 @media (max-width: 640px) {
   .page-hero .hero-copy h1 {
     font-size: clamp(2.4rem, 14vw, 3.5rem);
+  }
+
+  .team-hero-portrait-wrap {
+    width: min(90%, 390px);
+  }
+
+  .team-member-hero .hero-copy h1 {
+    font-size: clamp(3.1rem, 15vw, 4.15rem);
+  }
+
+  .team-hero-portrait-card {
+    border-radius: 30px;
+  }
+
+  .team-hero-quote-card {
+    right: -6px;
+    bottom: 18px;
+    width: min(88%, 300px);
+    gap: 12px;
+    padding: 14px 15px;
+    border-radius: 20px;
+  }
+
+  .team-hero-quote-icon {
+    width: 46px;
+    height: 46px;
+  }
+
+  .team-hero-quote-card p {
+    font-size: 15px;
   }
 
   .hero-actions,

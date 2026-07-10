@@ -67,18 +67,26 @@ export function AdminOrderDetails() {
 
   useEffect(() => {
     let active = true;
-    adminApi.order(orderId).then((data) => {
-      if (!active) return;
-      setOrder(data.order);
-      setProgress(data.progress || []);
-      setInvoices(data.invoices || []);
-      setSummary(data.summary || null);
-      setError("");
-    }).catch((err) => {
-      if (active) setError(err.message || "Could not load order.");
-    }).finally(() => {
-      if (active) setLoading(false);
-    });
+    async function loadOrder() {
+      setLoading(true);
+      try {
+        const data = await adminApi.order(orderId);
+        if (!active) return;
+        setOrder(data.order);
+        setProgress(data.progress || []);
+        setInvoices(data.invoices || []);
+        setSummary(data.summary || null);
+        setError("");
+      } catch (err) {
+        if (active) {
+          console.error(err);
+          setError(err.message || "Could not load order.");
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+    loadOrder();
     return () => { active = false; };
   }, [orderId]);
 
