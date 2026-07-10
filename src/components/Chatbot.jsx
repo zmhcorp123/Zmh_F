@@ -38,7 +38,10 @@ export function Chatbot() {
 
   useEffect(() => {
     if (!open || !chatScrollRef.current) return;
-    chatScrollRef.current.scrollTo({ top: chatScrollRef.current.scrollHeight, behavior: "smooth" });
+    const frame = window.requestAnimationFrame(() => {
+      chatScrollRef.current?.scrollTo({ top: chatScrollRef.current.scrollHeight, behavior: "auto" });
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, [messages, typing, open]);
 
   const replyWithTyping = (question, response = answer(question)) => {

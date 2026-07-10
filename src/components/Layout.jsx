@@ -65,7 +65,6 @@ export function Layout({ children }) {
     "/support-tickets",
     "/my-services",
     "/cancelled-services",
-    "/calendar",
   ];
   const isAppOnly = appOnlyPaths.some((path) => currentPath === path || currentPath.startsWith(path + "/"));
 

@@ -40,9 +40,9 @@ function calendarKey(value) {
   return date ? date.toISOString().slice(0, 10) : "";
 }
 
-function AdminCalendarBoard({ bookings = [] }) {
-  const events = bookings
-    .map((item) => ({ ...item, calendarDate: eventDate(item.serviceStartDate || item.requestedDate || item.createdAt) }))
+function AdminCalendarBoard({ bills = [] }) {
+  const events = bills
+    .map((item) => ({ ...item, calendarDate: eventDate(item.dueDate || item.createdAt) }))
     .filter((item) => item.calendarDate)
     .sort((a, b) => a.calendarDate - b.calendarDate);
   const baseDate = events[0]?.calendarDate || new Date();
@@ -63,7 +63,7 @@ function AdminCalendarBoard({ bookings = [] }) {
       <section className="admin-calendar-panel">
         <div className="admin-calendar-head">
           <div>
-            <span className="eyebrow">Client Works Calendar</span>
+            <span className="eyebrow">Pending Bills Calendar</span>
             <h3>{baseDate.toLocaleDateString(undefined, { month: "long", year: "numeric" })}</h3>
           </div>
           <strong>{events.length}</strong>
@@ -79,7 +79,7 @@ function AdminCalendarBoard({ bookings = [] }) {
             return (
               <article className={dayEvents.length ? "admin-calendar-day has-event" : "admin-calendar-day"} key={key}>
                 <strong>{day.getDate()}</strong>
-                {dayEvents.slice(0, 2).map((item) => <small key={item._id}>{item.companyName}</small>)}
+                {dayEvents.slice(0, 2).map((item) => <small key={item._id}>{item.company || item.user?.company || "Client bill"}</small>)}
                 {dayEvents.length > 2 && <b>+{dayEvents.length - 2}</b>}
               </article>
             );
@@ -91,16 +91,16 @@ function AdminCalendarBoard({ bookings = [] }) {
           <article className="admin-calendar-event" key={item._id}>
             <div>
               <span>{formatDate(item.calendarDate)}</span>
-              <strong>{item.companyName}</strong>
-              <p>{item.email || item.user?.email || "No email"} | {item.phone || "No phone"}</p>
+              <strong>{item.invoice || "Pending bill"}</strong>
+              <p>{item.company || item.user?.company || "Company"} | {item.user?.email || item.email || "No email"}</p>
             </div>
             <div className="admin-calendar-meta">
-              <span>{item.operatingDays || "Days not selected"}</span>
-              <span>{item.hours || "Hours not selected"}</span>
-              <b className="status-pill">{item.status || "new"}</b>
+              <span>{item.currency || "USD"} {Number(item.amount || 0).toFixed(2)}</span>
+              <span>Due {formatDate(item.dueDate)}</span>
+              <b className="status-pill">{item.paymentSubmission?.status === "submitted" ? "Payment submitted" : item.status || "pending"}</b>
             </div>
           </article>
-        )) : <div className="empty-state">No booking dates have been selected yet.</div>}
+        )) : <div className="empty-state">No pending user bills found.</div>}
       </section>
     </div>
   );
@@ -746,9 +746,14 @@ export function AdminPage() {
     loadAdminData();
     const refreshTimer = window.setInterval(() => {
       if (document.visibilityState === "visible") loadAdminData();
-    }, 15000);
+    }, 120000);
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") loadAdminData();
+    };
+    document.addEventListener("visibilitychange", refreshWhenVisible);
     return () => {
       active = false;
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
       window.clearInterval(refreshTimer);
     };
   }, [employeeNeedsSetup]);
@@ -773,6 +778,10 @@ export function AdminPage() {
   }, [ongoingBookings, orderSearch, orderSort, orderFilter]);
   const cancelledBookings = useMemo(() => bookings.filter((booking) => booking.status === "cancelled"), [bookings]);
   const openTickets = useMemo(() => tickets.filter((ticket) => ticket.status !== "resolved"), [tickets]);
+  const pendingBills = useMemo(() => bills.filter((bill) => {
+    const status = String(bill.paymentSubmission?.status || bill.status || "pending").toLowerCase();
+    return !["paid", "approved", "waived", "cancelled"].includes(status);
+  }), [bills]);
 
   const metrics = useMemo(() => [
     ["Pending approvals", pendingUsers.length, "users"],
@@ -1102,7 +1111,7 @@ export function AdminPage() {
           )}
 
           {!isEmployee && tab === "Calendar" && (
-            <AdminCalendarBoard bookings={bookings} />
+            <AdminCalendarBoard bills={pendingBills} />
           )}
 
           {!employeeNeedsSetup && tab === "Ongoing" && (

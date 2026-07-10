@@ -100,80 +100,6 @@ function activityMeta(type = "", title = "") {
   return { icon: UserRound, tone: "purple", route: "/notifications" };
 }
 
-function eventDate(value) {
-  if (!value) return null;
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? null : date;
-}
-
-function calendarKey(value) {
-  const date = eventDate(value);
-  return date ? date.toISOString().slice(0, 10) : "";
-}
-
-function CalendarBoard({ items = [], emptyText = "No calendar items yet." }) {
-  const events = items
-    .map((item) => {
-      const isBill = item.calendarType === "bill" || item.invoice;
-      const calendarDate = eventDate(item.calendarDate || item.dueDate || item.requestedDate);
-      return {
-        ...item,
-        calendarDate,
-        calendarLabel: isBill ? "Bill due" : "Meeting booked",
-        companyName: item.companyName || item.company || "Company",
-        eventTitle: isBill ? item.invoice || "Client bill" : item.companyName || "Client meeting",
-        eventDetail: isBill ? `${currency(item)} due` : item.services?.join(", ") || item.packageName || "Booked meeting",
-        eventStatus: isBill ? item.paymentSubmission?.status || item.status || "sent" : item.status === "new" ? "Waiting for Admin Approval" : item.status,
-      };
-    })
-    .filter((item) => item.calendarDate)
-    .sort((a, b) => a.calendarDate - b.calendarDate);
-  const baseDate = events[0]?.calendarDate || new Date();
-  const monthStart = new Date(baseDate.getFullYear(), baseDate.getMonth(), 1);
-  const monthEnd = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 0);
-  const days = [];
-  for (let day = 1; day <= monthEnd.getDate(); day += 1) days.push(new Date(baseDate.getFullYear(), baseDate.getMonth(), day));
-  const leadingDays = Array.from({ length: monthStart.getDay() }, (_, index) => `blank-${index}`);
-  const eventsByDay = events.reduce((map, item) => {
-    const key = calendarKey(item.calendarDate);
-    if (!map[key]) map[key] = [];
-    map[key].push(item);
-    return map;
-  }, {});
-
-  return (
-    <div className="client-calendar-workspace">
-      <section className="client-calendar-panel">
-        <div className="client-calendar-head">
-          <div>
-            <span className="eyebrow">Works Calendar</span>
-            <h3>{baseDate.toLocaleDateString(undefined, { month: "long", year: "numeric" })}</h3>
-          </div>
-          <strong>{events.length}</strong>
-        </div>
-        <div className="client-calendar-weekdays">
-          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => <span key={day}>{day}</span>)}
-        </div>
-        <div className="client-calendar-grid">
-          {leadingDays.map((key) => <span className="client-calendar-day blank" key={key} />)}
-          {days.map((day) => {
-            const key = calendarKey(day);
-            const dayEvents = eventsByDay[key] || [];
-            return (
-              <article className={dayEvents.length ? "client-calendar-day has-event" : "client-calendar-day"} key={key}>
-                <strong>{day.getDate()}</strong>
-                {dayEvents.slice(0, 3).map((item) => <small key={`${item.calendarLabel}-${item._id}`}>{item.companyName}</small>)}
-                {dayEvents.length > 3 && <b>+{dayEvents.length - 3}</b>}
-              </article>
-            );
-          })}
-        </div>
-      </section>
-      {!events.length && <div className="empty-state">{emptyText}</div>}
-    </div>
-  );
-}
-
 const navIcons = {
   Dashboard: LayoutDashboard,
   Bookings: CalendarCheck,
@@ -187,7 +113,6 @@ const navIcons = {
   Settings,
   "Support Tickets": LifeBuoy,
   "Book Service": FileText,
-  Calendar: CalendarDays,
 };
 
 function routeForNav(item) {
@@ -204,7 +129,7 @@ function getInitials(name = "") {
 function DashboardShell({ section, user, children, onLogout }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notificationsSeen, setNotificationsSeen] = useState(() => localStorage.getItem("zhm_notifications_seen") === "true");
-  const items = ["Dashboard", "Bookings", "My Services", "Ongoing Services", "Cancelled Services", "Invoices", "Payment Confirmation", "Notifications", "Profile", "Settings", "Support Tickets", "Book Service", "Calendar"];
+  const items = ["Dashboard", "Bookings", "My Services", "Ongoing Services", "Cancelled Services", "Invoices", "Payment Confirmation", "Notifications", "Profile", "Settings", "Support Tickets", "Book Service"];
   const activeSection = section === "Service Details" ? "My Services" : section;
   const displayName = user?.name || "Client";
   const showNotificationBadge = !notificationsSeen && activeSection !== "Notifications";
@@ -577,17 +502,6 @@ function ProfilePanel() {
 export function Dashboard({ section = "Dashboard", serviceId = "" }) {
   const { user, logout } = useAuth();
 
-  if (section === "Calendar") {
-    return (
-      <>
-        <SEO title="Calendar" />
-        <section className="client-calendar-page">
-          <DashboardCards section={section} serviceId={serviceId} />
-        </section>
-      </>
-    );
-  }
-
   return (
     <DashboardShell section={section} user={user} onLogout={logout}>
       {section === "Profile" || section === "Settings" ? <ProfilePanel /> : <DashboardCards section={section} serviceId={serviceId} />}
@@ -688,9 +602,14 @@ function DashboardCards({ section, serviceId }) {
     loadDashboard(true);
     const refreshTimer = window.setInterval(() => {
       if (document.visibilityState === "visible") loadDashboard(false);
-    }, 15000);
+    }, 120000);
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") loadDashboard(false);
+    };
+    document.addEventListener("visibilitychange", refreshWhenVisible);
     return () => {
       active = false;
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
       window.clearInterval(refreshTimer);
     };
   }, [section]);
@@ -828,16 +747,6 @@ function DashboardCards({ section, serviceId }) {
         <PaymentModal service={paymentModal} invoice={paymentModal?.latestInvoice} onClose={() => setPaymentModal(null)} onSubmit={submitPayment} saving={savingPayment} />
       </div>
     );
-  }
-
-  if (section === "Calendar") {
-    const billEvents = invoices
-      .filter((invoice) => invoice.dueDate && invoice.status !== "paid" && invoice.paymentSubmission?.status !== "approved")
-      .map((invoice) => ({ ...invoice, calendarType: "bill" }));
-    const meetingEvents = bookings
-      .filter((booking) => booking.requestedDate && booking.status !== "cancelled")
-      .map((booking) => ({ ...booking, calendarType: "meeting" }));
-    return <CalendarBoard items={[...billEvents, ...meetingEvents]} emptyText="Bills and booked meetings will appear here when dates are available." />;
   }
 
   if (section === "Bookings") {
@@ -992,7 +901,7 @@ function DashboardCards({ section, serviceId }) {
       </div>
       <div className="client-dashboard-bottom">
         <article className="client-premium-card client-appointment-card">
-          <div className="client-card-title with-action"><div><CalendarDays size={20} /><h3>Upcoming Appointment</h3></div><button type="button" onClick={() => navigate("/calendar")}>View Calendar</button></div>
+          <div className="client-card-title"><CalendarDays size={20} /><h3>Upcoming Appointment</h3></div>
           {upcoming._id ? (
             <div className="client-appointment-details">
               <span className="client-appointment-icon"><CalendarCheck size={24} /></span>

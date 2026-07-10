@@ -15,5 +15,5 @@ export const navigate = (to, options) => {
   } else {
     window.location.assign(to);
   }
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  window.scrollTo({ top: 0, behavior: "auto" });
 };

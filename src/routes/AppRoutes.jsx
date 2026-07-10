@@ -49,7 +49,13 @@ const publicRoutePrefetchers = [
   () => import("../pages/Contact"),
 ];
 
+function shouldPrefetchPublicRoutes() {
+  const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  return !connection?.saveData && !["slow-2g", "2g"].includes(connection?.effectiveType);
+}
+
 function prefetchPublicRoutes() {
+  if (!shouldPrefetchPublicRoutes()) return;
   publicRoutePrefetchers.forEach((prefetch) => {
     prefetch().catch(() => {});
   });
@@ -92,12 +98,25 @@ function DashboardRedirect() {
 
 export function AppRoutes() {
   useEffect(() => {
-    if ("requestIdleCallback" in window) {
-      const id = window.requestIdleCallback(prefetchPublicRoutes, { timeout: 1800 });
-      return () => window.cancelIdleCallback?.(id);
-    }
-    const id = window.setTimeout(prefetchPublicRoutes, 300);
-    return () => window.clearTimeout(id);
+    const schedulePrefetch = () => {
+      if ("requestIdleCallback" in window) {
+        const id = window.requestIdleCallback(prefetchPublicRoutes, { timeout: 5000 });
+        return () => window.cancelIdleCallback?.(id);
+      }
+      const id = window.setTimeout(prefetchPublicRoutes, 3500);
+      return () => window.clearTimeout(id);
+    };
+
+    if (document.readyState === "complete") return schedulePrefetch();
+    let cleanup = null;
+    const onLoad = () => {
+      cleanup = schedulePrefetch();
+    };
+    window.addEventListener("load", onLoad, { once: true });
+    return () => {
+      window.removeEventListener("load", onLoad);
+      cleanup?.();
+    };
   }, []);
 
   return (
@@ -150,7 +169,6 @@ export function AppRoutes() {
         <Route path="/my-services" element={<UserDashboardRoute section="My Services" />} />
         <Route path="/my-services/:serviceId" element={<UserServiceDetailsRoute />} />
         <Route path="/cancelled-services" element={<UserDashboardRoute section="Cancelled Services" />} />
-        <Route path="/calendar" element={<UserDashboardRoute section="Calendar" />} />
         <Route path="/book-service" element={<BookService />} />
         <Route path="/book-meeting" element={<BookMeeting />} />
         <Route path="/request-success" element={<RequestSuccess />} />
