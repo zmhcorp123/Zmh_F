@@ -1025,12 +1025,12 @@ input:focus, textarea:focus, select:focus { outline: 0; border-color: rgba(47,10
 
 .team-member-hero {
   max-width: 1440px;
-  min-height: clamp(760px, 88vh, 820px);
+  min-height: clamp(660px, 78vh, 730px);
   grid-template-columns: minmax(0, 1.08fr) minmax(420px, .92fr);
   align-items: start;
   gap: clamp(42px, 6vw, 92px);
-  padding-top: clamp(112px, 10vw, 138px);
-  padding-bottom: clamp(64px, 7vw, 88px);
+  padding-top: clamp(32px, 4vw, 52px);
+  padding-bottom: clamp(48px, 6vw, 76px);
 }
 
 .team-member-hero::before {
@@ -1856,7 +1856,7 @@ button[type="submit"],
 
 @media (max-width: 920px) {
   .page-hero {
-    padding-top: 104px;
+    padding-top: 50px;
   }
 
   .team-member-hero {
@@ -2755,7 +2755,7 @@ main section {
 
 .page-hero {
   min-height: 300px;
-  padding-top: clamp(92px, 9vw, 124px);
+  padding-top: clamp(34px, 3.5vw, 54px);
   padding-bottom: clamp(42px, 5vw, 68px);
 }
 
