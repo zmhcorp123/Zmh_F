@@ -28,14 +28,21 @@ const companyLinks = [
   ["How It Works", "/how-it-works"],
   ["Case Studies", "/case-studies"],
   ["FAQ", "/faq"],
-  ["Blog", "/blog"],
-  ["Careers", "/careers"],
   ["Privacy Policy", "/privacy"],
   ["Terms & Conditions", "/terms"],
   ["Cookie Policy", "/cookie-policy"],
 ];
 
 const logoMark = "/brand/zmh-usa-corp-mark-96.png";
+const logoMarkWebp = "/brand/zmh-usa-corp-mark-96.webp";
+const footerLogo = "/brand/zmh-usa-corp-mark.png";
+
+function BrandLogo({ footer = false }) {
+  if (footer) {
+    return <img src={footerLogo} width="96" height="96" loading="lazy" decoding="async" alt="ZMH USA Corp." />;
+  }
+  return <picture><source srcSet={logoMarkWebp} type="image/webp" /><img src={logoMark} width="96" height="96" alt="" decoding="async" fetchPriority="high" /></picture>;
+}
 
 function LinkButton({ to, children, onClick }) {
   return <button className="text-link" onClick={() => { navigate(to); onClick?.(); }}>{children}</button>;
@@ -43,7 +50,6 @@ function LinkButton({ to, children, onClick }) {
 
 export function Layout({ children }) {
   const [open, setOpen] = useState(false);
-  const [newsletterSaved, setNewsletterSaved] = useState(false);
   const [chatReady, setChatReady] = useState(false);
   const { isAuthenticated, user, logout } = useAuth();
   const { pathname: currentPath } = useLocation();
@@ -84,7 +90,7 @@ export function Layout({ children }) {
     <div className={isAppOnly && user?.role !== "admin" ? "app dashboard-app" : "app"}>
       <header className="navbar">
         <button className="brand" onClick={() => navigate("/")} aria-label="ZMH USA Corp home">
-          <span className="brand-mark"><picture><source srcSet="/brand/zmh-usa-corp-mark-96.webp" type="image/webp" /><img src={logoMark} width="96" height="96" alt="" decoding="async" fetchPriority="high" /></picture></span>
+          <span className="brand-mark"><BrandLogo /></span>
           <span><strong>{company.name}</strong><small>Remote Operations</small></span>
         </button>
         <nav className={open ? "nav open" : "nav"} aria-label="Primary navigation">
@@ -109,28 +115,20 @@ export function Layout({ children }) {
       {!isAppOnly && <footer className="footer">
         <div className="footer-top">
           <div>
-            <div className="brand footer-brand"><span className="footer-logo"><picture><source srcSet="/brand/zmh-usa-corp-logo-small.webp" type="image/webp" /><img src="/brand/zmh-usa-corp-logo-small.png" width="156" height="108" loading="lazy" decoding="async" alt="ZMH USA Corp. Remote Operations" /></picture></span><span><strong>{company.name}</strong><small>{company.tagline}</small></span></div>
+            <div className="brand footer-brand"><span className="footer-logo"><BrandLogo footer /></span><span><strong>{company.name}</strong><small>{company.tagline}</small></span></div>
             <p>Premium remote operations support for home service companies that need disciplined call, scheduling, dispatch, CRM, and admin workflows.</p>
             <div className="socials">{socials.map(([label, icon, href]) => <a key={label} href={href} target="_blank" rel="noreferrer" aria-label={label} title={label}><Icon name={icon} size={18} /></a>)}</div>
+            <div className="footer-email-list footer-contact-list">
+              <span><strong>Sales</strong>{company.emails.sales}</span>
+              <span><strong>Support</strong>{company.emails.support}</span>
+              <span><strong>Phone</strong>{company.phone}</span>
+            </div>
           </div>
           <div><h4>Services</h4>{services.slice(0, 6).map((item) => <LinkButton key={item.slug} to={"/services/" + item.slug}>{item.name}</LinkButton>)}</div>
           <div><h4>Industries</h4>{industries.slice(0, 6).map((item) => <LinkButton key={item.slug} to={"/industries/" + item.slug}>{item.name}</LinkButton>)}</div>
           <div><h4>Company</h4>{companyLinks.map(([label, to]) => <LinkButton key={to} to={to}>{label}</LinkButton>)}</div>
-          <div>
-            <h4>Newsletter</h4>
-            <p>Operations ideas for service companies.</p>
-            <div className="footer-email-list">
-              <span><strong>Sales</strong>{company.emails.sales}</span>
-              <span><strong>Support</strong>{company.emails.support}</span>
-            </div>
-            <form className="newsletter" onSubmit={(event) => { event.preventDefault(); setNewsletterSaved(true); }}>
-              <input type="email" required placeholder="Email address" aria-label="Email address" />
-              <button type="submit">Join</button>
-            </form>
-            {newsletterSaved && <small className="inline-note">Saved for backend subscription.</small>}
-          </div>
         </div>
-        <div className="footer-bottom"><span>Copyright 2026 ZMH USA Corp. All rights reserved.</span><span>{company.emails.sales} | {company.phone}</span></div>
+        <div className="footer-bottom"><span>Copyright 2026 ZMH USA Corp. All rights reserved.</span></div>
       </footer>}
       {!isAppOnly && chatReady && <Suspense fallback={<div className="chatbot chat-placeholder" aria-hidden="true" />}><Chatbot /></Suspense>}
     </div>

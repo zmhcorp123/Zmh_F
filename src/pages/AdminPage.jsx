@@ -368,7 +368,12 @@ function SettingsPanel() {
         const teamSetting = (settingsData.settings || []).find((item) => item.key === "teamProfiles");
         if (accountSetting?.value) setAccountDetails((current) => ({ ...current, ...accountSetting.value }));
         if (companySetting?.value) setCompanyDetails((current) => ({ ...current, ...companySetting.value }));
-        if (Array.isArray(teamSetting?.value) && teamSetting.value.length) setTeamRows(teamSetting.value);
+        if (Array.isArray(teamSetting?.value) && teamSetting.value.length) {
+          setTeamRows(teamSetting.value.map((profile) => {
+            const defaultProfile = defaultTeamRows.find((item) => item.slug === profile.slug);
+            return defaultProfile ? { ...defaultProfile, ...profile, image: profile.image || defaultProfile.image, imagePosition: profile.imagePosition || defaultProfile.imagePosition } : profile;
+          }));
+        }
       } catch (err) {
         if (active) {
           console.error(err);
@@ -424,6 +429,8 @@ function SettingsPanel() {
         summary: String(item.summary || "").trim(),
         bio: String(item.bio || "").trim(),
         focus: featureList(item.focus),
+        image: String(item.image || "").trim(),
+        imagePosition: String(item.imagePosition || "").trim(),
       })).filter((item) => item.name && item.role);
       if (!payload.length) throw new Error("At least one team profile is required.");
       await adminApi.settings({ teamProfiles: payload });
@@ -647,7 +654,7 @@ function SettingsPanel() {
                 {teamRows.map((profile, index) => (
                   <div className="team-profile-admin-card" key={`team-profile-${index}`}>
                     <div className="team-profile-card-head">
-                      <div className="team-profile-mini-avatar">{String(profile.name || "TP").split(" ").map((word) => word[0]).join("").slice(0, 2).toUpperCase()}</div>
+                      <div className="team-profile-mini-avatar">{profile.image ? <img src={profile.image} alt="" loading="lazy" decoding="async" /> : String(profile.name || "TP").split(" ").map((word) => word[0]).join("").slice(0, 2).toUpperCase()}</div>
                       <div>
                         <h4>{profile.name || "Team profile"}</h4>
                         <p>{profile.role || "Role not set"}</p>
@@ -659,6 +666,8 @@ function SettingsPanel() {
                       <FormField label="Role" icon="briefcase"><input value={profile.role || ""} onChange={(event) => updateTeamRow(index, "role", event.target.value)} required /></FormField>
                       <FormField label="Location" icon="map"><input value={profile.location || ""} onChange={(event) => updateTeamRow(index, "location", event.target.value)} /></FormField>
                       <FormField label="LinkedIn" icon="linkedin"><input value={profile.linkedin || ""} onChange={(event) => updateTeamRow(index, "linkedin", event.target.value)} placeholder="https://www.linkedin.com/" /></FormField>
+                      <FormField label="Photo Path" icon="image"><input value={profile.image || ""} onChange={(event) => updateTeamRow(index, "image", event.target.value)} placeholder="/team/name.png" /></FormField>
+                      <FormField label="Photo Position" icon="settings"><input value={profile.imagePosition || ""} onChange={(event) => updateTeamRow(index, "imagePosition", event.target.value)} placeholder="50% 28%" /></FormField>
                     </div>
                     <div className="team-profile-text-grid">
                       <FormField label="Summary" icon="mail"><textarea value={profile.summary || ""} onChange={(event) => updateTeamRow(index, "summary", event.target.value)} /></FormField>
