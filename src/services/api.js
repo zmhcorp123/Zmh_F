@@ -2,6 +2,7 @@ const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/
 const AUTH_TOKEN_KEY = "zmh_auth_token";
 const AUTH_STORAGE_PREFIX = "zmh_";
 const REQUEST_TIMEOUT_MS = 12000;
+const STARTUP_TIMEOUT_MS = 45000;
 let unauthorizedHandler = null;
 const inFlightGetRequests = new Map();
 
@@ -60,7 +61,8 @@ const request = async (path, options = {}) => {
 
   const requestPromise = (async () => {
   const controller = new AbortController();
-  const timeout = window.setTimeout(() => controller.abort(), options.timeoutMs || REQUEST_TIMEOUT_MS);
+  const timeoutMs = options.timeoutMs || REQUEST_TIMEOUT_MS;
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
 
   if (hasBody && !isFormData) headers.set("Content-Type", "application/json");
   if (token) headers.set("Authorization", `Bearer ${token}`);
@@ -77,6 +79,7 @@ const request = async (path, options = {}) => {
     });
   } catch (error) {
     const networkError = new Error(error?.name === "AbortError" ? "Server is taking too long. Please try again." : "Network unavailable. Please check your connection and try again.");
+    networkError.isTimeout = error?.name === "AbortError";
     networkError.cause = error;
     throw networkError;
   } finally {
@@ -106,8 +109,20 @@ const request = async (path, options = {}) => {
   return requestPromise;
 };
 
+const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
+
+const loginWithStartupRetry = async (payload) => {
+  try {
+    return await request("/auth/login", { method: "POST", body: payload, timeoutMs: STARTUP_TIMEOUT_MS });
+  } catch (error) {
+    if (!error.isTimeout) throw error;
+    await wait(1200);
+    return request("/auth/login", { method: "POST", body: payload, timeoutMs: STARTUP_TIMEOUT_MS });
+  }
+};
+
 export const authApi = {
-  login: (payload) => request("/auth/login", { method: "POST", body: payload }),
+  login: loginWithStartupRetry,
   signup: (payload) => request("/auth/signup", { method: "POST", body: payload }),
   sendOtp: (payload) => request("/auth/otp/send", { method: "POST", body: payload }),
   resendOtp: (payload) => request("/auth/otp/resend", { method: "POST", body: payload }),

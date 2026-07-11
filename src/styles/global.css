@@ -221,6 +221,8 @@ textarea { min-height: 120px; resize: vertical; }
 .auth-wrap, .booking, .not-found { min-height: 720px; display: grid; place-items: center; }
 .auth-card { width: min(460px, calc(100vw - 32px)); }
 .auth-card h1 { font-size: 42px; }
+.auth-link-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 0; }
+.auth-link-actions .learn { flex: 1 1 180px; justify-content: center; padding: 0 16px; white-space: nowrap; }
 .strength { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; }
 .strength span { height: 6px; width: 42px; border-radius: 999px; background: rgba(148,163,184,.35); }
 .strength.score-1 span:first-child { background: #ef4444; }
