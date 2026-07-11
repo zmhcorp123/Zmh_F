@@ -62,6 +62,7 @@ export function AdminOrderDetails() {
   const [saving, setSaving] = useState("");
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
+  const [progressStatus, setProgressStatus] = useState("completed");
 
   const servicesText = useMemo(() => (order?.activeServices?.length ? order.activeServices : order?.services || []).join("\n"), [order]);
 
@@ -138,6 +139,7 @@ export function AdminOrderDetails() {
         happenedAt: form.get("happenedAt"),
         progressPercent: form.get("progressPercent"),
         status: form.get("status"),
+        callLog: form.get("callLog"),
       });
       setOrder(data.order);
       setProgress(data.timeline || []);
@@ -300,6 +302,7 @@ export function AdminOrderDetails() {
                       {item.customerAddress && <span><strong>Address</strong>{item.customerAddress}</span>}
                     </div>}
                     <p>{item.description || "No description provided."}</p>
+                    {item.status === "inquiry" && item.callLog && <p><strong>Call log:</strong> {item.callLog}</p>}
                     <div className="progress-meter"><span style={{ width: `${Number(item.progressPercent || 0)}%` }} /></div>
                   </article>
                 )) : <p>No progress updates yet.</p>}
@@ -333,7 +336,8 @@ export function AdminOrderDetails() {
                 <label className="settings-field"><span>Address</span><input name="customerAddress" placeholder="Service address" /></label>
                 <label className="settings-field"><span>Description</span><textarea name="description" required placeholder="Describe what was completed and what changed for the client." /></label>
                 <label className="settings-field"><span>Progress %</span><input name="progressPercent" type="number" min="0" max="100" defaultValue={order.progressPercent || 0} /></label>
-                <label className="settings-field"><span>Status</span><select name="status" defaultValue="completed"><option value="planned">Planned</option><option value="in progress">In progress</option><option value="completed">Completed</option><option value="blocked">Blocked</option></select></label>
+                <label className="settings-field"><span>Status</span><select name="status" value={progressStatus} onChange={(event) => setProgressStatus(event.target.value)}><option value="inquiry">Inquiry / call</option><option value="planned">Planned</option><option value="in progress">In progress</option><option value="completed">Completed</option><option value="blocked">Blocked</option></select></label>
+                {progressStatus === "inquiry" && <label className="settings-field"><span>Call Log</span><textarea name="callLog" required placeholder="Record call outcome, next action, and follow-up date." /></label>}
                 <button type="submit" className="settings-primary-action">{saving === "progress" ? "Adding..." : "Add Progress"}</button>
               </form>
             </CollapsiblePanel>

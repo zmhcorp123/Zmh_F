@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Bell,
   BriefcaseBusiness,
@@ -126,23 +126,23 @@ function getInitials(name = "") {
   return parts.map((part) => part[0]).join("").toUpperCase() || "ZC";
 }
 
-function DashboardShell({ section, user, children, onLogout }) {
+function DashboardShell({ section, user, children, onLogout, notificationCount = 0, onNotificationsSeen }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [notificationsSeen, setNotificationsSeen] = useState(() => localStorage.getItem("zhm_notifications_seen") === "true");
   const items = ["Dashboard", "Bookings", "My Services", "Ongoing Services", "Cancelled Services", "Invoices", "Payment Confirmation", "Notifications", "Profile", "Settings", "Support Tickets", "Book Service"];
   const activeSection = section === "Service Details" ? "My Services" : section;
   const displayName = user?.name || "Client";
-  const showNotificationBadge = !notificationsSeen && activeSection !== "Notifications";
+  const unreadNotifications = Math.max(0, Number(notificationCount || 0));
+  const showNotificationBadge = unreadNotifications > 0 && activeSection !== "Notifications";
 
   useEffect(() => {
     if (activeSection !== "Notifications") return;
-    localStorage.setItem("zhm_notifications_seen", "true");
-    const frame = window.requestAnimationFrame(() => setNotificationsSeen(true));
+    const frame = window.requestAnimationFrame(() => onNotificationsSeen?.());
     return () => window.cancelAnimationFrame(frame);
-  }, [activeSection]);
+  }, [activeSection, onNotificationsSeen]);
 
   const go = (path) => {
     setSidebarOpen(false);
+    if (path === "/notifications") onNotificationsSeen?.();
     navigate(path);
   };
   return (
@@ -167,7 +167,7 @@ function DashboardShell({ section, user, children, onLogout }) {
                 <button key={item} className={item === activeSection ? "active" : ""} onClick={() => go(routeForNav(item))}>
                   <Icon size={20} />
                   <span>{item}</span>
-                  {item === "Notifications" && showNotificationBadge && <b>8</b>}
+                  {item === "Notifications" && showNotificationBadge && <b>{unreadNotifications}</b>}
                 </button>
               );
             })}
@@ -198,7 +198,7 @@ function DashboardShell({ section, user, children, onLogout }) {
               <p>{section === "Dashboard" ? "Here's what's happening with your services today." : `Manage your ${section.toLowerCase()} from one clean client portal.`}</p>
             </div>
             <div className="client-header-actions">
-              <button type="button" className="client-icon-button" aria-label="Notifications" onClick={() => go("/notifications")}><Bell size={20} />{showNotificationBadge && <span>8</span>}</button>
+              <button type="button" className="client-icon-button" aria-label="Notifications" onClick={() => go("/notifications")}><Bell size={20} />{showNotificationBadge && <span>{unreadNotifications}</span>}</button>
               <button type="button" className="client-profile-button" aria-label="Open profile" onClick={() => go("/profile")}><CircleUserRound size={20} /><ChevronDown size={16} /></button>
             </div>
           </header>
@@ -501,15 +501,17 @@ function ProfilePanel() {
 
 export function Dashboard({ section = "Dashboard", serviceId = "" }) {
   const { user, logout } = useAuth();
+  const [notificationCount, setNotificationCount] = useState(0);
+  const clearNotificationCount = useCallback(() => setNotificationCount(0), []);
 
   return (
-    <DashboardShell section={section} user={user} onLogout={logout}>
-      {section === "Profile" || section === "Settings" ? <ProfilePanel /> : <DashboardCards section={section} serviceId={serviceId} />}
+    <DashboardShell section={section} user={user} onLogout={logout} notificationCount={notificationCount} onNotificationsSeen={clearNotificationCount}>
+      {section === "Profile" || section === "Settings" ? <ProfilePanel /> : <DashboardCards section={section} serviceId={serviceId} onNotificationCountChange={setNotificationCount} />}
     </DashboardShell>
   );
 }
 
-function DashboardCards({ section, serviceId }) {
+function DashboardCards({ section, serviceId, onNotificationCountChange }) {
   const [, setProfile] = useState(null);
   const [bookings, setBookings] = useState([]);
   const [services, setServices] = useState([]);
@@ -524,6 +526,7 @@ function DashboardCards({ section, serviceId }) {
   const [savingPayment, setSavingPayment] = useState(false);
   const [savingConfirmation, setSavingConfirmation] = useState(false);
   const [ticketSubmitting, setTicketSubmitting] = useState(false);
+  const [selectedTimelineService, setSelectedTimelineService] = useState("");
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [page, setPage] = useState(1);
@@ -539,6 +542,7 @@ function DashboardCards({ section, serviceId }) {
           const data = await dashboardApi.summary();
           if (!active) return;
           setProfile({ user: data.user, stats: data.stats });
+          onNotificationCountChange?.(Number(data.stats?.notifications || 0));
           profileLoadedRef.current = true;
           setBookings(data.bookings || []);
           setInvoices(data.invoices || []);
@@ -581,12 +585,16 @@ function DashboardCards({ section, serviceId }) {
           const data = result.value || {};
           if (key === "profile") {
             setProfile(data);
+            onNotificationCountChange?.(Number(data.stats?.notifications || 0));
             profileLoadedRef.current = true;
           }
           if (key === "bookings") setBookings(data.bookings || []);
           if (key === "invoices") setInvoices(data.invoices || []);
           if (key === "services") setServices(data.services || []);
-          if (key === "notifications") setNotifications(data.notifications || []);
+          if (key === "notifications") {
+            setNotifications(data.notifications || []);
+            if (section === "Notifications") onNotificationCountChange?.(0);
+          }
           if (key === "tickets") setTickets(data.tickets || []);
         });
         setError(nextError);
@@ -612,7 +620,7 @@ function DashboardCards({ section, serviceId }) {
       document.removeEventListener("visibilitychange", refreshWhenVisible);
       window.clearInterval(refreshTimer);
     };
-  }, [section]);
+  }, [section, onNotificationCountChange]);
 
   const categorized = useMemo(() => {
     const pending = bookings.filter((booking) => !["ongoing", "cancelled"].includes(booking.status));
@@ -732,12 +740,14 @@ function DashboardCards({ section, serviceId }) {
     const completed = (selectedService.progressTimeline || []).filter((item) => item.status === "completed").map((item) => item.title);
     const activeServices = selectedService.activeServices?.length ? selectedService.activeServices : selectedService.services || [];
     const remaining = activeServices.filter((item) => !completed.some((done) => done.toLowerCase().includes(String(item).toLowerCase())));
+    const visibleTimeline = (selectedService.progressTimeline || []).filter((item) => !selectedTimelineService || String(item.title || "").toLowerCase().includes(selectedTimelineService.toLowerCase()));
     return (
       <div className="service-detail-workspace">
         <button type="button" className="table-action" onClick={() => navigate("/my-services")}>Back to services</button>
         <ServiceCard service={selectedService} onDownload={downloadInvoice} onPayment={setPaymentModal} />
+        <div className="client-service-actions" aria-label="Filter timeline by service"><button type="button" className="table-action" onClick={() => setSelectedTimelineService("")}>All services</button>{activeServices.map((service) => <button type="button" className="table-action" key={service} onClick={() => setSelectedTimelineService(service)}>{service}</button>)}</div>
         <div className="enterprise-order-grid">
-          <div className="order-enterprise-panel"><div className="panel-body"><h3>Service Timeline</h3><div className="client-timeline">{(selectedService.progressTimeline || []).map((item) => <div key={item._id}><strong>{item.title}</strong><span>{formatDate(item.happenedAt)} | {item.status} | {item.progressPercent}%</span><p>{item.description || "No description provided."}</p></div>)}</div></div></div>
+          <div className="order-enterprise-panel"><div className="panel-body"><h3>{selectedTimelineService ? `${selectedTimelineService} Timeline` : "Service Timeline"}</h3><div className="client-timeline">{visibleTimeline.length ? visibleTimeline.map((item) => <article key={item._id}><strong>{item.title}</strong><span>{formatDate(item.happenedAt)} | {item.status} | {item.progressPercent}%</span>{(item.customerName || item.customerEmail || item.customerPhone || item.customerAddress) && <div className="progress-customer-facts">{item.customerName && <span><strong>Customer</strong>{item.customerName}</span>}{item.customerEmail && <span><strong>Email</strong>{item.customerEmail}</span>}{item.customerPhone && <span><strong>Phone</strong>{item.customerPhone}</span>}{item.customerAddress && <span><strong>Address</strong>{item.customerAddress}</span>}</div>}<p>{item.description || "No description provided."}</p>{item.status === "inquiry" && item.callLog && <p><strong>Call log:</strong> {item.callLog}</p>}</article>) : <p>No timeline updates for this service yet.</p>}</div></div></div>
           <div className="order-enterprise-panel"><div className="panel-body"><h3>Billing History</h3>{(selectedService.invoices || []).map((invoice) => <article className="client-bill-card portal-row" key={invoice._id}><div><strong>{invoice.invoice}</strong><span>{currency(invoice)} | {formatDate(invoice.dueDate)}</span></div><StatusBadge value={invoice.status} /></article>)}</div></div>
           <div className="order-enterprise-panel"><div className="panel-body"><h3>Completed Services</h3><div className="client-service-tags">{completed.length ? completed.map((item) => <span key={item}>{item}</span>) : <p>No completed services yet.</p>}</div></div></div>
           <div className="order-enterprise-panel"><div className="panel-body"><h3>Remaining Services</h3><div className="client-service-tags">{remaining.length ? remaining.map((item) => <span key={item}>{item}</span>) : <p>No remaining services listed.</p>}</div></div></div>

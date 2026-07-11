@@ -3062,6 +3062,43 @@ main section {
   box-shadow: 0 10px 24px rgba(11, 95, 255, .18);
 }
 
+.day-options button {
+  min-width: 118px;
+}
+
+.office-hours-picker {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.office-hours-picker label {
+  gap: 6px;
+}
+
+.office-hours-picker input {
+  min-height: 46px;
+}
+
+.office-hours-picker button {
+  min-height: 46px;
+  border: 1px solid #dce4f2;
+  border-radius: 14px;
+  background: rgba(255,255,255,.78);
+  color: var(--text);
+  padding: 0 16px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.office-hours-picker button.selected {
+  border-color: rgba(11, 95, 255, .56);
+  color: #fff;
+  background: var(--primary);
+  box-shadow: 0 10px 24px rgba(11, 95, 255, .18);
+}
+
 .form-grid.compact.two-column {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -3167,6 +3204,10 @@ main section {
   }
 
   .form-grid.compact.two-column {
+    grid-template-columns: 1fr;
+  }
+
+  .office-hours-picker {
     grid-template-columns: 1fr;
   }
 }

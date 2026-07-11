@@ -1,32 +1,55 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { services } from "../data/siteData";
 import { Button } from "../components/Button";
 import { SEO } from "../components/SEO";
 import { bookingApi } from "../services/api";
 import { navigate } from "../utils/router";
+import { useAuth } from "../context/useAuth";
 
-const operatingDayOptions = ["Monday-Friday", "Monday-Saturday", "Weekends only", "Every day"];
-const hourOptions = ["8 AM-5 PM", "9 AM-6 PM", "10 AM-7 PM", "24/7 coverage"];
+const operatingDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 const afterHoursOptions = ["No after-hours", "Evening calls", "Weekend coverage", "Emergency calls", "Overflow support"];
 
 export function BookService() {
+  const { user } = useAuth();
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [createdBooking, setCreatedBooking] = useState(null);
   const [booking, setBooking] = useState({ services: [], requestedDate: "" });
 
+  useEffect(() => {
+    if (!user) return;
+    setBooking((current) => ({ ...current, "Company Name": user.company || user.name || "", Email: user.email || "", Phone: user.phone || "" }));
+  }, [user]);
+
   const updateField = (field, value) => setBooking((current) => ({ ...current, [field]: value }));
   const toggleService = (name) => setBooking((current) => ({ ...current, services: current.services.includes(name) ? current.services.filter((item) => item !== name) : [...current.services, name] }));
   const selectOption = (field, value) => setBooking((current) => ({ ...current, [field]: value }));
+  const toggleOperatingDay = (day) => setBooking((current) => {
+    const days = current.operatingDayList || [];
+    const nextDays = days.includes(day) ? days.filter((item) => item !== day) : [...days, day];
+    return { ...current, operatingDayList: nextDays, operatingDays: nextDays.join(", ") };
+  });
+  const updateOfficeHours = (field, value) => setBooking((current) => {
+    const next = { ...current, [field]: value, allDayCoverage: false };
+    next.hours = next.openTime && next.closeTime ? `${next.openTime}-${next.closeTime}` : "";
+    return next;
+  });
+  const toggleAllDayCoverage = () => setBooking((current) => ({
+    ...current,
+    allDayCoverage: !current.allDayCoverage,
+    openTime: "",
+    closeTime: "",
+    hours: !current.allDayCoverage ? "24/7 coverage" : "",
+  }));
 
   const submitBooking = async (event) => {
     event.preventDefault();
     const form = event.currentTarget;
     setLoading(true);
     setError("");
-    if (!booking.operatingDays || !booking.hours || !booking.afterHours) {
-      setError("Select operating days, opening hours, and after-hours needs.");
+    if (!booking.operatingDayList?.length || !booking.hours || !booking.afterHours) {
+      setError("Select operating days, office hours, and after-hours needs.");
       setLoading(false);
       return;
     }
@@ -57,7 +80,7 @@ export function BookService() {
             <h3>Company Information</h3>
             <div className="form-grid compact">
               {["Company Name", "Email", "Business Type", "Website", "Phone", "Address"].map((item) => (
-                <label key={item}>{item}<input type={item === "Email" ? "email" : "text"} value={booking[item] || ""} onChange={(event) => updateField(item, event.target.value)} placeholder={item} required={!["Website"].includes(item)} /></label>
+                <label key={item}>{item}<input type={item === "Email" ? "email" : "text"} value={booking[item] || ""} onChange={(event) => updateField(item, event.target.value)} placeholder={item} required={!["Website"].includes(item)} readOnly={Boolean(user && ["Company Name", "Email", "Phone"].includes(item))} /></label>
               ))}
             </div>
           </div>
@@ -78,11 +101,15 @@ export function BookService() {
             <div className="tap-field-grid">
               <div className="tap-field">
                 <span>Operating Days</span>
-                <div className="tap-options">{operatingDayOptions.map((option) => <button type="button" key={option} className={booking.operatingDays === option ? "selected" : ""} onClick={() => selectOption("operatingDays", option)}>{option}</button>)}</div>
+                <div className="tap-options day-options">{operatingDays.map((day) => <button type="button" key={day} className={booking.operatingDayList?.includes(day) ? "selected" : ""} onClick={() => toggleOperatingDay(day)}>{day}</button>)}</div>
               </div>
               <div className="tap-field">
-                <span>Opening Hours</span>
-                <div className="tap-options">{hourOptions.map((option) => <button type="button" key={option} className={booking.hours === option ? "selected" : ""} onClick={() => selectOption("hours", option)}>{option}</button>)}</div>
+                <span>Office Hours</span>
+                <div className="office-hours-picker">
+                  <label>Open<input type="time" value={booking.openTime || ""} onChange={(event) => updateOfficeHours("openTime", event.target.value)} disabled={booking.allDayCoverage} /></label>
+                  <label>Close<input type="time" value={booking.closeTime || ""} onChange={(event) => updateOfficeHours("closeTime", event.target.value)} disabled={booking.allDayCoverage} /></label>
+                  <button type="button" className={booking.allDayCoverage ? "selected" : ""} onClick={toggleAllDayCoverage}>24/7 coverage</button>
+                </div>
               </div>
               <div className="tap-field">
                 <span>After Hours Needs</span>
