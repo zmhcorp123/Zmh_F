@@ -178,7 +178,7 @@ function DashboardShell({ section, user, children, onLogout, notificationCount =
               <strong>{displayName}</strong>
               <small>Client ID: ZHM-1256</small>
             </div>
-            <button type="button" onClick={() => { onLogout?.(); navigate("/login"); }} aria-label="Sign out"><LogOut size={16} /></button>
+            <button type="button" className="client-logout-button" onClick={() => { onLogout?.(); navigate("/login"); }} aria-label="Sign out"><LogOut size={16} /><span>Logout</span></button>
           </div>
         </aside>
         <div className="dash-main client-dashboard-main">
@@ -714,10 +714,11 @@ function DashboardCards({ section, serviceId, onNotificationCountChange }) {
 
   const submitPaymentConfirmation = async (event) => {
     event.preventDefault();
+    const paymentForm = event.currentTarget;
     setSavingConfirmation(true);
     setError("");
     setNotice("");
-    const form = new FormData(event.currentTarget);
+    const form = new FormData(paymentForm);
     const invoiceId = String(form.get("invoiceId") || "").trim();
     const invoiceNumber = String(form.get("invoiceNumber") || "").trim();
     try {
@@ -726,7 +727,7 @@ function DashboardCards({ section, serviceId, onNotificationCountChange }) {
       setInvoices(invoiceData.invoices || []);
       setNotifications(notificationData.notifications || []);
       setNotice(data.message || "Payment confirmation submitted successfully. Please wait for admin approval.");
-      event.currentTarget.reset();
+      paymentForm.reset();
     } catch (err) {
       setError(err.message || "Could not submit payment confirmation.");
     } finally {
@@ -747,10 +748,10 @@ function DashboardCards({ section, serviceId, onNotificationCountChange }) {
         <button type="button" className="table-action" onClick={() => navigate("/my-services")}>Back to services</button>
         <ServiceCard service={selectedService} onDownload={downloadInvoice} onPayment={setPaymentModal} />
         <div className="client-service-actions" aria-label="Filter timeline by service"><button type="button" className="table-action" onClick={() => setSelectedTimelineService("")}>All services</button>{activeServices.map((service) => <button type="button" className="table-action" key={service} onClick={() => setSelectedTimelineService(service)}>{service}</button>)}</div>
-        <div className="enterprise-order-grid">
-          <div className="order-enterprise-panel"><div className="panel-body"><h3>{selectedTimelineService ? `${selectedTimelineService} Timeline` : "Service Timeline"}</h3><div className="client-timeline">{visibleTimeline.length ? visibleTimeline.map((item) => <article key={item._id}><strong>{item.title}</strong><span>{formatDate(item.happenedAt)} | {item.status} | {item.progressPercent}%</span>{(item.customerName || item.customerEmail || item.customerPhone || item.customerAddress) && <div className="progress-customer-facts">{item.customerName && <span><strong>Customer</strong>{item.customerName}</span>}{item.customerEmail && <span><strong>Email</strong>{item.customerEmail}</span>}{item.customerPhone && <span><strong>Phone</strong>{item.customerPhone}</span>}{item.customerAddress && <span><strong>Address</strong>{item.customerAddress}</span>}</div>}<p>{item.description || "No description provided."}</p>{item.status === "inquiry" && item.callLog && <p><strong>Call log:</strong> {item.callLog}</p>}</article>) : <p>No timeline updates for this service yet.</p>}</div></div></div>
+          <div className="enterprise-order-grid">
+          <details className="order-enterprise-panel minimizable-panel" open><summary><span><strong>{selectedTimelineService ? `${selectedTimelineService} Timeline` : "Call Logs & Service Timeline"}</strong></span><small className="minimize-label" /></summary><div className="panel-body"><div className="client-timeline">{visibleTimeline.length ? visibleTimeline.map((item) => <article key={item._id}><strong>{item.title}</strong><span>{formatDate(item.happenedAt)} | {item.status} | {item.progressPercent}%</span>{(item.customerName || item.customerEmail || item.customerPhone || item.customerAddress) && <div className="progress-customer-facts">{item.customerName && <span><strong>Customer</strong>{item.customerName}</span>}{item.customerEmail && <span><strong>Email</strong>{item.customerEmail}</span>}{item.customerPhone && <span><strong>Phone</strong>{item.customerPhone}</span>}{item.customerAddress && <span><strong>Address</strong>{item.customerAddress}</span>}</div>}<p>{item.description || "No description provided."}</p>{item.status === "inquiry" && item.callLog && <p><strong>Call log:</strong> {item.callLog}</p>}</article>) : <p>No timeline updates for this service yet.</p>}</div></div></details>
           <div className="order-enterprise-panel"><div className="panel-body"><h3>Billing History</h3>{(selectedService.invoices || []).map((invoice) => <article className="client-bill-card portal-row" key={invoice._id}><div><strong>{invoice.invoice}</strong><span>{currency(invoice)} | {formatDate(invoice.dueDate)}</span></div><StatusBadge value={invoice.status} /></article>)}</div></div>
-          <div className="order-enterprise-panel"><div className="panel-body"><h3>Completed Services</h3><div className="client-service-tags">{completed.length ? completed.map((item) => <span key={item}>{item}</span>) : <p>No completed services yet.</p>}</div></div></div>
+          <details className="order-enterprise-panel minimizable-panel" open><summary><span><strong>Completed Services</strong></span><small className="minimize-label" /></summary><div className="panel-body"><div className="client-service-tags">{completed.length ? completed.map((item) => <span key={item}>{item}</span>) : <p>No completed services yet.</p>}</div></div></details>
           <div className="order-enterprise-panel"><div className="panel-body"><h3>Remaining Services</h3><div className="client-service-tags">{remaining.length ? remaining.map((item) => <span key={item}>{item}</span>) : <p>No remaining services listed.</p>}</div></div></div>
           <div className="order-enterprise-panel"><div className="panel-body"><h3>Payment History</h3>{selectedService.paymentHistory?.length ? selectedService.paymentHistory.map((item) => <p key={item._id}><strong>{item.status}</strong> | {formatDate(item.paymentDate)} | {item.transactionId}</p>) : <p>No payment submissions yet.</p>}</div></div>
           <div className="order-enterprise-panel"><div className="panel-body"><h3>Support Contact</h3><p>For help with this service, contact {company.emails.support} or open a support ticket from your dashboard.</p></div></div>

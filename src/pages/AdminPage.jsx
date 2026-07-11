@@ -1179,16 +1179,16 @@ export function AdminPage() {
           {!isEmployee && tab === "Payment Approval" && (
             <div className="booking-admin-list payment-review-list">
               {payments.length ? payments.map((payment) => (
-                <article className="support-ticket-card payment-review-card" key={payment._id}>
-                  <div className="order-profile-head">
+                <details className="support-ticket-card payment-review-card payment-review-details" key={payment._id} open={payment.status === "submitted"}>
+                  <summary className="order-profile-head">
                     <div>
                       <span className="eyebrow">{payment.status}</span>
                       <h3>{payment.user?.name || "Client"} - {payment.invoice?.invoice || "Invoice"}</h3>
                       <p>{payment.order?.companyName || payment.invoice?.company || payment.user?.company || "Company"} | {payment.order?.packageName || "Package pending"}</p>
                     </div>
                     <span className="status-pill">{payment.status === "submitted" ? "Pending Admin Approval" : payment.status}</span>
-                  </div>
-                  <div className="profile-facts">
+                  </summary>
+                  <div className="payment-review-body"><div className="profile-facts">
                     <span><strong>User</strong>{payment.user?.name || "-"}</span>
                     <span><strong>Company</strong>{payment.invoice?.company || payment.user?.company || "-"}</span>
                     <span><strong>Invoice Number</strong>{payment.invoice?.invoice || "-"}</span>
@@ -1216,8 +1216,8 @@ export function AdminPage() {
                         <button type="submit" className="settings-secondary-action danger-link" disabled={savingId === payment._id}>Reject Payment</button>
                       </form>
                     </div>
-                  ) : <div className="empty-state">Reviewed {formatDate(payment.reviewedAt)}. {payment.reviewReason}</div>}
-                </article>
+                  ) : <div className="empty-state">Reviewed {formatDate(payment.reviewedAt)}. {payment.reviewReason}</div>}</div>
+                </details>
               )) : <div className="empty-state">No payment submissions yet.</div>}
             </div>
           )}

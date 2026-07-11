@@ -265,7 +265,7 @@ textarea { min-height: 120px; resize: vertical; }
 .client-service-tags { display: flex; flex-wrap: wrap; gap: 8px; }
 .client-service-tags span { margin: 0; padding: 8px 10px; border-radius: 999px; color: #047857; background: rgba(22,196,127,.12); font-weight: 800; }
 .client-timeline { display: grid; gap: 10px; }
-.client-timeline div { display: grid; gap: 4px; padding: 12px; border-left: 3px solid var(--primary); border-radius: 12px; background: rgba(255,255,255,.68); }
+.client-timeline > article { display: grid; gap: 4px; padding: 12px; border-left: 3px solid var(--primary); border-radius: 12px; background: rgba(255,255,255,.68); }
 .client-timeline strong { color: var(--text); }
 .client-timeline p { margin: 0; }
 .client-bill-card { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
@@ -3757,6 +3757,29 @@ main:has(.client-dashboard-shell) {
   color: #fff;
   background: rgba(255,255,255,.1);
 }
+
+.client-sidebar-profile .client-logout-button {
+  width: auto;
+  min-width: 34px;
+  padding: 0 9px;
+  gap: 6px;
+  font-size: .75rem;
+  font-weight: 800;
+}
+
+.client-sidebar-profile .client-logout-button span { display: inline; }
+
+.minimizable-panel > summary { cursor: pointer; }
+.minimize-label::before { content: "Minimize"; color: var(--primary); font-weight: 800; }
+.minimizable-panel:not([open]) .minimize-label::before { content: "Expand"; }
+.minimizable-panel:not([open]) > summary { border-bottom: 0; }
+
+.payment-review-details { padding: 0; overflow: hidden; }
+.payment-review-details > summary { display: flex; justify-content: space-between; gap: 16px; padding: 22px; cursor: pointer; list-style: none; }
+.payment-review-details > summary::-webkit-details-marker { display: none; }
+.payment-review-details:not([open]) > summary { margin: 0; }
+.payment-review-body { display: grid; gap: 16px; padding: 0 22px 22px; min-width: 0; }
+.payment-review-details .profile-facts span { min-width: 0; overflow-wrap: anywhere; }
 
 .client-dashboard-main {
   min-width: 0;

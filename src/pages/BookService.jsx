@@ -25,10 +25,17 @@ export function BookService() {
   const updateField = (field, value) => setBooking((current) => ({ ...current, [field]: value }));
   const toggleService = (name) => setBooking((current) => ({ ...current, services: current.services.includes(name) ? current.services.filter((item) => item !== name) : [...current.services, name] }));
   const selectOption = (field, value) => setBooking((current) => ({ ...current, [field]: value }));
-  const toggleOperatingDay = (day) => setBooking((current) => {
-    const days = current.operatingDayList || [];
-    const nextDays = days.includes(day) ? days.filter((item) => item !== day) : [...days, day];
-    return { ...current, operatingDayList: nextDays, operatingDays: nextDays.join(", ") };
+  const selectOperatingDay = (day) => setBooking((current) => {
+    const [startDay, endDay] = current.operatingDayList || [];
+    let nextDays;
+    if (!startDay || (startDay && endDay)) nextDays = [day];
+    else if (startDay === day) nextDays = [];
+    else nextDays = [startDay, day];
+    return {
+      ...current,
+      operatingDayList: nextDays,
+      operatingDays: nextDays.length === 2 ? `${nextDays[0]} - ${nextDays[1]}` : nextDays[0] || "",
+    };
   });
   const updateOfficeHours = (field, value) => setBooking((current) => {
     const next = { ...current, [field]: value, allDayCoverage: false };
@@ -48,8 +55,8 @@ export function BookService() {
     const form = event.currentTarget;
     setLoading(true);
     setError("");
-    if (!booking.operatingDayList?.length || !booking.hours || !booking.afterHours) {
-      setError("Select operating days, office hours, and after-hours needs.");
+    if (booking.operatingDayList?.length !== 2 || !booking.hours || !booking.afterHours) {
+      setError("Select a start day and an end day, office hours, and after-hours needs.");
       setLoading(false);
       return;
     }
@@ -101,7 +108,8 @@ export function BookService() {
             <div className="tap-field-grid">
               <div className="tap-field">
                 <span>Operating Days</span>
-                <div className="tap-options day-options">{operatingDays.map((day) => <button type="button" key={day} className={booking.operatingDayList?.includes(day) ? "selected" : ""} onClick={() => toggleOperatingDay(day)}>{day}</button>)}</div>
+                <small>{booking.operatingDayList?.length === 2 ? `Start: ${booking.operatingDayList[0]} · End: ${booking.operatingDayList[1]}` : booking.operatingDayList?.[0] ? `Start: ${booking.operatingDayList[0]} · Now select the end day` : "Select the start day, then the end day."}</small>
+                <div className="tap-options day-options">{operatingDays.map((day) => <button type="button" key={day} className={booking.operatingDayList?.includes(day) ? "selected" : ""} onClick={() => selectOperatingDay(day)}>{day}</button>)}</div>
               </div>
               <div className="tap-field">
                 <span>Office Hours</span>
