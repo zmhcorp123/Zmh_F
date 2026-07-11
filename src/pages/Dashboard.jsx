@@ -476,8 +476,9 @@ function ProfilePanel() {
             <h3>Edit profile</h3>
             <label>Full Name<input name="name" defaultValue={profile?.name || ""} required /></label>
             <label>Username<input name="username" defaultValue={profile?.username || ""} placeholder="username" /></label>
-            <label>Company Name<input name="company" defaultValue={profile?.company || ""} placeholder="Company name" /></label>
-            <label>Phone Number<input name="phone" defaultValue={profile?.phone || ""} placeholder="+1 555 000 0000" /></label>
+            <label>Company Name<input value={fieldValue(profile?.company)} readOnly /></label>
+            <label>Phone Number<input value={fieldValue(profile?.phone)} readOnly /></label>
+            <p className="form-helper">Company name, email address, and phone number are locked after account creation. Contact support if a correction is needed.</p>
             <div className="read-only-grid">
               <label>Email Address<input value={fieldValue(profile?.email)} readOnly /></label>
               <label>User Role<input value={fieldValue(profile?.role)} readOnly /></label>

@@ -846,6 +846,7 @@ export function AdminPage() {
   const updateBooking = async (event, booking) => {
     event.preventDefault();
     const action = event.nativeEvent.submitter?.value || "needs discussion";
+    if (action === "cancelled" && !window.confirm("Cancel this order? It will not be included in future billing.")) return;
     setSavingId(booking._id);
     setError("");
     const form = new FormData(event.currentTarget);
@@ -858,6 +859,7 @@ export function AdminPage() {
       });
       setBookings((current) => current.map((item) => item._id === booking._id ? data.booking : item));
       setNotice(data.emailSent ? "Booking saved and customer email sent." : "Booking saved.");
+      window.alert(data.emailSent ? "Booking saved and customer email sent." : "Booking saved successfully.");
     } catch (err) {
       setError(err.message || "Could not update booking.");
     } finally {

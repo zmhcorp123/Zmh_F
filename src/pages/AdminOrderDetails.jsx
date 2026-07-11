@@ -18,6 +18,15 @@ function dateValue(value) {
   return value ? new Date(value).toISOString().slice(0, 10) : "";
 }
 
+function nextMonthlyDate(value) {
+  if (!value) return "";
+  const date = new Date(`${value}T00:00:00`);
+  const day = date.getDate();
+  const next = new Date(date.getFullYear(), date.getMonth() + 1, 1);
+  next.setDate(Math.min(day, new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate()));
+  return dateValue(next);
+}
+
 function downloadBase64Pdf(filename, base64) {
   const bytes = atob(base64);
   const buffer = new Uint8Array(bytes.length);
@@ -63,6 +72,8 @@ export function AdminOrderDetails() {
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [progressStatus, setProgressStatus] = useState("completed");
+  const [serviceStartDate, setServiceStartDate] = useState("");
+  const [nextBillingDate, setNextBillingDate] = useState("");
 
   const servicesText = useMemo(() => (order?.activeServices?.length ? order.activeServices : order?.services || []).join("\n"), [order]);
 
@@ -77,6 +88,8 @@ export function AdminOrderDetails() {
         setProgress(data.progress || []);
         setInvoices(data.invoices || []);
         setSummary(data.summary || null);
+        setServiceStartDate(dateValue(data.order.serviceStartDate));
+        setNextBillingDate(dateValue(data.order.nextBillingDate));
         setError("");
       } catch (err) {
         if (active) {
@@ -103,8 +116,8 @@ export function AdminOrderDetails() {
         packageName: form.get("packageName"),
         packagePrice: form.get("packagePrice"),
         assignedStaff: form.get("assignedStaff"),
-        serviceStartDate: form.get("serviceStartDate"),
-        nextBillingDate: form.get("nextBillingDate"),
+        serviceStartDate,
+        nextBillingDate,
         paymentStatus: form.get("paymentStatus"),
         progressPercent: form.get("progressPercent"),
         activeServices: String(form.get("activeServices") || "").split("\n").map((item) => item.trim()).filter(Boolean),
@@ -114,7 +127,10 @@ export function AdminOrderDetails() {
       setProgress(data.progress || []);
       setInvoices(data.invoices || []);
       setSummary(data.summary || null);
+      setServiceStartDate(dateValue(data.order.serviceStartDate));
+      setNextBillingDate(dateValue(data.order.nextBillingDate));
       setNotice("Order details saved.");
+      window.alert("Order details saved successfully.");
     } catch (err) {
       setError(err.message || "Could not save order.");
     } finally {
@@ -267,8 +283,8 @@ export function AdminOrderDetails() {
                   <label className="settings-field"><span>Package Name</span><input name="packageName" defaultValue={order.packageName || ""} /></label>
                   <label className="settings-field"><span>Package Price</span><input name="packagePrice" defaultValue={order.packagePrice || ""} /></label>
                   <label className="settings-field"><span>Assigned Staff</span><input name="assignedStaff" defaultValue={order.assignedStaff || ""} /></label>
-                  <label className="settings-field"><span>Service Start Date</span><input name="serviceStartDate" type="date" defaultValue={dateValue(order.serviceStartDate)} /></label>
-                  <label className="settings-field"><span>Next Billing Date</span><input name="nextBillingDate" type="date" defaultValue={dateValue(order.nextBillingDate)} /></label>
+                  <label className="settings-field"><span>Billing Date</span><input name="serviceStartDate" type="date" value={serviceStartDate} onChange={(event) => { const value = event.target.value; setServiceStartDate(value); setNextBillingDate(nextMonthlyDate(value)); }} /></label>
+                  <label className="settings-field"><span>Next Billing Date (monthly)</span><input name="nextBillingDate" type="date" value={nextBillingDate} readOnly /><small>Automatically set one month after the billing date.</small></label>
                   <label className="settings-field"><span>Progress %</span><input name="progressPercent" type="number" min="0" max="100" defaultValue={order.progressPercent || 0} /></label>
                   <label className="settings-field"><span>Payment Status</span><select name="paymentStatus" defaultValue={order.paymentStatus || "pending"}><option value="pending">Pending</option><option value="sent">Sent</option><option value="paid">Paid</option><option value="overdue">Overdue</option><option value="waived">Waived</option></select></label>
                 </div>
