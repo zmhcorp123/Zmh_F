@@ -143,9 +143,7 @@ export const settingsApi = {
   company: () => request("/settings/company"),
   // A unique URL plus no-store prevents intermediary caches from reusing a
   // previously cached public team response.
-  teamProfiles: () => request(`/settings/team-profiles?fresh=${Date.now()}`, {
-    headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
-  }),
+  teamProfiles: () => request(`/settings/team-profiles?fresh=${Date.now()}`),
 };
 
 export const contactApi = {
