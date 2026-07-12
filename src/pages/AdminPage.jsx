@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Button } from "../components/Button";
 import { Icon } from "../components/icons";
 import { SEO } from "../components/SEO";
-import { adminApi, authApi } from "../services/api";
+import { adminApi, authApi, settingsApi } from "../services/api";
 import { packages as defaultPackages, teamProfiles as defaultTeamProfiles } from "../data/siteData";
 import { navigate } from "../utils/router";
 import { useAuth } from "../context/useAuth";
@@ -434,7 +434,13 @@ function SettingsPanel() {
       })).filter((item) => item.name && item.role);
       if (!payload.length) throw new Error("At least one team profile is required.");
       await adminApi.settings({ teamProfiles: payload });
-      setTeamRows(payload);
+      // Confirm the write through the same public endpoint the website uses,
+      // then render that verified response instead of the pre-save form state.
+      const latest = await settingsApi.teamProfiles();
+      if (!Array.isArray(latest.teamProfiles)) {
+        throw new Error("Team profiles were saved but could not be verified.");
+      }
+      setTeamRows(latest.teamProfiles);
       setSaved("Team profiles saved.");
     } catch (err) {
       setError(err.message || "Could not save team profiles.");

@@ -264,6 +264,10 @@ textarea { min-height: 120px; resize: vertical; }
 .client-service-grid strong { color: var(--text); font-size: 11px; text-transform: uppercase; }
 .client-service-tags { display: flex; flex-wrap: wrap; gap: 8px; }
 .client-service-tags span { margin: 0; padding: 8px 10px; border-radius: 999px; color: #047857; background: rgba(22,196,127,.12); font-weight: 800; }
+.completed-service-list { display: grid; gap: 12px; }
+.completed-service-card { display: grid; gap: 8px; padding: 14px; border: 1px solid var(--line); border-left: 3px solid var(--secondary); border-radius: 14px; background: rgba(22,196,127,.05); }
+.completed-service-card > span { color: var(--muted); font-size: .88rem; }
+.completed-service-card p { margin: 0; }
 .client-timeline { display: grid; gap: 10px; }
 .client-timeline > article { display: grid; gap: 4px; padding: 12px; border-left: 3px solid var(--primary); border-radius: 12px; background: rgba(255,255,255,.68); }
 .client-timeline strong { color: var(--text); }

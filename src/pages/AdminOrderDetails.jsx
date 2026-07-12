@@ -140,10 +140,11 @@ export function AdminOrderDetails() {
 
   const addProgress = async (event) => {
     event.preventDefault();
+    const progressForm = event.currentTarget;
     setSaving("progress");
     setNotice("");
     setError("");
-    const form = new FormData(event.currentTarget);
+    const form = new FormData(progressForm);
     try {
       const data = await adminApi.addOrderProgress(orderId, {
         title: form.get("title"),
@@ -161,7 +162,7 @@ export function AdminOrderDetails() {
       setProgress(data.timeline || []);
       setSummary(data.summary || null);
       setNotice("Progress update added.");
-      event.currentTarget.reset();
+      progressForm.reset();
     } catch (err) {
       setError(err.message || "Could not add progress update.");
     } finally {

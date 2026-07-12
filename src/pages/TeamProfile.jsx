@@ -3,7 +3,6 @@ import { Quote } from "lucide-react";
 import { CTA, PageHero, SectionHeader } from "../components/Sections";
 import { Icon } from "../components/icons";
 import { SEO } from "../components/SEO";
-import { teamProfiles } from "../data/siteData";
 import { settingsApi } from "../services/api";
 import { NotFound } from "./NotFound";
 
@@ -34,9 +33,8 @@ function TeamHeroPortrait({ profile }) {
   );
 }
 
-export function TeamProfile({ profile, slug }) {
+export function TeamProfile({ slug }) {
   const routeSlug = normalizeSlug(slug);
-  const staticProfile = profile || teamProfiles.find((item) => normalizeSlug(item.slug) === routeSlug) || null;
   const [liveProfile, setLiveProfile] = useState(null);
   const [loadedSlug, setLoadedSlug] = useState("");
 
@@ -58,10 +56,9 @@ export function TeamProfile({ profile, slug }) {
     return () => { active = false; };
   }, [routeSlug]);
 
-  const mergedProfile = liveProfile || staticProfile ? { ...staticProfile, ...liveProfile, image: liveProfile?.image || staticProfile?.image, imagePosition: liveProfile?.imagePosition || staticProfile?.imagePosition } : null;
-  const safeProfile = loadedSlug === routeSlug ? mergedProfile : staticProfile;
-  const loading = loadedSlug !== routeSlug && !staticProfile;
-  if (loading && !safeProfile) return null;
+  const safeProfile = loadedSlug === routeSlug ? liveProfile : null;
+  const loading = loadedSlug !== routeSlug;
+  if (loading) return null;
   if (!safeProfile) return <NotFound />;
   return <><SEO title={safeProfile.name} description={safeProfile.summary} /><PageHero eyebrow={safeProfile.role} title={safeProfile.name} text={safeProfile.summary} image={false} visual={<TeamHeroPortrait profile={safeProfile} />} className="team-member-hero" secondary={{ label: "Back to Team", to: "/team" }} /><section className="split team-profile-detail"><div><SectionHeader eyebrow="Profile" title="Professional background" /><p className="lead">{safeProfile.bio}</p><p><strong>Location:</strong> {safeProfile.location}</p><a className="profile-linkedin" href={safeProfile.linkedin || "https://www.linkedin.com/"} target="_blank" rel="noreferrer"><Icon name="linkedin" size={20} /> LinkedIn profile</a></div><div><SectionHeader eyebrow="Focus Areas" title="Where this profile contributes" /><div className="check-list">{(safeProfile.focus || []).map((item) => <span key={item}>{item}</span>)}</div></div></section><CTA /></>;
 }

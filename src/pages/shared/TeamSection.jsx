@@ -1,28 +1,46 @@
 import { useEffect, useState } from "react";
-import { teamProfiles } from "../../data/siteData";
 import { SectionHeader } from "../../components/Sections";
 import { Icon } from "../../components/icons";
 import { settingsApi } from "../../services/api";
 import { navigate } from "../../utils/router";
 
 export function TeamSection() {
-  const [profiles, setProfiles] = useState(teamProfiles);
+  const [profiles, setProfiles] = useState(null);
+  const [loadFailed, setLoadFailed] = useState(false);
 
   useEffect(() => {
     let active = true;
     settingsApi.teamProfiles().then((data) => {
-      if (active && Array.isArray(data.teamProfiles) && data.teamProfiles.length) {
-        setProfiles(data.teamProfiles.map((profile) => {
-          const defaultProfile = teamProfiles.find((item) => item.slug === profile.slug);
-          return defaultProfile ? { ...defaultProfile, ...profile, image: profile.image || defaultProfile.image, imagePosition: profile.imagePosition || defaultProfile.imagePosition } : profile;
-        }));
+      if (active) {
+        // Public profiles must always be the exact values saved in MongoDB.
+        setProfiles(Array.isArray(data.teamProfiles) ? data.teamProfiles : []);
       }
-    }).catch(() => {});
+    }).catch(() => {
+      if (active) {
+        setProfiles([]);
+        setLoadFailed(true);
+      }
+    });
     return () => { active = false; };
   }, []);
 
-  const primaryProfiles = profiles.slice(0, 3);
-  const otherProfiles = profiles.slice(3);
+  // The leadership row is role-based, not dependent on the order in which an
+  // admin happens to save profiles. CEO first, then co-founders; every other
+  // team member always follows in the lower grid.
+  const orderedProfiles = (profiles || [])
+    .map((profile, index) => ({ profile, index }))
+    .sort((a, b) => {
+      const rank = (role = "") => {
+        const normalizedRole = String(role).toLowerCase();
+        if (/\b(ceo|chief executive officer)\b/.test(normalizedRole)) return 0;
+        if (/\bco[- ]?founder\b/.test(normalizedRole)) return 1;
+        return 2;
+      };
+      return rank(a.profile.role) - rank(b.profile.role) || a.index - b.index;
+    })
+    .map(({ profile }) => profile);
+  const primaryProfiles = orderedProfiles.slice(0, 3);
+  const otherProfiles = orderedProfiles.slice(3);
   const getInitials = (name = "Team Profile") => name.split(" ").map((word) => word[0]).join("").slice(0, 2).toUpperCase();
   const renderProfile = (profile) => (
     <article className="team-card reveal" key={profile.slug}>
@@ -44,8 +62,12 @@ export function TeamSection() {
   return (
     <section id="team">
       <SectionHeader eyebrow="Leadership & Stakeholders" title="The people structure behind ZMH USA Corp." text="Founder and stakeholder profiles show the leadership responsibilities behind client delivery and operations quality." />
-      <div className="team-grid team-grid-primary">{primaryProfiles.map(renderProfile)}</div>
+      {profiles === null && <p>Loading team profiles…</p>}
+      {loadFailed && <p>Team profiles are temporarily unavailable. Please refresh and try again.</p>}
+      {Array.isArray(profiles) && !loadFailed && <>
+        <div className="team-grid team-grid-primary">{primaryProfiles.map(renderProfile)}</div>
       {otherProfiles.length > 0 && <div className="team-grid team-grid-secondary">{otherProfiles.map(renderProfile)}</div>}
+      </>}
     </section>
   );
 }

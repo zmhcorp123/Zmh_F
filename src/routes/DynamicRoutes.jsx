@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { industries, packages, services, teamProfiles } from "../data/siteData";
+import { industries, packages, services } from "../data/siteData";
 import { IndustryDetail } from "../pages/IndustryDetail";
 import { NotFound } from "../pages/NotFound";
 import { PackageDetail } from "../pages/PackageDetail";
@@ -28,6 +28,5 @@ export function PackageRoute() {
 
 export function TeamProfileRoute() {
   const { slug } = useParams();
-  const profile = teamProfiles.find((item) => item.slug === slug);
-  return <TeamProfile profile={profile || null} slug={slug} />;
+  return <TeamProfile slug={slug} />;
 }

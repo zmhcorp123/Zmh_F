@@ -141,7 +141,11 @@ export const bookingApi = {
 export const settingsApi = {
   packages: () => request("/settings/packages"),
   company: () => request("/settings/company"),
-  teamProfiles: () => request("/settings/team-profiles"),
+  // A unique URL plus no-store prevents intermediary caches from reusing a
+  // previously cached public team response.
+  teamProfiles: () => request(`/settings/team-profiles?fresh=${Date.now()}`, {
+    headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
+  }),
 };
 
 export const contactApi = {
