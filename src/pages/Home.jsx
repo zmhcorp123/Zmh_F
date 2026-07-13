@@ -78,7 +78,7 @@ export function Home() {
         <div className="mesh-bg" aria-hidden="true" />
         <div className="hero-copy reveal-lite reveal-hero-copy">
           <span className="hero-badge"><Icon name="shield" size={15} /> Trusted Remote Operations Partner</span>
-          <h1>Remote Operations Department for <span>Your Companies</span> </h1>
+          <h1>Remote Operations Department for <span>Your companies</span> </h1>
           <p>Helping HVAC, plumbing, roofing, electrical and home service businesses grow with professional call handling, dispatch, CRM, support, and billing operations.</p>
           <div className="hero-actions"><Button to="/book-meeting" icon="calendar">Book Free Operations Audit</Button><Button to="/services" variant="secondary">Explore Services</Button></div>
           <div className="trust-strip">{[["100+", "Clients", "users"], ["98%+", "Satisfaction", "check"], ["24/7", "Operations", "headset"], ["Trusted", "Remote Team", "shield"]].map(([value, label, icon]) => <div key={label}><b className="trust-icon"><Icon name={icon} size={22} /></b><strong>{value}</strong><span>{label}</span></div>)}</div>

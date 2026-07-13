@@ -287,6 +287,38 @@ textarea { min-height: 120px; resize: vertical; }
 .payment-reject-form { display: flex; align-items: center; gap: 10px; flex: 1 1 360px; }
 .payment-reject-form input { min-width: 180px; }
 .service-detail-workspace { display: grid; gap: 18px; }
+.service-detail-workspace { max-width: 1440px; margin: 0 auto; gap: 20px; }
+.service-detail-back { width: fit-content; border-radius: 999px; padding: 10px 16px; }
+.service-detail-hero { gap: 20px; padding: 28px; border: 1px solid rgba(89, 112, 171, .2); border-radius: 24px; background: linear-gradient(135deg, rgba(255,255,255,.98), rgba(242,246,255,.9)); box-shadow: 0 24px 56px rgba(15,23,42,.1); }
+.service-detail-hero .client-service-head { align-items: flex-start; }
+.service-detail-hero .client-service-head strong { display: block; font-size: clamp(26px, 3vw, 36px); letter-spacing: -.035em; }
+.service-detail-hero .client-service-head span { margin-top: 5px; font-size: 15px; }
+.service-detail-hero .client-progress-wrap { gap: 14px; padding: 18px 20px; border-radius: 18px; background: linear-gradient(100deg, rgba(44, 99, 255, .09), rgba(18, 202, 178, .1)); }
+.service-detail-hero .client-progress-wrap strong { font-size: 34px; }
+.service-detail-hero .client-service-grid { gap: 12px; }
+.service-detail-hero .client-service-grid > span { min-height: 86px; padding: 15px; border-radius: 16px; background: rgba(255,255,255,.8); }
+.service-detail-hero .client-service-actions { padding-top: 2px; }
+.service-detail-hero .client-service-actions .table-action:first-child,
+.service-detail-hero .client-service-actions .table-action:last-child { border-color: transparent; color: white; background: linear-gradient(135deg, #2667f5, #7652f2); box-shadow: 0 10px 22px rgba(47, 99, 246, .2); }
+.service-detail-filters { gap: 8px; padding: 4px 0; }
+.service-detail-filters::before { content: "View activity for"; align-self: center; margin-right: 4px; color: var(--muted); font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: .07em; }
+.service-detail-filters .table-action { min-height: 36px; border-radius: 999px; padding: 7px 13px; }
+.service-detail-grid { grid-template-columns: minmax(0, 1.5fr) minmax(300px, .72fr); gap: 20px; }
+.service-detail-grid .order-enterprise-panel { border-radius: 20px; background: rgba(255,255,255,.9); box-shadow: 0 14px 34px rgba(15,23,42,.07); }
+.service-detail-grid .order-enterprise-panel h3 { margin: 0; font-size: 20px; letter-spacing: -.02em; }
+.service-detail-grid .panel-body { padding: 20px; }
+.service-detail-grid .client-bill-card { padding: 16px; border-radius: 16px; background: linear-gradient(135deg, rgba(40, 101, 248, .055), rgba(255,255,255,.84)); }
+.service-detail-grid .client-timeline > article { padding: 16px 18px; border: 1px solid rgba(106,128,177,.18); border-left: 4px solid var(--primary); border-radius: 16px; background: rgba(248,250,255,.9); }
+.service-detail-grid .completed-service-card { padding: 16px 18px; border-radius: 16px; }
+.service-detail-grid .enterprise-order-side { position: sticky; top: 92px; }
+@media (max-width: 1040px) {
+  .service-detail-grid { grid-template-columns: 1fr; }
+  .service-detail-grid .enterprise-order-side { position: static; }
+}
+@media (max-width: 640px) {
+  .service-detail-hero { padding: 20px; }
+  .service-detail-filters::before { width: 100%; }
+}
 .status-pill.payment-submitted, .status-pill.submitted { color: #b45309; background: rgba(249,115,22,.12); }
 .status-pill.payment-rejected, .status-pill.rejected, .status-pill.cancelled { color: #dc2626; background: rgba(220,38,38,.1); }
 .status-pill.paid, .status-pill.approved { color: #047857; background: rgba(22,196,127,.13); }
