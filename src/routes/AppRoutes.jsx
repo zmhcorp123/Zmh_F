@@ -160,7 +160,6 @@ export function AppRoutes() {
         <Route path="/dashboard" element={<DashboardRoute />} />
         <Route path="/user-dashboard" element={<UserDashboardRoute section="Dashboard" />} />
         <Route path="/profile" element={<UserDashboardRoute section="Profile" />} />
-        <Route path="/bookings" element={<UserDashboardRoute section="Bookings" />} />
         <Route path="/settings" element={<UserDashboardRoute section="Settings" />} />
         <Route path="/invoices" element={<UserDashboardRoute section="Invoices" />} />
         <Route path="/payment-confirmation" element={<UserDashboardRoute section="Payment Confirmation" />} />

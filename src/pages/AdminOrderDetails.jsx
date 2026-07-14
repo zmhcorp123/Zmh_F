@@ -353,7 +353,7 @@ export function AdminOrderDetails() {
                 <label className="settings-field"><span>Address</span><input name="customerAddress" placeholder="Service address" /></label>
                 <label className="settings-field"><span>Description</span><textarea name="description" required placeholder="Describe what was completed and what changed for the client." /></label>
                 <label className="settings-field"><span>Progress %</span><input name="progressPercent" type="number" min="0" max="100" defaultValue={order.progressPercent || 0} /></label>
-                <label className="settings-field"><span>Status</span><select name="status" value={progressStatus} onChange={(event) => setProgressStatus(event.target.value)}><option value="inquiry">Inquiry / call</option><option value="planned">Planned</option><option value="in progress">In progress</option><option value="completed">Completed</option><option value="blocked">Blocked</option></select></label>
+                <label className="settings-field"><span>Status</span><select name="status" value={progressStatus} onChange={(event) => setProgressStatus(event.target.value)}><option value="inquiry">Inquiry / call</option><option value="completed">Completed</option></select></label>
                 {progressStatus === "inquiry" && <label className="settings-field"><span>Call Log</span><textarea name="callLog" required placeholder="Record call outcome, next action, and follow-up date." /></label>}
                 <button type="submit" className="settings-primary-action">{saving === "progress" ? "Adding..." : "Add Progress"}</button>
               </form>

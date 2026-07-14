@@ -107,7 +107,7 @@ function relativeTime(value) {
 function activityMeta(type = "", title = "") {
   const text = `${type} ${title}`.toLowerCase();
   if (text.includes("invoice") || text.includes("billing") || text.includes("payment")) return { icon: ReceiptText, tone: "amber", route: "/invoices" };
-  if (text.includes("booking")) return { icon: CalendarCheck, tone: "blue", route: "/bookings" };
+  if (text.includes("booking")) return { icon: CalendarCheck, tone: "blue", route: "/my-services" };
   if (text.includes("support") || text.includes("ticket")) return { icon: Headphones, tone: "purple", route: "/support-tickets" };
   if (text.includes("service") || text.includes("progress") || text.includes("order")) return { icon: PlayCircle, tone: "green", route: "/my-services" };
   return { icon: UserRound, tone: "purple", route: "/notifications" };
@@ -115,7 +115,6 @@ function activityMeta(type = "", title = "") {
 
 const navIcons = {
   Dashboard: LayoutDashboard,
-  Bookings: CalendarCheck,
   "My Services": BriefcaseBusiness,
   "Ongoing Services": PlayCircle,
   "Cancelled Services": XCircle,
@@ -141,7 +140,7 @@ function getInitials(name = "") {
 
 function DashboardShell({ section, user, children, onLogout, notificationCount = 0, onNotificationsSeen }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const items = ["Dashboard", "Book Service", "Bookings", "My Services", "Cancelled Services", "Invoices", "Payment Confirmation", "Notifications", "Profile", "Support Tickets"];
+  const items = ["Dashboard", "Book Service", "My Services", "Cancelled Services", "Invoices", "Payment Confirmation", "Notifications", "Profile", "Support Tickets"];
   const activeSection = section === "Service Details" ? "My Services" : section;
   const displayName = user?.name || "Client";
   const unreadNotifications = Math.max(0, Number(notificationCount || 0));
@@ -457,7 +456,6 @@ function ProfilePanel() {
 
   const clientId = profile?.clientId || profile?._id?.slice(-8)?.toUpperCase() || "ZHM-CLIENT";
   const stats = [
-    { label: "Total Bookings", value: profile?.stats?.bookings ?? 0, detail: "All service requests", icon: CalendarCheck, tone: "blue" },
     { label: "Completed Services", value: profile?.stats?.completedServices ?? 0, detail: "Successfully delivered", icon: CheckCircle2, tone: "violet" },
     { label: "Ongoing Services", value: profile?.stats?.ongoingServices ?? 0, detail: "Currently in progress", icon: RefreshCw, tone: "indigo" },
     { label: "Invoices Paid", value: profile?.stats?.invoicesPaid ?? 0, detail: "Payments confirmed", icon: ReceiptText, tone: "emerald" },
@@ -604,7 +602,7 @@ function DashboardCards({ section, serviceId, onNotificationCountChange }) {
         }
         return;
       }
-      const needsBookings = ["Dashboard", "Bookings", "Calendar", "Cancelled Services"].includes(section);
+      const needsBookings = ["Dashboard", "Calendar", "Cancelled Services"].includes(section);
       const needsServices = ["Dashboard", "My Services", "Ongoing Services", "Cancelled Services", "Service Details"].includes(section);
       const needsInvoices = ["Dashboard", "Invoices", "Payment Confirmation", "Calendar"].includes(section);
       const needsNotifications = ["Dashboard", "Notifications", "Payment Confirmation"].includes(section);
@@ -810,10 +808,6 @@ function DashboardCards({ section, serviceId, onNotificationCountChange }) {
     );
   }
 
-  if (section === "Bookings") {
-    return <div className="portal-list">{error && <div className="form-error">{error}</div>}{categorized.pending.length ? categorized.pending.map((booking) => <article className="portal-row client-booking-card" key={booking._id}><div><strong>{booking.companyName}</strong><span>{booking.packageName || "Package pending"} | {booking.packagePrice || "Price pending"}</span><p>{booking.adminResponse || "Waiting for admin approval or service start."}</p><div className="client-service-grid"><span><strong>Booking Date</strong>{formatDate(booking.createdAt)}</span><span><strong>Estimated Start</strong>{formatDate(booking.serviceStartDate || booking.requestedDate)}</span></div></div><div className="client-bill-actions"><StatusBadge value={booking.status === "new" ? "Waiting for Admin Approval" : booking.status} /><button type="button" className="table-action">View Details</button></div></article>) : <div className="empty-state">No pending bookings. Ongoing and cancelled services are shown in their own sections.</div>}</div>;
-  }
-
   if (section === "My Services") {
     return (
       <div className="portal-list client-service-list">
@@ -885,7 +879,7 @@ function DashboardCards({ section, serviceId, onNotificationCountChange }) {
 
   const completionRate = categorized.ongoing.length ? Math.round(categorized.ongoing.reduce((sum, service) => sum + Number(service.progressPercent || 0), 0) / categorized.ongoing.length) : 100;
   const statCards = [
-    { title: "Total Bookings", value: bookings.length, text: "All time bookings", icon: CalendarCheck, tone: "blue", route: "/bookings", spark: "M3 36 C10 28 16 34 23 27 S35 20 42 28 S53 36 60 18 S72 29 78 25" },
+    { title: "Total Bookings", value: bookings.length, text: "All time bookings", icon: CalendarCheck, tone: "blue", route: "/my-services", spark: "M3 36 C10 28 16 34 23 27 S35 20 42 28 S53 36 60 18 S72 29 78 25" },
     { title: "Ongoing Services", value: categorized.ongoing.length, text: "Currently active", icon: BriefcaseBusiness, tone: "green", route: "/my-services", spark: "M3 32 C11 24 17 31 24 25 S36 14 43 30 S55 33 61 17 S70 25 78 9" },
     { title: "Cancelled Services", value: categorized.cancelled.length, text: "Total cancelled", icon: XCircle, tone: "purple", route: "/cancelled-services", spark: "M3 31 C12 28 18 35 25 29 S35 26 42 30 S51 34 57 15 S67 34 78 24" },
     { title: "Avg Progress", value: `${completionRate}%`, text: "Service completion rate", icon: CheckCircle2, tone: "amber", route: "/my-services", spark: "M3 34 C12 28 19 33 27 31 S38 29 45 18 S55 36 64 24 S70 12 78 16" },
