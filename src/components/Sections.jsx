@@ -75,8 +75,8 @@ export function SectionHeader({ eyebrow, title, text }) {
   return <div className="section-header"><span className="eyebrow">{eyebrow}</span><h2>{title}</h2>{text && <p>{text}</p>}</div>;
 }
 
-export function Card({ icon, title, text, children }) {
-  return <article className="card saas-card reveal">{icon && <div className="card-icon"><Icon name={icon} /></div>}<h3>{title}</h3>{text && <p>{text}</p>}{children}</article>;
+export function Card({ icon, title, text, image, imageAlt, children }) {
+  return <article className={"card saas-card reveal" + (image ? " image-card" : "")}>{image && <div className="card-image"><img src={image} alt={imageAlt || title} loading="lazy" onError={(event) => { event.currentTarget.closest(".card-image")?.classList.add("image-unavailable"); }} /></div>}{icon && <div className="card-icon"><Icon name={icon} /></div>}<h3>{title}</h3>{text && <p>{text}</p>}{children}</article>;
 }
 
 export function CTA() {

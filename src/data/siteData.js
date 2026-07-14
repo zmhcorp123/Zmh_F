@@ -43,6 +43,12 @@ export const services = [
   ][index],
   benefits: ["Faster response times", "Cleaner handoffs", "More booked jobs", "Consistent customer experience"],
   features: ["Custom scripts and SOPs", "CRM-ready notes", "Escalation paths", "Daily performance summaries"],
+  metrics: [
+    { value: "24/7", label: "Coverage options", icon: "coverage" },
+    { value: "< 60s", label: "Response goal", icon: "response" },
+    { value: "100%", label: "CRM-ready notes", icon: "quality" },
+    { value: "Live", label: "Operations support", icon: "support" },
+  ],
 }));
 
 export const industries = [
@@ -62,6 +68,12 @@ export const industries = [
   problems: ["Missed calls during busy windows", "Technicians interrupted by admin tasks", "Customer updates scattered across tools"],
   solutions: ["Dedicated remote operations pods", "Documented workflows for every call type", "Clean scheduling, dispatch, and follow-up rhythms"],
   benefits: ["Higher booking rate", "Less operational noise", "Better customer visibility", "Scalable coverage"],
+  metrics: [
+    { value: "24/7", label: "Coverage options", icon: "coverage" },
+    { value: "Fast", label: "Response workflows", icon: "response" },
+    { value: "Clear", label: "Customer updates", icon: "quality" },
+    { value: "Scale", label: "With your team", icon: "growth" },
+  ],
 }));
 
 export const packages = [

@@ -13,7 +13,6 @@ import {
   ClipboardCheck,
   CreditCard,
   Camera,
-  Clock3,
   Eye,
   EyeOff,
   FileText,
@@ -28,16 +27,13 @@ import {
   LogOut,
   Mail,
   Menu,
-  Monitor,
   MoreHorizontal,
-  PencilLine,
   PlayCircle,
   ReceiptText,
   RefreshCw,
   Settings,
   ShieldCheck,
   Sparkles,
-  TicketCheck,
   UserCheck,
   UserRound,
   UsersRound,
@@ -145,7 +141,7 @@ function getInitials(name = "") {
 
 function DashboardShell({ section, user, children, onLogout, notificationCount = 0, onNotificationsSeen }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const items = ["Dashboard", "Bookings", "My Services", "Ongoing Services", "Cancelled Services", "Invoices", "Payment Confirmation", "Notifications", "Profile", "Settings", "Support Tickets", "Book Service"];
+  const items = ["Dashboard", "Book Service", "Bookings", "My Services", "Cancelled Services", "Invoices", "Payment Confirmation", "Notifications", "Profile", "Support Tickets"];
   const activeSection = section === "Service Details" ? "My Services" : section;
   const displayName = user?.name || "Client";
   const unreadNotifications = Math.max(0, Number(notificationCount || 0));
@@ -362,7 +358,6 @@ function ProfilePanel() {
   const [savingPassword, setSavingPassword] = useState(false);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState("personal");
   const [avatarPreview, setAvatarPreview] = useState("");
   const [passwords, setPasswords] = useState({ current: "", next: "", confirm: "" });
   const [visiblePasswords, setVisiblePasswords] = useState({ current: false, next: false, confirm: false });
@@ -477,14 +472,6 @@ function ProfilePanel() {
   const passwordRules = [
     ["Minimum 8 characters", passwords.next.length >= 8], ["Uppercase letter", /[A-Z]/.test(passwords.next)], ["Lowercase letter", /[a-z]/.test(passwords.next)], ["Number", /\d/.test(passwords.next)], ["Special character", /[^A-Za-z0-9]/.test(passwords.next)],
   ];
-  const activityCards = [
-    { title: "Activity Timeline", icon: Clock3, tone: "blue", items: [["Profile reviewed", "Today, 10:42 AM"], ["Client portal accessed", "Yesterday, 4:16 PM"], ["Account created", profile?.createdAt ? formatDate(profile.createdAt) : "Recently"]] },
-    { title: "Recent Profile Updates", icon: PencilLine, tone: "violet", items: [["Account information synced", "Just now"], ["Security preferences verified", "2 days ago"], ["Contact details reviewed", "Last week"]] },
-    { title: "Recent Login Devices", icon: Monitor, tone: "indigo", items: [["Windows · Chrome", "Current session · Bangladesh"], ["iPhone · Safari", "Last active 2 days ago"], ["macOS · Chrome", "Last active 9 days ago"]] },
-    { title: "Security Events", icon: ShieldCheck, tone: "emerald", items: [["Password protection active", "Security check passed"], ["Two-step verification", "Recommended for your account"], ["No unusual activity", "Monitored continuously"]] },
-    { title: "Support Tickets", icon: TicketCheck, tone: "amber", items: [["Client Success", "No open tickets"], ["Priority support", "Available with your plan"], ["Response time", "Typically under 1 business day"]] },
-    { title: "API Sessions", icon: KeyRound, tone: "slate", items: [["Portal session", "Active and secured"], ["Session encryption", "TLS protected"], ["Connected applications", "No linked applications"]] },
-  ];
   const renderPasswordField = (field, label) => (
     <label className="profile-password-field">
       <span>{label}</span>
@@ -533,21 +520,16 @@ function ProfilePanel() {
         </aside>
         <form className="profile-edit-card" onSubmit={saveProfile}>
           <div className="profile-card-heading"><div><span>PROFILE SETTINGS</span><h3>Edit your profile</h3><p>Keep your account information accurate and up to date.</p></div><span className="profile-secure-dot"><ShieldCheck size={18} /></span></div>
-          <div className="profile-tabs" role="tablist" aria-label="Profile sections">
-            {[['personal', 'Personal Information'], ['preferences', 'Preferences'], ['notifications', 'Notifications']].map(([key, label]) => <button type="button" role="tab" aria-selected={activeTab === key} className={activeTab === key ? "active" : ""} key={key} onClick={() => setActiveTab(key)}>{label}</button>)}
+          <div className="profile-form-grid">
+            <label><span>Full name</span><input name="name" defaultValue={profile?.name || ""} required /></label>
+            <label><span>Username</span><input name="username" defaultValue={profile?.username || ""} placeholder="username" /></label>
+            <label><span>Phone</span><input name="phone" defaultValue={profile?.phone || ""} placeholder="+1 (000) 000-0000" /></label>
+            <label><span>Company</span><input name="company" defaultValue={profile?.company || ""} placeholder="Your company" /></label>
           </div>
-          {activeTab === "personal" ? <>
-            <div className="profile-form-grid">
-              <label><span>Full name</span><input name="name" defaultValue={profile?.name || ""} required /></label>
-              <label><span>Username</span><input name="username" defaultValue={profile?.username || ""} placeholder="username" /></label>
-              <label><span>Phone</span><input name="phone" defaultValue={profile?.phone || ""} placeholder="+1 (000) 000-0000" /></label>
-              <label><span>Company</span><input name="company" defaultValue={profile?.company || ""} placeholder="Your company" /></label>
-            </div>
-            <div className="profile-info-banner"><ShieldCheck size={18} /><p>Company name, email and client ID cannot be changed after account creation. Contact support if corrections are required.</p></div>
-            <div className="profile-readonly-grid">
-              {[['Email', profile?.email, Mail], ['Role', profile?.role, UsersRound], ['Account status', profile?.status, UserCheck], ['Client ID', clientId, IdCard], ['Member since', profile?.createdAt ? formatDate(profile.createdAt) : '', CalendarDays]].map(([label, value, Icon]) => <div key={label}><Icon size={15} /><span><small>{label}</small><strong>{fieldValue(value)}</strong></span></div>)}
-            </div>
-          </> : <div className="profile-tab-placeholder"><Sparkles size={21} /><strong>{activeTab === "preferences" ? "Preferences are tailored to your ZHM client experience." : "Notifications are managed from your client portal."}</strong><p>Use the navigation to review service and billing updates at any time.</p></div>}
+          <div className="profile-info-banner"><ShieldCheck size={18} /><p>Company name, email and client ID cannot be changed after account creation. Contact support if corrections are required.</p></div>
+          <div className="profile-readonly-grid">
+            {[['Email', profile?.email, Mail], ['Role', profile?.role, UsersRound], ['Account status', profile?.status, UserCheck], ['Client ID', clientId, IdCard], ['Member since', profile?.createdAt ? formatDate(profile.createdAt) : '', CalendarDays]].map(([label, value, Icon]) => <div key={label}><Icon size={15} /><span><small>{label}</small><strong>{fieldValue(value)}</strong></span></div>)}
+          </div>
           <div className="profile-form-actions"><button type="button" onClick={(event) => event.currentTarget.form.reset()}>Cancel</button><button type="submit" disabled={saving}>{saving ? "Saving changes..." : "Save changes"}<ChevronRight size={17} /></button></div>
         </form>
         <form className="profile-password-card" onSubmit={changePassword}>
@@ -557,9 +539,6 @@ function ProfilePanel() {
           <ul className="profile-password-rules">{passwordRules.map(([label, passed]) => <li className={passed ? "passed" : ""} key={label}><Check size={13} />{label}</li>)}</ul>
           <button type="submit" className="profile-gradient-button" disabled={savingPassword}>{savingPassword ? "Updating password..." : "Update password"}<ShieldCheck size={17} /></button>
         </form>
-      </section>
-      <section className="profile-extra-grid">
-        {activityCards.map((card) => { const Icon = card.icon; return <article className={`profile-extra-card ${card.tone}`} key={card.title}><div><span><Icon size={18} /></span><h3>{card.title}</h3></div>{card.items.map(([title, meta]) => <button type="button" key={title}><i /><span><strong>{title}</strong><small>{meta}</small></span><ChevronRight size={16} /></button>)}</article>; })}
       </section>
     </div>
   );

@@ -2,12 +2,53 @@ import { useEffect, useState } from "react";
 import { services } from "../data/siteData";
 import { Button } from "../components/Button";
 import { SEO } from "../components/SEO";
-import { bookingApi } from "../services/api";
+import { bookingApi, contactApi } from "../services/api";
 import { navigate } from "../utils/router";
 import { useAuth } from "../context/useAuth";
 
 const operatingDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 const afterHoursOptions = ["No after-hours", "Evening calls", "Weekend coverage", "Emergency calls", "Overflow support"];
+
+function PublicBookingInquiry() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const submitInquiry = async (event) => {
+    event.preventDefault();
+    setLoading(true);
+    setError("");
+    const form = new FormData(event.currentTarget);
+    try {
+      await contactApi.send({
+        name: form.get("name"),
+        company: form.get("company"),
+        email: form.get("email"),
+        phone: form.get("phone"),
+        message: `Service inquiry: ${form.get("message")}`,
+      });
+      navigate("/request-success?type=inquiry");
+    } catch (err) {
+      setError(err.message || "Could not send your inquiry.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return <section className="booking single-booking-page"><form className="form-card single-booking-form" onSubmit={submitInquiry}>
+    <span className="eyebrow">Service inquiry</span>
+    <h1>Tell us how we can help</h1>
+    <p>Booking is available to signed-in client accounts. Send us an inquiry and our operations team will help you choose the right next step.</p>
+    <div className="booking-form-section"><h3>Your details</h3><div className="form-grid compact">
+      <label>Full Name<input name="name" required placeholder="Your name" /></label>
+      <label>Company<input name="company" placeholder="Company name" /></label>
+      <label>Email<input name="email" type="email" required placeholder="you@company.com" /></label>
+      <label>Phone<input name="phone" placeholder="Best contact number" /></label>
+    </div></div>
+    <div className="booking-form-section"><label>What support do you need?<textarea name="message" required placeholder="Tell us about your business and the services you are interested in." /></label></div>
+    {error && <div className="form-error">{error}</div>}
+    <div className="wizard-actions"><Button type="submit" icon="mail">{loading ? "Sending inquiry..." : "Send inquiry"}</Button><Button to="/login" variant="secondary">Client sign in</Button></div>
+  </form></section>;
+}
 
 export function BookService() {
   const { user } = useAuth();
@@ -21,6 +62,12 @@ export function BookService() {
     if (!user) return;
     setBooking((current) => ({ ...current, "Company Name": user.company || user.name || "", Email: user.email || "", Phone: user.phone || "" }));
   }, [user]);
+
+  if (!user) return <><SEO title="Service Inquiry" /><PublicBookingInquiry /></>;
+
+  if (["admin", "employee"].includes(user.role)) {
+    return <><SEO title="Booking Access" /><section className="booking single-booking-page"><div className="form-card single-booking-form"><span className="eyebrow">Client booking only</span><h1>Booking is not available for staff accounts</h1><p>Admin and employee accounts manage client requests from the dashboard. Only signed-in client accounts can place a booking.</p><div className="wizard-actions"><Button to="/admin-dashboard">Go to dashboard</Button></div></div></section></>;
+  }
 
   const updateField = (field, value) => setBooking((current) => ({ ...current, [field]: value }));
   const toggleService = (name) => setBooking((current) => ({ ...current, services: current.services.includes(name) ? current.services.filter((item) => item !== name) : [...current.services, name] }));

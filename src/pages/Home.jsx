@@ -2,6 +2,7 @@ import { useState } from "react";
 import { services, testimonials, faqs } from "../data/siteData";
 import { Button } from "../components/Button";
 import { Icon } from "../components/icons";
+import { Card } from "../components/Sections";
 import { SEO } from "../components/SEO";
 import { contactApi } from "../services/api";
 import { navigate } from "../utils/router";
@@ -89,7 +90,7 @@ export function Home() {
 
       <section className="saas-services">
         <SectionTitle eyebrow="What we do" title="Complete Remote Operations Support for Home Service Businesses" />
-        <div className="service-card-grid">{services.slice(0, 8).map((item) => <article className="saas-card service-card reveal-lite" key={item.slug}><div className="card-icon"><Icon name={item.icon} /></div><h3>{item.name}</h3><p>{item.summary}</p><button className="learn" onClick={() => navigate("/services/" + item.slug)}>Learn More <Icon name="arrow" size={15} /></button></article>)}</div>
+        <div className="service-card-grid">{services.slice(0, 8).map((item) => <Card key={item.slug} image={`/services/${encodeURIComponent(item.slug)}.png`} imageAlt={`${item.name} service`} icon={item.icon} title={item.name} text={item.summary}><button className="learn" onClick={() => navigate("/services/" + item.slug)}>Learn More <Icon name="arrow" size={15} /></button></Card>)}</div>
       </section>
 
       <section className="saas-band">
