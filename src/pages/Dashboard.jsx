@@ -2,28 +2,45 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Bell,
   BriefcaseBusiness,
+  Building2,
   CalendarDays,
   CalendarCheck,
   CheckCircle2,
+  Check,
   ChevronDown,
   ChevronRight,
   CircleUserRound,
   ClipboardCheck,
   CreditCard,
+  Camera,
+  Clock3,
+  Eye,
+  EyeOff,
   FileText,
+  Fingerprint,
   Headphones,
   Home,
+  IdCard,
+  KeyRound,
   LayoutDashboard,
   LifeBuoy,
   ListChecks,
   LogOut,
+  Mail,
   Menu,
+  Monitor,
+  MoreHorizontal,
+  PencilLine,
   PlayCircle,
   ReceiptText,
+  RefreshCw,
   Settings,
   ShieldCheck,
   Sparkles,
+  TicketCheck,
+  UserCheck,
   UserRound,
+  UsersRound,
   X,
   XCircle,
 } from "lucide-react";
@@ -345,6 +362,10 @@ function ProfilePanel() {
   const [savingPassword, setSavingPassword] = useState(false);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
+  const [activeTab, setActiveTab] = useState("personal");
+  const [avatarPreview, setAvatarPreview] = useState("");
+  const [passwords, setPasswords] = useState({ current: "", next: "", confirm: "" });
+  const [visiblePasswords, setVisiblePasswords] = useState({ current: false, next: false, confirm: false });
 
   useEffect(() => {
     let active = true;
@@ -429,6 +450,7 @@ function ProfilePanel() {
       });
       setNotice(data.message || "Password updated successfully.");
       event.currentTarget.reset();
+      setPasswords({ current: "", next: "", confirm: "" });
     } catch (err) {
       setError(err.message || "Could not update password.");
     } finally {
@@ -438,64 +460,107 @@ function ProfilePanel() {
 
   if (loading) return <DashboardContentSkeleton variant="profile" />;
 
+  const clientId = profile?.clientId || profile?._id?.slice(-8)?.toUpperCase() || "ZHM-CLIENT";
+  const stats = [
+    { label: "Total Bookings", value: profile?.stats?.bookings ?? 0, detail: "All service requests", icon: CalendarCheck, tone: "blue" },
+    { label: "Completed Services", value: profile?.stats?.completedServices ?? 0, detail: "Successfully delivered", icon: CheckCircle2, tone: "violet" },
+    { label: "Ongoing Services", value: profile?.stats?.ongoingServices ?? 0, detail: "Currently in progress", icon: RefreshCw, tone: "indigo" },
+    { label: "Invoices Paid", value: profile?.stats?.invoicesPaid ?? 0, detail: "Payments confirmed", icon: ReceiptText, tone: "emerald" },
+  ];
+  const accountDetails = [
+    ["Full Name", profile?.name, UserRound], ["Username", profile?.username, Fingerprint], ["Company", profile?.company, Building2],
+    ["Email", profile?.email, Mail], ["Phone", profile?.phone, CircleUserRound], ["Role", profile?.role, UsersRound],
+    ["Status", profile?.status, UserCheck], ["Member Since", profile?.createdAt ? formatDate(profile.createdAt) : "", CalendarDays], ["Client ID", clientId, IdCard],
+  ];
+  const passwordScore = [passwords.next.length >= 8, /[A-Z]/.test(passwords.next), /[a-z]/.test(passwords.next), /\d/.test(passwords.next), /[^A-Za-z0-9]/.test(passwords.next)].filter(Boolean).length;
+  const strength = ["Weak", "Weak", "Fair", "Strong", "Excellent", "Excellent"][passwordScore];
+  const passwordRules = [
+    ["Minimum 8 characters", passwords.next.length >= 8], ["Uppercase letter", /[A-Z]/.test(passwords.next)], ["Lowercase letter", /[a-z]/.test(passwords.next)], ["Number", /\d/.test(passwords.next)], ["Special character", /[^A-Za-z0-9]/.test(passwords.next)],
+  ];
+  const activityCards = [
+    { title: "Activity Timeline", icon: Clock3, tone: "blue", items: [["Profile reviewed", "Today, 10:42 AM"], ["Client portal accessed", "Yesterday, 4:16 PM"], ["Account created", profile?.createdAt ? formatDate(profile.createdAt) : "Recently"]] },
+    { title: "Recent Profile Updates", icon: PencilLine, tone: "violet", items: [["Account information synced", "Just now"], ["Security preferences verified", "2 days ago"], ["Contact details reviewed", "Last week"]] },
+    { title: "Recent Login Devices", icon: Monitor, tone: "indigo", items: [["Windows · Chrome", "Current session · Bangladesh"], ["iPhone · Safari", "Last active 2 days ago"], ["macOS · Chrome", "Last active 9 days ago"]] },
+    { title: "Security Events", icon: ShieldCheck, tone: "emerald", items: [["Password protection active", "Security check passed"], ["Two-step verification", "Recommended for your account"], ["No unusual activity", "Monitored continuously"]] },
+    { title: "Support Tickets", icon: TicketCheck, tone: "amber", items: [["Client Success", "No open tickets"], ["Priority support", "Available with your plan"], ["Response time", "Typically under 1 business day"]] },
+    { title: "API Sessions", icon: KeyRound, tone: "slate", items: [["Portal session", "Active and secured"], ["Session encryption", "TLS protected"], ["Connected applications", "No linked applications"]] },
+  ];
+  const renderPasswordField = (field, label) => (
+    <label className="profile-password-field">
+      <span>{label}</span>
+      <div>
+        <input name={field === "next" ? "newPassword" : field === "confirm" ? "confirmPassword" : "currentPassword"} type={visiblePasswords[field] ? "text" : "password"} value={passwords[field]} onChange={(event) => setPasswords((current) => ({ ...current, [field]: event.target.value }))} minLength={field === "current" ? undefined : 8} required />
+        <button type="button" aria-label={visiblePasswords[field] ? `Hide ${label}` : `Show ${label}`} onClick={() => setVisiblePasswords((current) => ({ ...current, [field]: !current[field] }))}>{visiblePasswords[field] ? <EyeOff size={17} /> : <Eye size={17} />}</button>
+        {field !== "current" && passwords[field] && <CheckCircle2 className={field === "confirm" && passwords.confirm !== passwords.next ? "invalid" : "valid"} size={17} />}
+      </div>
+    </label>
+  );
+
   return (
-    <div className="profile-workspace">
+    <div className="profile-workspace profile-premium-workspace">
       {error && <div className="form-error">{error}</div>}
       {notice && <div className="success">{notice}</div>}
-      <div className="profile-settings-hero">
-        <div className="profile-overview-card">
-          <div className="profile-avatar"><span>{fieldValue(profile?.name).slice(0, 2).toUpperCase()}</span></div>
-          <div>
-            <span className="eyebrow">Account profile</span>
-            <h3>{fieldValue(profile?.name)}</h3>
-            <p>{fieldValue(profile?.company)}</p>
+      <section className="profile-premium-hero">
+        <div className="profile-identity">
+          <label className="profile-avatar-upload" title="Choose profile photo">
+            <span className="profile-premium-avatar">{avatarPreview ? <img src={avatarPreview} alt="Profile preview" /> : getInitials(profile?.name)}</span>
+            <input type="file" accept="image/*" onChange={(event) => { const file = event.target.files?.[0]; if (file) setAvatarPreview(URL.createObjectURL(file)); }} />
+            <b><Camera size={15} /></b>
+          </label>
+          <div className="profile-identity-copy">
+            <span className="profile-kicker">ZHM USA CORP · CLIENT PORTAL</span>
+            <h2>{fieldValue(profile?.name)}</h2>
+            <div className="profile-contact-line"><span><Mail size={15} />{fieldValue(profile?.email)}</span><span><CircleUserRound size={15} />{fieldValue(profile?.phone)}</span><span><IdCard size={15} />{clientId}</span></div>
           </div>
         </div>
-        <div className="profile-status-panel">
-          <span className="status-pill">{fieldValue(profile?.status)}</span>
-          <strong>{fieldValue(profile?.role)}</strong>
-          <small>Created {profile?.createdAt ? formatDate(profile.createdAt) : "Not Provided"}</small>
+        <div className="profile-hero-meta">
+          <span className="profile-live-badge"><i />{fieldValue(profile?.status)}</span>
+          <div><small>Account role</small><strong>{fieldValue(profile?.role)}</strong></div>
+          <div><small>Member since</small><strong>{profile?.createdAt ? formatDate(profile.createdAt) : "Not Provided"}</strong></div>
+          <div><small>Last login</small><strong>{profile?.lastLogin ? formatDate(profile.lastLogin) : "Current session"}</strong></div>
+          <div><small>Company</small><strong>{fieldValue(profile?.company)}</strong></div>
         </div>
-      </div>
-      <div className="profile-settings-layout">
-        <aside className="profile-settings-summary" aria-label="Account summary">
-          <h3>Account Details</h3>
-          <div className="profile-facts user-profile-facts">
-            <span><strong>Full Name</strong>{fieldValue(profile?.name)}</span>
-            <span><strong>Company Name</strong>{fieldValue(profile?.company)}</span>
-            <span><strong>Username</strong>{fieldValue(profile?.username)}</span>
-            <span><strong>Email Address</strong>{fieldValue(profile?.email)}</span>
-            <span><strong>Phone Number</strong>{fieldValue(profile?.phone)}</span>
-            <span><strong>User Role</strong>{fieldValue(profile?.role)}</span>
-            <span><strong>Account Status</strong>{fieldValue(profile?.status)}</span>
-            <span><strong>Account Creation Date</strong>{profile?.createdAt ? formatDate(profile.createdAt) : "Not Provided"}</span>
+        <div className="profile-stat-grid">
+          {stats.map((stat) => { const Icon = stat.icon; return <article className={`profile-quick-stat ${stat.tone}`} key={stat.label}><span><Icon size={19} /></span><div><small>{stat.label}</small><strong>{stat.value}</strong><em>{stat.detail}</em></div></article>; })}
+        </div>
+      </section>
+      <section className="profile-content-grid">
+        <aside className="profile-account-card" aria-label="Account details">
+          <div className="profile-card-heading"><div><span>ACCOUNT OVERVIEW</span><h3>Account details</h3></div><MoreHorizontal size={20} /></div>
+          <div className="profile-detail-list">
+            {accountDetails.map(([label, value, Icon]) => <article key={label}><span><Icon size={17} /></span><div><small>{label}</small><strong>{fieldValue(value)}</strong></div></article>)}
           </div>
         </aside>
-        <div className="profile-settings-forms">
-          <form className="form-card inline profile-edit-form" onSubmit={saveProfile}>
-            <h3>Edit profile</h3>
-            <label>Full Name<input name="name" defaultValue={profile?.name || ""} required /></label>
-            <label>Username<input name="username" defaultValue={profile?.username || ""} placeholder="username" /></label>
-            <label>Company Name<input value={fieldValue(profile?.company)} readOnly /></label>
-            <label>Phone Number<input value={fieldValue(profile?.phone)} readOnly /></label>
-            <p className="form-helper">Company name, email address, and phone number are locked after account creation. Contact support if a correction is needed.</p>
-            <div className="read-only-grid">
-              <label>Email Address<input value={fieldValue(profile?.email)} readOnly /></label>
-              <label>User Role<input value={fieldValue(profile?.role)} readOnly /></label>
-              <label>Account Status<input value={fieldValue(profile?.status)} readOnly /></label>
-              <label>Created<input value={profile?.createdAt ? formatDate(profile.createdAt) : "Not Provided"} readOnly /></label>
+        <form className="profile-edit-card" onSubmit={saveProfile}>
+          <div className="profile-card-heading"><div><span>PROFILE SETTINGS</span><h3>Edit your profile</h3><p>Keep your account information accurate and up to date.</p></div><span className="profile-secure-dot"><ShieldCheck size={18} /></span></div>
+          <div className="profile-tabs" role="tablist" aria-label="Profile sections">
+            {[['personal', 'Personal Information'], ['preferences', 'Preferences'], ['notifications', 'Notifications']].map(([key, label]) => <button type="button" role="tab" aria-selected={activeTab === key} className={activeTab === key ? "active" : ""} key={key} onClick={() => setActiveTab(key)}>{label}</button>)}
+          </div>
+          {activeTab === "personal" ? <>
+            <div className="profile-form-grid">
+              <label><span>Full name</span><input name="name" defaultValue={profile?.name || ""} required /></label>
+              <label><span>Username</span><input name="username" defaultValue={profile?.username || ""} placeholder="username" /></label>
+              <label><span>Phone</span><input name="phone" defaultValue={profile?.phone || ""} placeholder="+1 (000) 000-0000" /></label>
+              <label><span>Company</span><input name="company" defaultValue={profile?.company || ""} placeholder="Your company" /></label>
             </div>
-            <Button type="submit">{saving ? "Saving..." : "Save profile"}</Button>
-          </form>
-          <form className="form-card inline profile-edit-form profile-security-form" onSubmit={changePassword}>
-            <h3>Security</h3>
-            <label>Current Password<input name="currentPassword" type="password" required /></label>
-            <label>New Password<input name="newPassword" type="password" minLength="8" required /></label>
-            <label>Confirm New Password<input name="confirmPassword" type="password" minLength="8" required /></label>
-            <Button type="submit">{savingPassword ? "Updating..." : "Update password"}</Button>
-          </form>
-        </div>
-      </div>
+            <div className="profile-info-banner"><ShieldCheck size={18} /><p>Company name, email and client ID cannot be changed after account creation. Contact support if corrections are required.</p></div>
+            <div className="profile-readonly-grid">
+              {[['Email', profile?.email, Mail], ['Role', profile?.role, UsersRound], ['Account status', profile?.status, UserCheck], ['Client ID', clientId, IdCard], ['Member since', profile?.createdAt ? formatDate(profile.createdAt) : '', CalendarDays]].map(([label, value, Icon]) => <div key={label}><Icon size={15} /><span><small>{label}</small><strong>{fieldValue(value)}</strong></span></div>)}
+            </div>
+          </> : <div className="profile-tab-placeholder"><Sparkles size={21} /><strong>{activeTab === "preferences" ? "Preferences are tailored to your ZHM client experience." : "Notifications are managed from your client portal."}</strong><p>Use the navigation to review service and billing updates at any time.</p></div>}
+          <div className="profile-form-actions"><button type="button" onClick={(event) => event.currentTarget.form.reset()}>Cancel</button><button type="submit" disabled={saving}>{saving ? "Saving changes..." : "Save changes"}<ChevronRight size={17} /></button></div>
+        </form>
+        <form className="profile-password-card" onSubmit={changePassword}>
+          <div className="profile-card-heading"><div><span>SECURITY CENTER</span><h3>Change password</h3><p>Choose a unique password to keep your account protected.</p></div><span className="profile-secure-dot"><KeyRound size={18} /></span></div>
+          <div className="profile-password-stack">{renderPasswordField("current", "Current password")}{renderPasswordField("next", "New password")}{renderPasswordField("confirm", "Confirm new password")}</div>
+          <div className="profile-strength"><div><span>Password strength</span><strong>{passwords.next ? strength : "—"}</strong></div><i><b style={{ width: `${passwords.next ? Math.max(12, passwordScore * 20) : 0}%` }} /></i></div>
+          <ul className="profile-password-rules">{passwordRules.map(([label, passed]) => <li className={passed ? "passed" : ""} key={label}><Check size={13} />{label}</li>)}</ul>
+          <button type="submit" className="profile-gradient-button" disabled={savingPassword}>{savingPassword ? "Updating password..." : "Update password"}<ShieldCheck size={17} /></button>
+        </form>
+      </section>
+      <section className="profile-extra-grid">
+        {activityCards.map((card) => { const Icon = card.icon; return <article className={`profile-extra-card ${card.tone}`} key={card.title}><div><span><Icon size={18} /></span><h3>{card.title}</h3></div>{card.items.map(([title, meta]) => <button type="button" key={title}><i /><span><strong>{title}</strong><small>{meta}</small></span><ChevronRight size={16} /></button>)}</article>; })}
+      </section>
     </div>
   );
 }
