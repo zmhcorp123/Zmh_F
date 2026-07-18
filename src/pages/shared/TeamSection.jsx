@@ -1,33 +1,12 @@
-import { useEffect, useState } from "react";
+import { teamProfiles } from "../../data/siteData";
 import { SectionHeader } from "../../components/Sections";
 import { Icon } from "../../components/icons";
-import { settingsApi } from "../../services/api";
 import { navigate } from "../../utils/router";
 
 export function TeamSection() {
-  const [profiles, setProfiles] = useState(null);
-  const [loadFailed, setLoadFailed] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-    settingsApi.teamProfiles().then((data) => {
-      if (active) {
-        // Public profiles must always be the exact values saved in MongoDB.
-        setProfiles(Array.isArray(data.teamProfiles) ? data.teamProfiles : []);
-      }
-    }).catch(() => {
-      if (active) {
-        setProfiles([]);
-        setLoadFailed(true);
-      }
-    });
-    return () => { active = false; };
-  }, []);
-
-  // The leadership row is role-based, not dependent on the order in which an
-  // admin happens to save profiles. CEO first, then co-founders; every other
-  // team member always follows in the lower grid.
-  const orderedProfiles = (profiles || [])
+  // Public profiles are bundled with the app, so this section is available
+  // immediately and does not wait for the settings API.
+  const orderedProfiles = teamProfiles
     .map((profile, index) => ({ profile, index }))
     .sort((a, b) => {
       const rank = (role = "") => {
@@ -62,12 +41,8 @@ export function TeamSection() {
   return (
     <section id="team">
       <SectionHeader eyebrow="Leadership & Stakeholders" title="The people structure behind ZMH USA Corp." text="Founder and stakeholder profiles show the leadership responsibilities behind client delivery and operations quality." />
-      {profiles === null && <p>Loading team profiles…</p>}
-      {loadFailed && <p>Team profiles are temporarily unavailable. Please refresh and try again.</p>}
-      {Array.isArray(profiles) && !loadFailed && <>
-        <div className="team-grid team-grid-primary">{primaryProfiles.map(renderProfile)}</div>
+      <div className="team-grid team-grid-primary">{primaryProfiles.map(renderProfile)}</div>
       {otherProfiles.length > 0 && <div className="team-grid team-grid-secondary">{otherProfiles.map(renderProfile)}</div>}
-      </>}
     </section>
   );
 }
