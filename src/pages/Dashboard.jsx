@@ -12,7 +12,6 @@ import {
   CircleUserRound,
   ClipboardCheck,
   CreditCard,
-  Camera,
   Eye,
   EyeOff,
   FileText,
@@ -350,14 +349,11 @@ function ServiceCard({ service, onDownload, onPayment, detail = false }) {
 }
 
 function ProfilePanel() {
-  const { updateUser } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
-  const [avatarPreview, setAvatarPreview] = useState("");
   const [passwords, setPasswords] = useState({ current: "", next: "", confirm: "" });
   const [visiblePasswords, setVisiblePasswords] = useState({ current: false, next: false, confirm: false });
 
@@ -379,46 +375,6 @@ function ProfilePanel() {
     loadProfile();
     return () => { active = false; };
   }, []);
-
-  const saveProfile = async (event) => {
-    event.preventDefault();
-    setSaving(true);
-    setNotice("");
-    setError("");
-    const form = new FormData(event.currentTarget);
-    const payload = {
-      name: String(form.get("name") || "").trim(),
-      username: String(form.get("username") || "").trim(),
-      company: String(form.get("company") || "").trim(),
-      phone: String(form.get("phone") || "").trim(),
-    };
-
-    if (!payload.name) {
-      setError("Full name is required.");
-      setSaving(false);
-      return;
-    }
-    if (payload.username && !/^[a-zA-Z0-9_.-]{3,32}$/.test(payload.username)) {
-      setError("Username must be 3-32 characters and use only letters, numbers, dots, dashes, or underscores.");
-      setSaving(false);
-      return;
-    }
-    if (payload.phone && !/^[+()\-\s\d.]{7,24}$/.test(payload.phone)) {
-      setError("Enter a valid phone number.");
-      setSaving(false);
-      return;
-    }
-    try {
-      const data = await dashboardApi.updateProfile(payload);
-      setProfile(data.user);
-      updateUser(data.user);
-      setNotice("Profile updated successfully.");
-    } catch (err) {
-      setError(err.message || "Could not update profile.");
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const changePassword = async (event) => {
     event.preventDefault();
@@ -487,11 +443,7 @@ function ProfilePanel() {
       {notice && <div className="success">{notice}</div>}
       <section className="profile-premium-hero">
         <div className="profile-identity">
-          <label className="profile-avatar-upload" title="Choose profile photo">
-            <span className="profile-premium-avatar">{avatarPreview ? <img src={avatarPreview} alt="Profile preview" /> : getInitials(profile?.name)}</span>
-            <input type="file" accept="image/*" onChange={(event) => { const file = event.target.files?.[0]; if (file) setAvatarPreview(URL.createObjectURL(file)); }} />
-            <b><Camera size={15} /></b>
-          </label>
+          <span className="profile-premium-avatar" aria-hidden="true">{getInitials(profile?.name)}</span>
           <div className="profile-identity-copy">
             <span className="profile-kicker">ZHM USA CORP · CLIENT PORTAL</span>
             <h2>{fieldValue(profile?.name)}</h2>
@@ -516,20 +468,6 @@ function ProfilePanel() {
             {accountDetails.map(([label, value, Icon]) => <article key={label}><span><Icon size={17} /></span><div><small>{label}</small><strong>{fieldValue(value)}</strong></div></article>)}
           </div>
         </aside>
-        <form className="profile-edit-card" onSubmit={saveProfile}>
-          <div className="profile-card-heading"><div><span>PROFILE SETTINGS</span><h3>Edit your profile</h3><p>Keep your account information accurate and up to date.</p></div><span className="profile-secure-dot"><ShieldCheck size={18} /></span></div>
-          <div className="profile-form-grid">
-            <label><span>Full name</span><input name="name" defaultValue={profile?.name || ""} required /></label>
-            <label><span>Username</span><input name="username" defaultValue={profile?.username || ""} placeholder="username" /></label>
-            <label><span>Phone</span><input name="phone" defaultValue={profile?.phone || ""} placeholder="+1 (000) 000-0000" /></label>
-            <label><span>Company</span><input name="company" defaultValue={profile?.company || ""} placeholder="Your company" /></label>
-          </div>
-          <div className="profile-info-banner"><ShieldCheck size={18} /><p>Company name, email and client ID cannot be changed after account creation. Contact support if corrections are required.</p></div>
-          <div className="profile-readonly-grid">
-            {[['Email', profile?.email, Mail], ['Role', profile?.role, UsersRound], ['Account status', profile?.status, UserCheck], ['Client ID', clientId, IdCard], ['Member since', profile?.createdAt ? formatDate(profile.createdAt) : '', CalendarDays]].map(([label, value, Icon]) => <div key={label}><Icon size={15} /><span><small>{label}</small><strong>{fieldValue(value)}</strong></span></div>)}
-          </div>
-          <div className="profile-form-actions"><button type="button" onClick={(event) => event.currentTarget.form.reset()}>Cancel</button><button type="submit" disabled={saving}>{saving ? "Saving changes..." : "Save changes"}<ChevronRight size={17} /></button></div>
-        </form>
         <form className="profile-password-card" onSubmit={changePassword}>
           <div className="profile-card-heading"><div><span>SECURITY CENTER</span><h3>Change password</h3><p>Choose a unique password to keep your account protected.</p></div><span className="profile-secure-dot"><KeyRound size={18} /></span></div>
           <div className="profile-password-stack">{renderPasswordField("current", "Current password")}{renderPasswordField("next", "New password")}{renderPasswordField("confirm", "Confirm new password")}</div>
