@@ -29,7 +29,6 @@ import {
   MoreHorizontal,
   PlayCircle,
   ReceiptText,
-  RefreshCw,
   Settings,
   ShieldCheck,
   Sparkles,
@@ -411,11 +410,6 @@ function ProfilePanel() {
   if (loading) return <DashboardContentSkeleton variant="profile" />;
 
   const clientId = profile?.clientId || profile?._id?.slice(-8)?.toUpperCase() || "ZHM-CLIENT";
-  const stats = [
-    { label: "Completed Services", value: profile?.stats?.completedServices ?? 0, detail: "Successfully delivered", icon: CheckCircle2, tone: "violet" },
-    { label: "Ongoing Services", value: profile?.stats?.ongoingServices ?? 0, detail: "Currently in progress", icon: RefreshCw, tone: "indigo" },
-    { label: "Invoices Paid", value: profile?.stats?.invoicesPaid ?? 0, detail: "Payments confirmed", icon: ReceiptText, tone: "emerald" },
-  ];
   const accountDetails = [
     ["Full Name", profile?.name, UserRound], ["Username", profile?.username, Fingerprint], ["Company", profile?.company, Building2],
     ["Email", profile?.email, Mail], ["Phone", profile?.phone, CircleUserRound], ["Role", profile?.role, UsersRound],
@@ -441,26 +435,6 @@ function ProfilePanel() {
     <div className="profile-workspace profile-premium-workspace">
       {error && <div className="form-error">{error}</div>}
       {notice && <div className="success">{notice}</div>}
-      <section className="profile-premium-hero">
-        <div className="profile-identity">
-          <span className="profile-premium-avatar" aria-hidden="true">{getInitials(profile?.name)}</span>
-          <div className="profile-identity-copy">
-            <span className="profile-kicker">ZHM USA CORP · CLIENT PORTAL</span>
-            <h2>{fieldValue(profile?.name)}</h2>
-            <div className="profile-contact-line"><span><Mail size={15} />{fieldValue(profile?.email)}</span><span><CircleUserRound size={15} />{fieldValue(profile?.phone)}</span><span><IdCard size={15} />{clientId}</span></div>
-          </div>
-        </div>
-        <div className="profile-hero-meta">
-          <span className="profile-live-badge"><i />{fieldValue(profile?.status)}</span>
-          <div><small>Account role</small><strong>{fieldValue(profile?.role)}</strong></div>
-          <div><small>Member since</small><strong>{profile?.createdAt ? formatDate(profile.createdAt) : "Not Provided"}</strong></div>
-          <div><small>Last login</small><strong>{profile?.lastLogin ? formatDate(profile.lastLogin) : "Current session"}</strong></div>
-          <div><small>Company</small><strong>{fieldValue(profile?.company)}</strong></div>
-        </div>
-        <div className="profile-stat-grid">
-          {stats.map((stat) => { const Icon = stat.icon; return <article className={`profile-quick-stat ${stat.tone}`} key={stat.label}><span><Icon size={19} /></span><div><small>{stat.label}</small><strong>{stat.value}</strong><em>{stat.detail}</em></div></article>; })}
-        </div>
-      </section>
       <section className="profile-content-grid">
         <aside className="profile-account-card" aria-label="Account details">
           <div className="profile-card-heading"><div><span>ACCOUNT OVERVIEW</span><h3>Account details</h3></div><MoreHorizontal size={20} /></div>
