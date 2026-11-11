@@ -6450,3 +6450,18 @@ button:disabled,
 .detail-hero-copy {
   max-width: 1060px;
 }
+
+.page-hero.page-hero-text-only.team-member-hero {
+  grid-template-columns: minmax(0, 1.08fr) minmax(320px, .92fr);
+  align-items: center;
+}
+
+@media (max-width: 920px) {
+  .page-hero.page-hero-text-only.team-member-hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .team-member-hero .team-hero-portrait-wrap {
+    justify-self: center;
+  }
+}

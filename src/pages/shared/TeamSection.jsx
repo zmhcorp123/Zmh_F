@@ -11,9 +11,10 @@ export function TeamSection() {
     .sort((a, b) => {
       const rank = (role = "") => {
         const normalizedRole = String(role).toLowerCase();
-        if (/\b(ceo|chief executive officer)\b/.test(normalizedRole)) return 0;
-        if (/\bco[- ]?founder\b/.test(normalizedRole)) return 1;
-        return 2;
+        if (/\bchairman\b/.test(normalizedRole)) return 0;
+        if (/\b(ceo|chief executive officer)\b/.test(normalizedRole)) return 1;
+        if (/\bco[- ]?founder\b/.test(normalizedRole)) return 2;
+        return 3;
       };
       return rank(a.profile.role) - rank(b.profile.role) || a.index - b.index;
     })
