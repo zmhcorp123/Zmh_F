@@ -142,7 +142,7 @@ export function BookService() {
           <div className="booking-form-section">
             <h3>Select Services</h3>
             <div className="single-service-grid">
-              {services.slice(0, 8).map((item) => <label key={item.slug} className="checkbox"><input type="checkbox" checked={booking.services.includes(item.name)} onChange={() => toggleService(item.name)} /> <span>{item.name}</span></label>)}
+              {services.map((item) => <label key={item.slug} className="checkbox"><input type="checkbox" checked={booking.services.includes(item.name)} onChange={() => toggleService(item.name)} /> <span>{item.name}</span></label>)}
             </div>
           </div>
 

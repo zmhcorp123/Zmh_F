@@ -4,8 +4,8 @@ import { TeamSection } from "./shared/TeamSection";
 
 export function Team() {
   return <>
-    <SEO title="Leadership & Stakeholders" description="Founder and stakeholder profiles for ZMH USA Corp." />
-    <PageHero eyebrow="Team" title="Founder and stakeholder profiles" text="Meet the people structure behind ZMH USA Corp. and the operating responsibilities that support client delivery." image={false} />
+    <SEO title="Leadership & Stakeholders" description="Founder and stakeholder profiles for AvenirIP" />
+    <PageHero eyebrow="Team" title="Founder and stakeholder profiles" text="Meet the people structure behind AvenirIP and the operating responsibilities that support client delivery." image={false} />
     <TeamSection />
     <section className="split">
       <div>

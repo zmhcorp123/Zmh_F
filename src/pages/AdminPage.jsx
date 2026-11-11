@@ -107,7 +107,7 @@ function AdminCalendarBoard({ bills = [] }) {
 }
 
 const defaultAccountDetails = {
-  beneficiaryName: "ZMH USA Corp",
+  beneficiaryName: "AvenirIP",
   bankName: "Contact sales for bank details",
   accountNumber: "Provided on request",
   routingNumber: "",
@@ -120,7 +120,7 @@ const defaultAccountDetails = {
 };
 
 const defaultCompanyDetails = {
-  officePhone: "+1 (555) 018-2048",
+  officePhone: "+880 1764-395155",
   officeAddress: "Serving home service companies across the United States",
 };
 
@@ -223,7 +223,7 @@ function BankDetailsForm({ accountDetails, onChange, onSave, onReset, onTest, sa
     <SettingsCard eyebrow="Payments" title="Bank Transfer Details" description="Used on invoice summaries and client payment documents.">
       <form className="bank-details-form" onSubmit={onSave}>
         <div className="settings-form-grid">
-          <FormField label="Beneficiary" helper="Legal receiving name." icon="user"><input value={accountDetails.beneficiaryName || ""} onChange={update("beneficiaryName")} placeholder="ZMH USA Corp" required /></FormField>
+          <FormField label="Beneficiary" helper="Legal receiving name." icon="user"><input value={accountDetails.beneficiaryName || ""} onChange={update("beneficiaryName")} placeholder="AvenirIP" required /></FormField>
           <FormField label="Bank" helper="Receiving institution." icon="database"><input value={accountDetails.bankName || ""} onChange={update("bankName")} placeholder="Bank name" required /></FormField>
           <FormField label="Account No." helper="Primary account number." icon="bill"><input value={accountDetails.accountNumber || ""} onChange={update("accountNumber")} placeholder="Account number" required /></FormField>
           <FormField label="Routing No." helper="ACH or domestic routing." icon="route"><input value={accountDetails.routingNumber || ""} onChange={update("routingNumber")} placeholder="Routing number" /></FormField>
@@ -248,7 +248,7 @@ function CompanyDetailsForm({ companyDetails, onChange, onSave, onReset, saving 
   return (
     <form className="company-details-form" onSubmit={onSave}>
       <div className="settings-form-grid">
-        <FormField label="Office Number" helper="Shown on public contact areas." icon="phone"><input value={companyDetails.officePhone || ""} onChange={update("officePhone")} placeholder="+1 (555) 018-2048" /></FormField>
+        <FormField label="Office Number" helper="Shown on public contact areas." icon="phone"><input value={companyDetails.officePhone || ""} onChange={update("officePhone")} placeholder="+880 1764-395155" /></FormField>
         <FormField label="Office Address" helper="Shown on the contact page." icon="map"><input value={companyDetails.officeAddress || ""} onChange={update("officeAddress")} placeholder="Office address" /></FormField>
       </div>
       <div className="settings-footer-actions">
@@ -628,7 +628,7 @@ function SettingsPanel() {
             <SettingsCard eyebrow="Company" title="Company Settings" description="Core company identity used throughout the admin experience.">
               <div className="company-settings-summary">
                 <div className="brand-mark"><img src="/brand/zmh-usa-corp-mark.png" width="96" height="96" loading="lazy" decoding="async" alt="" /></div>
-                <div><strong>ZMH USA Corp.</strong><span>Remote operations support for home service companies.</span></div>
+                <div><strong>AvenirIP</strong><span>Remote operations support for home service companies.</span></div>
               </div>
               <CompanyDetailsForm companyDetails={companyDetails} onChange={updateCompany} onSave={saveCompanyDetails} onReset={() => setCompanyDetails(defaultCompanyDetails)} saving={savingCompany} />
             </SettingsCard>

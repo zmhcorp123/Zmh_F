@@ -19,7 +19,7 @@ const nav = [
 
 const socials = [
   ["Facebook", "facebook", "https://www.facebook.com/"],
-  ["LinkedIn", "linkedin", "https://www.linkedin.com/"],
+  ["LinkedIn", "linkedin", "https://www.linkedin.com/company/avenir-ip"],
 ];
 
 const companyLinks = [
@@ -39,7 +39,7 @@ const footerLogo = "/brand/zmh-usa-corp-mark.png";
 
 function BrandLogo({ footer = false }) {
   if (footer) {
-    return <img src={footerLogo} width="96" height="96" loading="lazy" decoding="async" alt="ZMH USA Corp." />;
+    return <img src={footerLogo} width="96" height="96" loading="lazy" decoding="async" alt="AvenirIP" />;
   }
   return <picture><source srcSet={logoMarkWebp} type="image/webp" /><img src={logoMark} width="96" height="96" alt="" decoding="async" fetchPriority="high" /></picture>;
 }
@@ -88,9 +88,9 @@ export function Layout({ children }) {
   return (
     <div className={isAppOnly && user?.role !== "admin" ? "app dashboard-app" : "app"}>
       <header className="navbar">
-        <button className="brand" onClick={() => navigate("/")} aria-label="ZMH USA Corp home">
+        <button className="brand" onClick={() => navigate("/")} aria-label="AvenirIP home">
           <span className="brand-mark"><BrandLogo /></span>
-          <span><strong>{company.name}</strong><small>Remote Operations</small></span>
+          <span><strong>{company.name}</strong><small>Intelligent Tech.  Inspired Future</small></span>
         </button>
         <nav className={open ? "nav open" : "nav"} aria-label="Primary navigation">
           {nav.map(([label, to]) => <button key={to} className={"text-link " + (currentPath === to || (to !== "/" && currentPath.startsWith(to)) ? "active" : "")} onClick={() => { navigate(to); closeMenu(); }}>{label}</button>)}
@@ -117,17 +117,17 @@ export function Layout({ children }) {
             <div className="brand footer-brand"><span className="footer-logo"><BrandLogo footer /></span><span><strong>{company.name}</strong><small>{company.tagline}</small></span></div>
             <p>Premium remote operations support for home service companies that need disciplined call, scheduling, dispatch, CRM, and admin workflows.</p>
             <div className="socials">{socials.map(([label, icon, href]) => <a key={label} href={href} target="_blank" rel="noreferrer" aria-label={label} title={label}><Icon name={icon} size={18} /></a>)}</div>
-            <div className="footer-email-list footer-contact-list">
-              <span><strong>Sales</strong>{company.emails.sales}</span>
-              <span><strong>Support</strong>{company.emails.support}</span>
-              <span><strong>Phone</strong>{company.phone}</span>
-            </div>
           </div>
-          <div><h4>Services</h4>{services.slice(0, 6).map((item) => <LinkButton key={item.slug} to={"/services/" + item.slug}>{item.name}</LinkButton>)}</div>
+          <div><h4>Services</h4>{services.slice(-4).map((item) => <LinkButton key={item.slug} to={"/services/" + item.slug}>{item.name}</LinkButton>)}</div>
           <div><h4>Industries</h4>{industries.slice(0, 6).map((item) => <LinkButton key={item.slug} to={"/industries/" + item.slug}>{item.name}</LinkButton>)}</div>
           <div><h4>Company</h4>{companyLinks.map(([label, to]) => <LinkButton key={to} to={to}>{label}</LinkButton>)}</div>
         </div>
-        <div className="footer-bottom"><span>Copyright 2026 ZMH USA Corp. All rights reserved.</span></div>
+        <div className="footer-contact-list" aria-label="Contact information">
+          <span><strong>Email</strong><a href={`mailto:${company.email.trim()}`}>{company.email.trim()}</a></span>
+          <span><strong>Phone</strong><a href={`tel:${company.phone.replace(/[^+\d]/g, "")}`}>{company.phone}</a></span>
+          <span><strong>Address</strong>{company.address}</span>
+        </div>
+        <div className="footer-bottom"><span>Copyright 2026 AvenirIP All rights reserved.</span></div>
       </footer>}
       {!isAppOnly && chatReady && <Suspense fallback={<div className="chatbot chat-placeholder" aria-hidden="true" />}><Chatbot /></Suspense>}
     </div>

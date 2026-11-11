@@ -40,7 +40,7 @@ export function TeamSection() {
 
   return (
     <section id="team">
-      <SectionHeader eyebrow="Leadership & Stakeholders" title="The people structure behind ZMH USA Corp." text="Founder and stakeholder profiles show the leadership responsibilities behind client delivery and operations quality." />
+      <SectionHeader eyebrow="Leadership & Stakeholders" title="The people structure behind AvenirIP" text="Founder and stakeholder profiles show the leadership responsibilities behind client delivery and operations quality." />
       <div className="team-grid team-grid-primary">{primaryProfiles.map(renderProfile)}</div>
       {otherProfiles.length > 0 && <div className="team-grid team-grid-secondary">{otherProfiles.map(renderProfile)}</div>}
     </section>

@@ -5,19 +5,19 @@ const legalPages = {
   "Terms & Conditions": {
     effectiveDate: "July 2026",
     intro: [
-      'Welcome to ZMH USA Corp. ("ZMH," "Company," "we," "our," or "us"). These Terms & Conditions govern your access to and use of our website and services. By accessing this website or engaging our services, you agree to be bound by these Terms.',
+      'Welcome to AvenirIP ("ZMH," "Company," "we," "our," or "us"). These Terms & Conditions govern your access to and use of our website and services. By accessing this website or engaging our services, you agree to be bound by these Terms.',
       "If you do not agree with these Terms, please do not use this website or our services.",
     ],
     sections: [
       {
-        title: "1. About ZMH USA Corp.",
-        body: ["ZMH USA Corp. is a New York-based company providing remote business operations support, customer service, dispatch coordination, appointment scheduling, CRM management, administrative support, and related business process outsourcing services to businesses primarily operating in the United States."],
+        title: "1. About AvenirIP",
+        body: ["AvenirIP is a New York-based company providing remote business operations support, customer service, dispatch coordination, appointment scheduling, CRM management, administrative support, and related business process outsourcing services to businesses primarily operating in the United States."],
       },
       {
         title: "2. Scope of Services",
         body: ["Our services may include, but are not limited to:"],
         list: ["Customer call answering", "Appointment scheduling", "Dispatch coordination", "CRM management", "Administrative support", "Lead qualification", "Customer follow-up", "Email management", "Workflow coordination", "Business process outsourcing"],
-        footer: ["Specific services are governed by individual service agreements between ZMH USA Corp. and each client."],
+        footer: ["Specific services are governed by individual service agreements between AvenirIP and each client."],
       },
       {
         title: "3. No Guarantee of Business Results",
@@ -32,7 +32,7 @@ const legalPages = {
       },
       {
         title: "5. Independent Business Relationship",
-        body: ["ZMH USA Corp. provides business support services and does not become an employee, agent, partner, or legal representative of the client unless expressly agreed in writing."],
+        body: ["AvenirIP provides business support services and does not become an employee, agent, partner, or legal representative of the client unless expressly agreed in writing."],
       },
       {
         title: "6. Confidentiality",
@@ -40,7 +40,7 @@ const legalPages = {
       },
       {
         title: "7. Intellectual Property",
-        body: ["All website content, branding, graphics, text, logos, and proprietary materials remain the exclusive property of ZMH USA Corp.", "No content may be copied, reproduced, distributed, or modified without prior written permission."],
+        body: ["All website content, branding, graphics, text, logos, and proprietary materials remain the exclusive property of AvenirIP", "No content may be copied, reproduced, distributed, or modified without prior written permission."],
       },
       {
         title: "8. Payment Terms",
@@ -49,7 +49,7 @@ const legalPages = {
       },
       {
         title: "9. Limitation of Liability",
-        body: ["To the fullest extent permitted by law, ZMH USA Corp. shall not be liable for:"],
+        body: ["To the fullest extent permitted by law, AvenirIP shall not be liable for:"],
         list: ["Lost profits", "Business interruption", "Loss of goodwill", "Indirect damages", "Consequential damages", "Third-party service failures", "Internet outages", "Software failures beyond our reasonable control"],
         footer: ["Our total liability shall not exceed the amount paid by the client for the services directly giving rise to the claim during the preceding three (3) months."],
       },
@@ -80,13 +80,13 @@ const legalPages = {
       },
       {
         title: "16. Contact Information",
-        body: ["ZMH USA Corp.", "Email: info@zmhusacorp.com", "Website: www.zmhusacorp.com"],
+        body: ["AvenirIP", "Email: info@zmhusacorp.com", "Website: www.zmhusacorp.com"],
       },
     ],
   },
   "Privacy Policy": {
     effectiveDate: "July 2026",
-    intro: ["ZMH USA Corp. respects your privacy and is committed to protecting your personal information. This Privacy Policy explains how we collect, use, store, and protect information when you visit our website or use our services."],
+    intro: ["AvenirIP respects your privacy and is committed to protecting your personal information. This Privacy Policy explains how we collect, use, store, and protect information when you visit our website or use our services."],
     sections: [
       {
         title: "1. Information We Collect",
@@ -120,7 +120,7 @@ const legalPages = {
       },
       {
         title: "6. International Operations",
-        body: ["ZMH USA Corp. maintains business operations in both the United States and Bangladesh.", "Information may be securely processed by authorized personnel located in either jurisdiction for the purpose of delivering contracted services.", "All personnel handling customer information are subject to confidentiality obligations and internal security procedures."],
+        body: ["AvenirIP maintains business operations in both the United States and Bangladesh.", "Information may be securely processed by authorized personnel located in either jurisdiction for the purpose of delivering contracted services.", "All personnel handling customer information are subject to confidentiality obligations and internal security procedures."],
       },
       {
         title: "7. Data Retention",
@@ -147,13 +147,13 @@ const legalPages = {
       },
       {
         title: "12. Contact Us",
-        body: ["If you have questions regarding this Privacy Policy or our data practices, please contact:", "ZMH USA Corp.", "Email: info@zmhusacorp.com", "Website: www.zmhusacorp.com"],
+        body: ["If you have questions regarding this Privacy Policy or our data practices, please contact:", "AvenirIP", "Email: info@zmhusacorp.com", "Website: www.zmhusacorp.com"],
       },
     ],
   },
   "Cookie Policy": {
     effectiveDate: "July 2026",
-    intro: ["This Cookie Policy explains how ZMH USA Corp. uses cookies and similar technologies on our website."],
+    intro: ["This Cookie Policy explains how AvenirIP uses cookies and similar technologies on our website."],
     sections: [
       {
         title: "What Are Cookies?",

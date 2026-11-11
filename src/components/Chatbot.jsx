@@ -5,8 +5,9 @@ import { navigate } from "../utils/router";
 export function Chatbot() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState([{ from: "bot", text: "Hi, I am the ZMH assistant. Ask about services, pricing, industries, support, or booking." }]);
+  const [messages, setMessages] = useState([{ from: "bot", text: "Hi, I am the AvenirIP  assistant. Ask about services, pricing, industries, support, or booking." }]);
   const [typing, setTyping] = useState(false);
+  const chatbotRef = useRef(null);
   const replyTimer = useRef(null);
   const chatScrollRef = useRef(null);
   const latestUserQuestion = [...messages].reverse().find((message) => message.from === "user")?.text || "";
@@ -35,6 +36,17 @@ export function Chatbot() {
   };
 
   useEffect(() => () => clearTimeout(replyTimer.current), []);
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    const minimizeOnOutsideClick = (event) => {
+      if (!chatbotRef.current?.contains(event.target)) setOpen(false);
+    };
+
+    document.addEventListener("pointerdown", minimizeOnOutsideClick);
+    return () => document.removeEventListener("pointerdown", minimizeOnOutsideClick);
+  }, [open]);
 
   useEffect(() => {
     if (!open || !chatScrollRef.current) return;
@@ -82,10 +94,10 @@ export function Chatbot() {
     .slice(0, 4);
 
   return (
-    <div className="chatbot">
+    <div className="chatbot" ref={chatbotRef}>
       {open && (
-        <section className="chat-panel" aria-label="ZMH assistant chat">
-          <header><strong>ZMH Assistant</strong><button type="button" className="chat-close" aria-label="Close chat" title="Close chat" onClick={() => setOpen(false)}>Close</button></header>
+        <section className="chat-panel" aria-label="AvenirIP  assistant chat">
+          <header><strong>AvenirIP  assistant</strong><button type="button" className="chat-close" aria-label="Close chat" title="Close chat" onClick={() => setOpen(false)}>Close</button></header>
           <div className="chat-scroll" ref={chatScrollRef}><div className="chat-messages">{messages.map((message, index) => <p key={index} className={message.from}>{message.text}</p>)}{typing && <p className="bot typing" aria-live="polite"><span></span><span></span><span></span></p>}</div>
           <div className="chat-faqs" aria-label="Suggested questions">
             <span>Suggested questions</span>

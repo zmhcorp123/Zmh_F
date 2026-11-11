@@ -10,7 +10,7 @@ export function PageHero({ eyebrow, title, text, primary = "Book a Free Operatio
   ];
 
   return (
-    <section className={"page-hero " + className}>
+    <section className={"page-hero " + (image ? "" : "page-hero-text-only ") + className}>
       <div className="hero-copy reveal">
         <span className="eyebrow">{eyebrow}</span>
         <h1>{title}</h1>
