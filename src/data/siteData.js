@@ -1,6 +1,6 @@
 export const company = {
   name: "AvenirIP",
-  tagline: "Your Remote Operations Department for Home Service Companies",
+  tagline: "Intelligent Tech.  Inspired Future ",
   phone: "+880 1764-395155",
   email: " info@avenirip.com",
   emails: {
@@ -95,10 +95,9 @@ export const industries = [
   "Landscaping",
   "Painting",
   "General Contractors",
-].map((name, index) => ({
+].map((name) => ({
   name,
   slug: name.toLowerCase().replaceAll(" ", "-"),
-  icon: ["settings", "route", "shield", "workflow", "image", "users", "shield", "sun", "image", "briefcase"][index],
   problems: ["Missed calls during busy windows", "Technicians interrupted by admin tasks", "Customer updates scattered across tools"],
   solutions: ["Dedicated remote operations pods", "Documented workflows for every call type", "Clean scheduling, dispatch, and follow-up rhythms"],
   benefits: ["Higher booking rate", "Less operational noise", "Better customer visibility", "Scalable coverage"],
@@ -129,7 +128,7 @@ export const faqs = [
 ];
 
 export const testimonials = [
-  { quote: "ZMH helped us capture calls we used to miss and gave our dispatch board real structure.", name: "Operations Manager", company: "Residential HVAC Group" },
+  { quote: "AvenirIP helped us capture calls we used to miss and gave our dispatch board real structure.", name: "Operations Manager", company: "Residential HVAC Group" },
   { quote: "Their team feels like part of our office. Customers get updates, and technicians get clean notes.", name: "Founder", company: "Plumbing Contractor" },
   { quote: "We finally have a repeatable admin workflow without hiring a full in-house department.", name: "Director", company: "Property Management Firm" },
 ];
@@ -164,7 +163,6 @@ export const teamProfiles = [
     slug: "colonel",
     role: "Co-Founder",
     location: "Bangladesh",
-    linkedin: "https://www.linkedin.com/",
     summary: "Oversees daily workflows, scheduling, dispatch coordination, CRM updates, and SOP execution.",
     bio: "The operations lead is responsible for managing daily service delivery, team quality, process adherence, and performance reporting from the Bangladesh operations center.",
     focus: ["Daily workflows", "SOP execution", "Quality control", "Team coordination"],

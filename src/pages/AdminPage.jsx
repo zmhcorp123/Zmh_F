@@ -121,7 +121,7 @@ const defaultAccountDetails = {
 
 const defaultCompanyDetails = {
   officePhone: "+880 1764-395155",
-  officeAddress: "Serving home service companies across the United States",
+  officeAddress: "House: 5G, Road: 104, Gulshan 2",
 };
 
 const defaultPackageRows = defaultPackages.map((item, index) => ({

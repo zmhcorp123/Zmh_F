@@ -89,8 +89,8 @@ export function Home() {
       <HeroWaveTransition />
 
       <section className="saas-services">
-        <SectionTitle eyebrow="What we do" title="Technology services for the next stage of your business" />
-        <div className="service-card-grid">{services.slice(-4).map((item) => <Card key={item.slug} icon={item.icon} title={item.name} text={item.summary}><button className="learn" onClick={() => navigate("/services/" + item.slug)}>Learn More <Icon name="arrow" size={15} /></button></Card>)}</div>
+        <SectionTitle eyebrow="What we do" title="Services that support every part of your operation" />
+        <div className="service-card-grid">{services.map((item) => <Card key={item.slug} icon={item.icon} title={item.name} text={item.summary}><button className="learn" onClick={() => navigate("/services/" + item.slug)}>Learn More <Icon name="arrow" size={15} /></button></Card>)}</div>
       </section>
 
       <section className="saas-band">
